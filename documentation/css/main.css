@@ -1,0 +1,13 @@
+#intro h1 {
+  font-weight: 600; }
+
+#intro .sub-heading {
+  font-size: 1.5em; }
+
+#intro ul {
+  padding: 0; }
+  #intro ul li {
+    list-style: none; }
+
+#intro .thanks {
+  font-size: 16px; }
