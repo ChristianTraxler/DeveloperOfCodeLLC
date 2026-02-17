@@ -464,6 +464,11 @@
             </div>
         </section>
 
+        <!-- Scroll to Top Button -->
+        <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
+            <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+
         <!-- Footer -->
         <footer class="site-footer">
             <p>2021 &copy; Developer Of Code, LLC. All Right Reserved.</p>
@@ -592,6 +597,21 @@
         }
 
         setTimeout(typeRole, 1500);
+
+        // ── Scroll to Top Button ──
+        var scrollTopBtn = document.getElementById('scrollTop');
+
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 400) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        }, { passive: true });
+
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
 
         // ── Smooth Scroll for Nav Links ──
         document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {

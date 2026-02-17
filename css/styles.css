@@ -1238,3 +1238,49 @@ body::before {
     display: block;
     opacity: 1;
 }
+
+/* ═══════════════════════════════════════════
+   SCROLL TO TOP BUTTON
+   ═══════════════════════════════════════════ */
+.scroll-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(16px);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.3s ease;
+    box-shadow: 0 4px 20px rgba(255, 69, 0, 0.35);
+}
+
+.scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-top:hover {
+    background: #ff6a33;
+    box-shadow: 0 6px 28px rgba(255, 69, 0, 0.5);
+    transform: translateY(-3px);
+}
+
+.scroll-top svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--bg-deep);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
