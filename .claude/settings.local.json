@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npx vercel:*)",
-      "Read(//Users/christiantraxler/Desktop/**)",
-      "Read(//Users/christiantraxler/**)"
-    ]
-  }
-}
