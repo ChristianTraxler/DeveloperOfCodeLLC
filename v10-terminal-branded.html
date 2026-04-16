@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developer of Code — Web Design for Small Business</title>
+<meta name="description" content="We craft beautiful, custom websites at prices that make sense — and we stick around as your partner in growth.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  /* Developer of Code brand palette */
+  --bg:#0a0e17;
+  --surface:#111827;
+  --surface-2:#1a2236;
+  --border:#1f2a42;
+  --text:#e6edf3;
+  --text-dim:#8b949e;
+  --text-faint:#484f58;
+  /* Brand orange + green kept */
+  --green:#3fb950;
+  --blue:#58a6ff;
+  --purple:#bc8cff;
+  --orange:#ff6a33;
+  --orange-hover:#ff4500;
+  --orange-dark:#cc3700;
+  --orange-glow:rgba(255,106,51,0.15);
+  --red:#f85149;
+  --pink:#f778ba;
+  --cyan:#39d2c0;
+  --mono:'Azeret Mono',monospace;
+  --display:'Fraunces',serif;
+}
+
+html,body{height:100%;overflow:hidden}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:14px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ====== WINDOW CHROME ====== */
+.window{
+  position:fixed;inset:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  box-shadow:0 20px 80px rgba(0,0,0,0.5);
+}
+
+.titlebar{
+  height:42px;
+  background:var(--surface-2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 16px;
+  gap:8px;
+  flex-shrink:0;
+  -webkit-app-region:drag;
+}
+
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#f85149}
+.dot-y{background:#d29922}
+.dot-g{background:#3fb950}
+
+.titlebar-text{
+  flex:1;text-align:center;
+  font-size:0.7rem;color:var(--text-faint);
+  letter-spacing:0.04em;
+}
+
+.titlebar-tabs{
+  display:flex;gap:2px;margin-left:20px;
+}
+
+.tab{
+  padding:6px 14px;
+  font-size:0.65rem;
+  color:var(--text-faint);
+  border-radius:6px 6px 0 0;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  letter-spacing:0.02em;
+  border:1px solid transparent;
+  border-bottom:none;
+  background:transparent;
+  font-family:var(--mono);
+}
+
+.tab:hover{color:var(--text-dim);background:rgba(255,255,255,0.03)}
+
+.tab.active{
+  color:var(--text);
+  background:var(--surface);
+  border-color:var(--border);
+}
+
+/* ====== MAIN AREA ====== */
+.main-area{
+  flex:1;display:flex;overflow:hidden;
+}
+
+/* ====== SIDEBAR ====== */
+.sidebar{
+  width:220px;
+  background:var(--surface-2);
+  border-right:1px solid var(--border);
+  padding:16px 0;
+  flex-shrink:0;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+
+.sidebar-section{
+  padding:0 12px;margin-bottom:16px;
+}
+
+.sidebar-label{
+  font-size:0.58rem;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  padding:4px 8px;
+  margin-bottom:4px;
+}
+
+.sidebar-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all 0.15s ease;
+  font-size:0.75rem;
+  color:var(--text-dim);
+  border:none;
+  background:none;
+  width:100%;
+  text-align:left;
+  font-family:var(--mono);
+}
+
+.sidebar-item:hover{
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+}
+
+.sidebar-item.active{
+  background:rgba(255,106,51,0.1);
+  color:var(--orange);
+}
+
+.sidebar-icon{
+  width:16px;text-align:center;
+  font-size:0.7rem;flex-shrink:0;
+}
+
+.sidebar-badge{
+  margin-left:auto;
+  font-size:0.55rem;
+  padding:1px 6px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.06);
+  color:var(--text-faint);
+}
+
+.sidebar-footer{
+  margin-top:auto;
+  padding:12px 20px;
+  border-top:1px solid var(--border);
+}
+
+.sidebar-brand{
+  font-family:var(--display);
+  font-size:0.85rem;
+  font-weight:600;
+  color:var(--text);
+}
+
+.sidebar-brand span{color:var(--orange)}
+
+.sidebar-copy{
+  font-size:0.55rem;color:var(--text-faint);
+  margin-top:2px;
+}
+
+/* ====== CONTENT PANE ====== */
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding:0;
+  position:relative;
+}
+
+/* Each view */
+.view{
+  display:none;
+  padding:32px 40px;
+  animation:viewIn 0.4s ease;
+  min-height:100%;
+}
+
+.view.active{display:block}
+
+@keyframes viewIn{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ====== STATUS BAR ====== */
+.statusbar{
+  height:28px;
+  background:var(--surface-2);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 16px;
+  gap:16px;
+  flex-shrink:0;
+}
+
+.status-item{
+  font-size:0.58rem;color:var(--text-faint);
+  display:flex;align-items:center;gap:10px;
+  line-height:1;
+}
+
+.status-dot{
+  width:6px;height:6px;border-radius:50%;
+  flex-shrink:0;
+  display:inline-block;
+  vertical-align:middle;
+}
+
+.status-dot.online{
+  background:var(--green);
+  box-shadow:0 0 6px rgba(63,185,80,0.4);
+  position:relative;
+}
+
+.status-dot.online::before{
+  content:'';
+  position:absolute;
+  inset:-2px;
+  border-radius:50%;
+  border:2px solid var(--green);
+  animation:sonar 1.5s ease-out infinite;
+}
+
+@keyframes sonar{
+  0%{transform:scale(1);opacity:0.8}
+  100%{transform:scale(3);opacity:0}
+}
+
+.statusbar-right{margin-left:auto;display:flex;gap:16px}
+
+/* ====== VIEW: HOME ====== */
+.home-hero{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:0;
+  padding-top:20px;
+}
+
+.home-greeting{
+  font-size:0.7rem;color:var(--green);
+  letter-spacing:0.08em;margin-bottom:20px;
+  display:flex;align-items:center;gap:6px;
+}
+
+.home-greeting .cursor-blink{
+  display:inline-block;width:2px;height:14px;
+  background:var(--green);
+  animation:cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+
+.home-title{
+  font-family:var(--display);
+  font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:800;
+  line-height:1.1;
+  margin-bottom:16px;
+  letter-spacing:-0.02em;
+}
+
+.home-title .hl-green{color:var(--green)}
+.home-title .hl-blue{color:var(--blue)}
+.home-title .hl-purple{color:var(--purple)}
+
+.home-desc{
+  font-size:0.88rem;color:var(--text-dim);
+  max-width:500px;line-height:1.8;
+  margin-bottom:28px;
+}
+
+.home-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px}
+
+.cmd-btn{
+  padding:8px 18px;
+  border-radius:6px;
+  font-family:var(--mono);font-size:0.72rem;
+  cursor:pointer;transition:all 0.2s ease;
+  border:1px solid var(--border);
+  background:var(--surface-2);
+  color:var(--text);
+  display:flex;align-items:center;gap:6px;
+}
+
+.cmd-btn:hover{
+  border-color:var(--orange);
+  background:var(--orange-glow);
+  color:var(--orange);
+}
+
+.cmd-btn .cmd-prefix{color:var(--text-faint)}
+
+.cmd-btn-primary{
+  background:var(--orange);color:#fff;
+  border-color:var(--orange);font-weight:500;
+}
+
+.cmd-btn-primary:hover{
+  background:var(--orange-hover);border-color:var(--orange-hover);color:#fff;
+}
+
+/* Quick stats row */
+.home-stats{
+  display:flex;gap:12px;width:100%;margin-bottom:32px;
+}
+
+.home-stat{
+  flex:1;
+  padding:16px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  transition:border-color 0.2s ease;
+}
+
+.home-stat:hover{border-color:var(--orange)}
+
+.hs-num{
+  font-family:var(--display);font-size:1.8rem;
+  font-weight:800;line-height:1;margin-bottom:4px;
+}
+
+.hs-num.c-green{color:var(--green)}
+.hs-num.c-blue{color:var(--orange)}
+.hs-num.c-purple{color:var(--purple)}
+
+.hs-label{font-size:0.6rem;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase}
+
+/* Recent output block */
+.output-block{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px 20px;
+  font-size:0.75rem;
+  line-height:1.8;
+  width:100%;
+  max-width:600px;
+}
+
+.output-line{display:flex;gap:8px}
+.output-line .prompt{color:var(--green);flex-shrink:0}
+.output-line .cmd{color:var(--text)}
+.output-comment{color:var(--text-faint);font-style:italic}
+.output-result{color:var(--orange)}
+.output-success{color:var(--green)}
+.output-warn{color:var(--orange)}
+
+/* ====== VIEW: ABOUT ====== */
+.about-content{max-width:680px}
+
+.view-label{
+  font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+
+.view-label .vl-dot{width:6px;height:6px;border-radius:50%}
+
+.view-title{
+  font-family:var(--display);font-size:clamp(1.6rem,3vw,2.2rem);
+  font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-0.02em;
+}
+
+.view-body{
+  font-size:0.88rem;color:var(--text-dim);
+  line-height:1.8;margin-bottom:20px;
+}
+
+.mission-block{
+  padding:20px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-left:3px solid var(--orange);
+  border-radius:0 8px 8px 0;
+  font-style:italic;
+  color:var(--text-dim);
+  line-height:1.8;
+  font-size:0.85rem;
+  margin-bottom:24px;
+}
+
+.about-img-area{
+  width:100%;max-width:250px;
+  background:none;
+  border:none;
+  border-radius:0;
+  display:block;
+  overflow:hidden;
+  margin-bottom:24px;
+  padding:0;
+  line-height:0;
+}
+
+.about-img-area img{
+  width:100%;height:auto;
+  display:block;
+}
+
+/* ====== VIEW: SERVICES ====== */
+.services-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:12px;margin-top:20px;
+}
+
+.svc-card{
+  padding:20px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  transition:all 0.2s ease;
+  cursor:default;
+  position:relative;
+  overflow:hidden;
+}
+
+.svc-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--orange);opacity:0;transition:opacity 0.2s ease;
+}
+
+.svc-card:hover{border-color:var(--orange)}
+.svc-card:hover::before{opacity:1}
+
+.svc-header{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
+}
+
+.svc-icon{
+  width:28px;height:28px;border-radius:6px;
+  background:rgba(255,106,51,0.08);
+  border:1px solid rgba(255,106,51,0.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;color:var(--orange);
+}
+
+.svc-card h3{font-size:0.85rem;font-weight:500;color:var(--text)}
+
+.svc-card p{font-size:0.78rem;color:var(--text-dim);line-height:1.6}
+
+.svc-tags{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+
+.svc-tag{
+  font-size:0.55rem;
+  padding:2px 8px;
+  border-radius:12px;
+  background:rgba(255,106,51,0.06);
+  border:1px solid rgba(255,106,51,0.12);
+  color:var(--orange);
+  letter-spacing:0.04em;
+}
+
+/* ====== VIEW: PROCESS ====== */
+.process-timeline{
+  position:relative;
+  padding-left:28px;
+  margin-top:20px;
+  max-width:560px;
+}
+
+.process-timeline::before{
+  content:'';position:absolute;left:7px;top:0;bottom:0;
+  width:2px;background:var(--border);
+}
+
+.pt-step{
+  position:relative;
+  padding:16px 0 24px;
+}
+
+.pt-dot{
+  position:absolute;left:-28px;top:20px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--bg);
+  border:2px solid var(--text-faint);
+  transition:all 0.3s ease;
+  z-index:2;
+}
+
+.pt-step:hover .pt-dot{
+  border-color:var(--orange);
+  background:var(--orange);
+  box-shadow:0 0 12px var(--orange-glow);
+}
+
+.pt-step h3{font-size:0.88rem;font-weight:500;margin-bottom:4px}
+.pt-step p{font-size:0.78rem;color:var(--text-dim);line-height:1.6}
+
+.pt-time{
+  font-size:0.6rem;color:var(--orange);
+  margin-top:6px;opacity:0.6;
+  letter-spacing:0.06em;
+}
+
+/* ====== VIEW: PORTFOLIO ====== */
+.portfolio-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;margin-top:20px;
+}
+
+.pf-card{
+  aspect-ratio:16/10;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:6px;
+  transition:all 0.2s ease;
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  text-decoration:none;color:var(--text);
+}
+
+.pf-card img{
+  width:100%;height:100%;
+  object-fit:contain;
+  object-position:center bottom;
+  padding:12px;
+}
+
+a.pf-card:hover,
+.pf-card:hover{
+  border-color:var(--orange);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  color:var(--text);
+}
+
+.pf-num{
+  font-family:var(--display);font-size:2rem;font-weight:800;
+  color:var(--text-faint);opacity:0.2;
+}
+
+.pf-label{font-size:0.6rem;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase}
+
+.pf-overlay{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:14px 16px;
+  background:linear-gradient(to top,rgba(10,14,23,0.95) 60%,transparent);
+  z-index:2;
+}
+
+.pf-card:hover .pf-overlay{transform:translateY(0)}
+
+.pf-overlay h3{font-size:0.8rem;font-weight:600;color:#fff}
+.pf-overlay p{font-size:0.6rem;color:var(--orange);letter-spacing:0.06em}
+
+/* ====== VIEW: PRICING ====== */
+.pricing-cards{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;margin-top:20px;
+}
+
+.pr-card{
+  padding:24px 20px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  transition:all 0.2s ease;
+}
+
+.pr-card.featured{
+  border-color:var(--orange);
+  background:rgba(255,106,51,0.03);
+  box-shadow:0 0 30px rgba(255,106,51,0.04);
+}
+
+.pr-card:hover{border-color:var(--orange)}
+
+.pr-badge{
+  display:inline-block;
+  font-size:0.5rem;
+  padding:2px 8px;
+  border-radius:4px;
+  background:var(--orange);
+  color:#fff;
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+
+.pr-tier{
+  font-size:0.6rem;color:var(--orange);
+  letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.pr-price{
+  font-family:var(--display);font-size:2rem;
+  font-weight:800;line-height:1;margin-bottom:4px;
+}
+
+.pr-price span{font-family:var(--mono);font-size:0.65rem;color:var(--text-faint);font-weight:300}
+
+.pr-desc{font-size:0.75rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
+
+.pr-features{display:flex;flex-direction:column;gap:5px;margin-bottom:18px}
+
+.pr-feat{
+  font-size:0.75rem;color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;
+}
+
+.pr-feat::before{content:'✓';color:var(--green);font-size:0.65rem;font-weight:600}
+
+.pr-btn{
+  display:block;width:100%;padding:8px;
+  border-radius:6px;text-align:center;
+  font-family:var(--mono);font-size:0.72rem;
+  cursor:pointer;transition:all 0.2s ease;
+  text-decoration:none;border:none;
+}
+
+.pr-btn-fill{
+  background:var(--orange);color:#fff;font-weight:500;
+}
+.pr-btn-fill:hover{background:var(--orange-hover)}
+
+.pr-btn-outline{
+  background:transparent;color:var(--text-dim);
+  border:1px solid var(--border);
+}
+.pr-btn-outline:hover{border-color:var(--orange);color:var(--orange)}
+
+/* ====== VIEW: TESTIMONIALS ====== */
+.test-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:12px;margin-top:20px;
+}
+
+.tc{
+  padding:20px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  transition:border-color 0.2s ease;
+}
+
+.tc:hover{border-color:var(--orange)}
+
+.tc-text{
+  font-size:0.82rem;font-style:italic;
+  color:var(--text-dim);line-height:1.7;margin-bottom:14px;
+}
+
+.tc-author{display:flex;align-items:center;gap:8px}
+
+.tc-av{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--orange);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;font-weight:600;color:#fff;
+}
+
+.tc-info h4{font-size:0.75rem;font-weight:500}
+.tc-info p{font-size:0.58rem;color:var(--text-faint)}
+
+/* ====== VIEW: CONTACT ====== */
+.contact-content{max-width:500px}
+
+.contact-block{
+  padding:24px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-top:20px;
+}
+
+.contact-line{
+  display:flex;gap:8px;margin-bottom:6px;
+  font-size:0.78rem;
+}
+
+.contact-line .cl-label{color:var(--text-faint);min-width:60px}
+.contact-line .cl-value{color:var(--orange)}
+.contact-line .cl-value a{color:var(--orange);text-decoration:none}
+.contact-line .cl-value a:hover{text-decoration:underline}
+
+/* ====== RESPONSIVE ====== */
+@media(max-width:900px){
+  .window{inset:0;border-radius:0}
+  .sidebar{display:none}
+  .titlebar-tabs{display:none}
+
+  /* Show a bottom tab bar instead */
+  .mobile-tabs{
+    display:flex !important;
+    overflow-x:auto;
+    gap:0;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+    scrollbar-width:none;
+  }
+  .mobile-tabs::-webkit-scrollbar{display:none}
+
+  .mob-tab{
+    flex-shrink:0;
+    padding:10px 14px;
+    font-family:var(--mono);font-size:0.6rem;
+    color:var(--text-faint);
+    background:none;border:none;
+    cursor:pointer;
+    transition:color 0.2s ease;
+    letter-spacing:0.04em;
+    white-space:nowrap;
+  }
+
+  .mob-tab.active{color:var(--orange)}
+  .mob-tab:hover{color:var(--text)}
+
+  .view{padding:20px 16px}
+  .home-stats{flex-direction:column}
+  .pricing-cards{grid-template-columns:1fr}
+  .portfolio-grid{grid-template-columns:1fr}
+  .test-grid{grid-template-columns:1fr}
+  .services-grid{grid-template-columns:1fr}
+}
+
+@media(min-width:901px){
+  .mobile-tabs{display:none !important}
+}
+</style>
+</head>
+<body>
+
+<div class="window">
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <div class="titlebar-tabs" id="titleTabs">
+      <button class="tab active" data-view="home">home</button>
+      <button class="tab" data-view="about">about</button>
+      <button class="tab" data-view="services">services</button>
+      <button class="tab" data-view="process">process</button>
+      <button class="tab" data-view="portfolio">work</button>
+      <button class="tab" data-view="pricing">pricing</button>
+      <button class="tab" data-view="testimonials">reviews</button>
+      <button class="tab" data-view="contact">contact</button>
+    </div>
+    <span class="titlebar-text">developer_of_code — bash — 120×40</span>
+  </div>
+
+  <!-- Mobile tabs -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="mob-tab active" data-view="home">Home</button>
+    <button class="mob-tab" data-view="about">About</button>
+    <button class="mob-tab" data-view="services">Services</button>
+    <button class="mob-tab" data-view="process">Process</button>
+    <button class="mob-tab" data-view="portfolio">Work</button>
+    <button class="mob-tab" data-view="pricing">Pricing</button>
+    <button class="mob-tab" data-view="testimonials">Reviews</button>
+    <button class="mob-tab" data-view="contact">Contact</button>
+  </div>
+
+  <div class="main-area">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Explorer</div>
+        <button class="sidebar-item active" data-view="home"><span class="sidebar-icon">⌂</span> home <span class="sidebar-badge">new</span></button>
+        <button class="sidebar-item" data-view="about"><span class="sidebar-icon">◉</span> about.md</button>
+        <button class="sidebar-item" data-view="services"><span class="sidebar-icon">◈</span> services.json</button>
+        <button class="sidebar-item" data-view="process"><span class="sidebar-icon">⟳</span> process.yml</button>
+        <button class="sidebar-item" data-view="portfolio"><span class="sidebar-icon">▦</span> portfolio/</button>
+        <button class="sidebar-item" data-view="pricing"><span class="sidebar-icon">$</span> pricing.config</button>
+        <button class="sidebar-item" data-view="testimonials"><span class="sidebar-icon">★</span> reviews.log</button>
+        <button class="sidebar-item" data-view="contact"><span class="sidebar-icon">→</span> contact.sh</button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-brand">Developer of <span>Code</span>, <span style="font-family:var(--mono);font-size:0.7rem;font-weight:500;letter-spacing:0.06em;color:#fff">LLC</span></div>
+        <div class="sidebar-copy">&copy; 2026</div>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="content" id="content">
+
+      <!-- HOME -->
+      <div class="view active" id="view-home">
+        <div class="home-hero">
+          <div class="home-greeting">
+            <span>~/developer-of-code $</span>
+            <span class="cursor-blink"></span>
+          </div>
+
+          <h1 class="home-title">Your Business Deserves a <span class="hl-green">Powerful</span> Online <span style="color:var(--orange)">Presence</span></h1>
+
+          <p class="home-desc">We craft beautiful, custom websites at prices that make sense — and we stick around as your partner in growth.</p>
+
+          <div class="home-actions">
+            <button class="cmd-btn cmd-btn-primary" data-view="contact">Start Your Project</button>
+            <button class="cmd-btn" data-view="portfolio"><span class="cmd-prefix">$</span> view work</button>
+            <button class="cmd-btn" data-view="pricing"><span class="cmd-prefix">$</span> view pricing</button>
+          </div>
+
+          <div class="home-stats">
+            <div class="home-stat">
+              <div class="hs-num c-green">100%</div>
+              <div class="hs-label">Custom Design</div>
+            </div>
+            <div class="home-stat">
+              <div class="hs-num c-blue">24/7</div>
+              <div class="hs-label">Support</div>
+            </div>
+            <div class="home-stat">
+              <div class="hs-num c-purple">∞</div>
+              <div class="hs-label">Growth Partner</div>
+            </div>
+          </div>
+
+          <div class="output-block">
+            <div class="output-line"><span class="prompt">$</span><span class="cmd">doc init --project="your-website"</span></div>
+            <div class="output-comment"># initializing new project...</div>
+            <div class="output-result">→ design: custom</div>
+            <div class="output-result">→ responsive: true</div>
+            <div class="output-result">→ seo: enabled</div>
+            <div class="output-result">→ support: ongoing</div>
+            <div class="output-success">✓ Ready to build. Run `doc start` to begin.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="view" id="view-about">
+        <div class="about-content">
+          <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> about.md</div>
+          <h2 class="view-title">Every small business deserves to <span style="color:var(--orange)">stand out</span></h2>
+          <div class="about-img-area">
+            <picture>
+              <source srcset="img/Memoji_wave.webp" type="image/webp">
+              <img src="img/Memoji_wave.jpg" alt="Christian Traxler" width="200" height="175">
+            </picture>
+          </div>
+          <p class="view-body">We don't build from templates. Every project starts from scratch — designed for your brand, your audience, and your ambitions.</p>
+          <div class="mission-block">At Developer of Code, we believe every small business deserves a powerful online presence. We craft beautiful, custom websites at prices that make sense — and we stick around as your partner in growth, because your success is our mission.</div>
+          <div class="home-stats">
+            <div class="home-stat"><div class="hs-num c-green">100%</div><div class="hs-label">Custom Design</div></div>
+            <div class="home-stat"><div class="hs-num c-blue">24/7</div><div class="hs-label">Support</div></div>
+            <div class="home-stat"><div class="hs-num c-purple">∞</div><div class="hs-label">Growth Partner</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="view" id="view-services">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> services.json</div>
+        <h2 class="view-title">Websites that work <span style="color:var(--orange)">as hard</span> as you do</h2>
+        <p class="view-body">From first impression to lasting growth, we handle every pixel so you can focus on your business.</p>
+        <div class="services-grid">
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">◎</div><h3>Custom Web Design</h3></div><p>Every site designed from scratch to match your brand, audience, and goals.</p><div class="svc-tags"><span class="svc-tag">UI/UX</span><span class="svc-tag">responsive</span><span class="svc-tag">custom</span></div></div>
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">⬡</div><h3>E-Commerce</h3></div><p>Sell online with a store that's beautiful, fast, and easy to navigate.</p><div class="svc-tags"><span class="svc-tag">payments</span><span class="svc-tag">inventory</span><span class="svc-tag">orders</span></div></div>
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">⟲</div><h3>Maintenance</h3></div><p>Monthly plans keep your site secure, updated, and performing at its best.</p><div class="svc-tags"><span class="svc-tag">security</span><span class="svc-tag">updates</span><span class="svc-tag">backups</span></div></div>
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">◈</div><h3>Brand Identity</h3></div><p>Logo, colors, typography — a cohesive identity that resonates.</p><div class="svc-tags"><span class="svc-tag">logo</span><span class="svc-tag">colors</span><span class="svc-tag">guidelines</span></div></div>
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">⊙</div><h3>SEO & Analytics</h3></div><p>Be found by the right people. Search visibility built into every site.</p><div class="svc-tags"><span class="svc-tag">search</span><span class="svc-tag">analytics</span><span class="svc-tag">ranking</span></div></div>
+          <div class="svc-card"><div class="svc-header"><div class="svc-icon">✎</div><h3>Content Strategy</h3></div><p>Messaging that connects and converts. Great design needs great content.</p><div class="svc-tags"><span class="svc-tag">copy</span><span class="svc-tag">planning</span><span class="svc-tag">social</span></div></div>
+        </div>
+      </div>
+
+      <!-- PROCESS -->
+      <div class="view" id="view-process">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> process.yml</div>
+        <h2 class="view-title">From idea to launch, <span style="color:var(--orange)">simplified</span></h2>
+        <p class="view-body">No jargon, no surprises — just great work, delivered on time.</p>
+        <div class="process-timeline">
+          <div class="pt-step"><div class="pt-dot"></div><h3>Discovery & Intake</h3><p>We learn your business, audience, and goals inside out.</p><div class="pt-time">// week 1</div></div>
+          <div class="pt-step"><div class="pt-dot"></div><h3>Design & Concept</h3><p>Mockups and wireframes tailored to your brand.</p><div class="pt-time">// weeks 2–3</div></div>
+          <div class="pt-step"><div class="pt-dot"></div><h3>Development & Build</h3><p>Clean, modern code — fast and responsive.</p><div class="pt-time">// weeks 3–5</div></div>
+          <div class="pt-step"><div class="pt-dot"></div><h3>Review & Refine</h3><p>You review, we refine until it's perfect.</p><div class="pt-time">// weeks 5–6</div></div>
+          <div class="pt-step"><div class="pt-dot"></div><h3>Launch & Grow</h3><p>Deploy and grow with ongoing support.</p><div class="pt-time">// week 6+</div></div>
+        </div>
+      </div>
+
+      <!-- PORTFOLIO -->
+      <div class="view" id="view-portfolio">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> portfolio/</div>
+        <h2 class="view-title">Projects we're <span style="color:var(--orange)">proud of</span></h2>
+        <p class="view-body">Every project is a partnership. Here's work we've done for businesses like yours.</p>
+        <div class="portfolio-grid">
+          <a href="https://www.drreaveschiropractic.com" target="_blank" rel="noopener noreferrer" class="pf-card"><picture><source srcset="img/portfolio/IMG_0705.webp" type="image/webp"><img src="img/portfolio/IMG_0705.png" alt="Reaves Chiropractic" loading="lazy"></picture><div class="pf-overlay"><h3>Reaves Chiropractic</h3><p>Web Development</p></div></a>
+          <a href="https://renegadewellnesscenter.com" target="_blank" rel="noopener noreferrer"
+						 class="pf-card"><picture><source srcset="img/portfolio/RWC-new.png?v=3" type="image/webp"><img
+						src="img/portfolio/RWC-new.webp" alt="Renegade Wellness Center" loading="lazy"></picture><div
+						class="pf-overlay"><h3>Renegade Wellness Center</h3><p>Web Development</p></div></a>
+          <a href="https://www.lhrexcavationandgrading.com" target="_blank" rel="noopener noreferrer" class="pf-card"><picture><source srcset="img/portfolio/LHR-excavation.webp" type="image/webp"><img src="img/portfolio/LHR-excavation.png" alt="LHR Excavation and Grading" loading="lazy"></picture><div class="pf-overlay"><h3>LHR Excavation and Grading</h3><p>Web Development</p></div></a>
+          <a href="https://project-saas.vercel.app/" target="_blank" rel="noopener noreferrer" class="pf-card"><picture><source srcset="img/portfolio/IMG_7031.webp" type="image/webp"><img src="img/portfolio/IMG_7031.png" alt="SaaS Project" loading="lazy"></picture><div class="pf-overlay"><h3>SaaS Project</h3><p>Web Development</p></div></a>
+        </div>
+      </div>
+
+      <!-- PRICING -->
+      <div class="view" id="view-pricing">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> pricing.config</div>
+        <h2 class="view-title">Honest pricing, <span style="color:var(--orange)">no surprises</span></h2>
+        <p class="view-body">Every package includes custom design, responsive development, and our commitment to your success.</p>
+        <div class="pricing-cards">
+          <div class="pr-card">
+            <div class="pr-tier">Starter</div>
+            <div class="pr-price">$499 <span>one-time</span></div>
+            <div class="pr-desc">For new businesses needing a professional presence.</div>
+            <div class="pr-features"><div class="pr-feat">Up to 5 pages</div><div class="pr-feat">Mobile responsive</div><div class="pr-feat">Contact form</div><div class="pr-feat">Basic SEO</div><div class="pr-feat">2 revision rounds</div></div>
+            <button class="pr-btn pr-btn-outline" data-view="contact">Get Started</button>
+          </div>
+          <div class="pr-card featured">
+            <div class="pr-badge">Recommended</div>
+            <div class="pr-tier">Professional</div>
+            <div class="pr-price">$999 <span>one-time</span></div>
+            <div class="pr-desc">For growing businesses ready to make an impression.</div>
+            <div class="pr-features"><div class="pr-feat">Up to 10 pages</div><div class="pr-feat">Custom animations</div><div class="pr-feat">CMS integration</div><div class="pr-feat">Advanced SEO</div><div class="pr-feat">Google Analytics</div><div class="pr-feat">3 revision rounds</div></div>
+            <button class="pr-btn pr-btn-fill" data-view="contact">Get Started</button>
+          </div>
+          <div class="pr-card">
+            <div class="pr-tier">Business</div>
+            <div class="pr-price">$1,999 <span>one-time</span></div>
+            <div class="pr-desc">Full-scale web presence with e-commerce and support.</div>
+            <div class="pr-features"><div class="pr-feat">Unlimited pages</div><div class="pr-feat">E-commerce ready</div><div class="pr-feat">Custom integrations</div><div class="pr-feat">Priority support</div><div class="pr-feat">Monthly maintenance</div><div class="pr-feat">Unlimited revisions</div></div>
+            <button class="pr-btn pr-btn-outline" data-view="contact">Get Started</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TESTIMONIALS -->
+      <div class="view" id="view-testimonials">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> reviews.log</div>
+        <h2 class="view-title">What our clients <span style="color:var(--orange)">say</span></h2>
+        <div class="test-grid">
+          <div class="tc"><p class="tc-text">Developer of Code transformed our online presence. The site is beautiful, loads fast, and our customers love it. Best investment we've made.</p><div class="tc-author"><div class="tc-av">A</div><div class="tc-info"><h4>Client Name</h4><p>Business Owner</p></div></div></div>
+          <div class="tc"><p class="tc-text">What sets them apart is they actually stick around. Monthly updates, quick fixes, honest advice. Like having a tech partner on your team.</p><div class="tc-author"><div class="tc-av">B</div><div class="tc-info"><h4>Client Name</h4><p>Restaurant Owner</p></div></div></div>
+          <div class="tc"><p class="tc-text">I was quoted $5,000+ everywhere else. Developer of Code gave me the same quality — maybe better — at a price my startup could afford.</p><div class="tc-author"><div class="tc-av">C</div><div class="tc-info"><h4>Client Name</h4><p>Startup Founder</p></div></div></div>
+          <div class="tc"><p class="tc-text">The whole process was smooth. They walked me through everything and delivered exactly what they promised, right on schedule.</p><div class="tc-author"><div class="tc-av">D</div><div class="tc-info"><h4>Client Name</h4><p>Retail Store Owner</p></div></div></div>
+        </div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="view" id="view-contact">
+        <div class="view-label" style="color:var(--orange)"><div class="vl-dot" style="background:var(--orange)"></div> contact.sh</div>
+        <div class="contact-content">
+          <h2 class="view-title">Ready to give your business the website it <span style="color:var(--orange)">deserves?</span></h2>
+          <p class="view-body">No pressure, no jargon — just a friendly conversation about how we can help your business grow online.</p>
+          <div class="contact-block">
+            <div class="output-line"><span class="prompt">$</span><span class="cmd">doc contact --start</span></div>
+            <div class="output-comment"># connecting to Developer of Code...</div>
+            <br>
+            <div class="contact-line"><span class="cl-label">email:</span><span class="cl-value"><a href="mailto:hello@developerofcode.com">hello@developerofcode.com</a></span></div>
+            <div class="contact-line"><span class="cl-label">web:</span><span class="cl-value">developerofcode.com</span></div>
+            <div class="contact-line"><span class="cl-label">status:</span><span class="cl-value" style="color:var(--green)">● accepting projects</span></div>
+            <br>
+            <div class="output-success">✓ We typically respond within 24 hours.</div>
+            <div class="output-success">✓ Free consultation, no commitment.</div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px">
+            <a href="mailto:hello@developerofcode.com" class="cmd-btn cmd-btn-primary" style="text-decoration:none">Send Email</a>
+            <button class="cmd-btn" data-view="pricing"><span class="cmd-prefix">$</span> view pricing</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+
+  <!-- Status Bar -->
+  <div class="statusbar">
+    <div class="status-item"><div class="status-dot online"></div> Accepting Projects</div>
+    <div class="status-item">Developer of Code, LLC</div>
+    <div class="statusbar-right">
+      <div class="status-item" id="statusView">home</div>
+      <div class="status-item">&copy; 2026</div>
+    </div>
+  </div>
+
+</div><!-- /window -->
+
+<script>
+// View switching
+function switchView(viewName) {
+  // Views
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = document.getElementById('view-' + viewName);
+  if (target) target.classList.add('active');
+
+  // Sidebar
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll(`.sidebar-item[data-view="${viewName}"]`).forEach(s => s.classList.add('active'));
+
+  // Title tabs
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll(`.tab[data-view="${viewName}"]`).forEach(t => t.classList.add('active'));
+
+  // Mobile tabs
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll(`.mob-tab[data-view="${viewName}"]`).forEach(t => t.classList.add('active'));
+
+  // Status bar
+  document.getElementById('statusView').textContent = viewName;
+
+  // Scroll content to top
+  document.getElementById('content').scrollTop = 0;
+}
+
+// Click handlers
+document.querySelectorAll('[data-view]').forEach(el => {
+  el.addEventListener('click', () => {
+    switchView(el.dataset.view);
+  });
+});
+</script>
+</body>
+</html>

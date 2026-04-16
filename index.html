@@ -12,9 +12,28 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="keywords" content="web developer, resume, personal, portfolio, responsive">
-    <meta name="description" content="A web developer with a passion to help people get noticed on the web.">
-    <title>Developer Of Code, LLC</title>
+    <meta name="keywords" content="web developer, web design, freelance developer, North Carolina, portfolio, responsive websites">
+    <meta name="description" content="Christian Traxler is a veteran-owned freelance web developer in North Carolina specializing in custom websites, web design, and videography. View portfolio and book a free consultation.">
+    <meta name="author" content="Christian Traxler">
+    <meta name="robots" content="index, follow">
+    <title>Christian Traxler | Web Developer in North Carolina - Developer Of Code, LLC</title>
+    <link rel="canonical" href="https://developerofcode.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Developer Of Code, LLC">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://developerofcode.com/">
+    <meta property="og:title" content="Christian Traxler | Web Developer in North Carolina">
+    <meta property="og:description" content="Veteran-owned freelance web developer in North Carolina specializing in custom websites, web design, and videography. View portfolio and book a free consultation.">
+    <meta property="og:image" content="https://developerofcode.com/img/DOC-logo.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@DeveloperOfCode">
+    <meta name="twitter:title" content="Christian Traxler | Web Developer in North Carolina">
+    <meta name="twitter:description" content="Veteran-owned freelance web developer in North Carolina specializing in custom websites, web design, and videography.">
+    <meta name="twitter:image" content="https://developerofcode.com/img/DOC-logo.png">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#0a0e17">
@@ -29,6 +48,64 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/styles.css">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "Developer Of Code, LLC",
+          "url": "https://developerofcode.com/",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Developer Of Code, LLC"
+          }
+        },
+        {
+          "@type": "LocalBusiness",
+          "name": "Developer Of Code, LLC",
+          "url": "https://developerofcode.com/",
+          "telephone": "+1-828-781-4674",
+          "email": "developerofcodellc@gmail.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressRegion": "NC",
+            "addressCountry": "US"
+          },
+          "sameAs": [
+            "https://www.facebook.com/DeveloperOfCodeLLC",
+            "https://twitter.com/DeveloperOfCode",
+            "https://www.instagram.com/developer_of_code_llc/"
+          ],
+          "knowsAbout": ["Web Development", "Web Design", "Videography", "Photography"]
+        },
+        {
+          "@type": "Person",
+          "name": "Christian Traxler",
+          "jobTitle": "Web Developer",
+          "url": "https://developerofcode.com/",
+          "email": "developerofcodellc@gmail.com",
+          "telephone": "+1-828-781-4674",
+          "alumniOf": {
+            "@type": "CollegeOrUniversity",
+            "name": "DeVry University"
+          },
+          "knowsAbout": ["HTML5", "CSS3", "JavaScript", "Web Development", "Web Design"],
+          "worksFor": {
+            "@type": "Organization",
+            "name": "Developer Of Code, LLC"
+          },
+          "sameAs": [
+            "https://www.facebook.com/DeveloperOfCodeLLC",
+            "https://twitter.com/DeveloperOfCode",
+            "https://www.instagram.com/developer_of_code_llc/"
+          ]
+        }
+      ]
+    }
+    </script>
 </head>
 
 <body>
@@ -36,6 +113,9 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K2CNPHK"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+
+    <!-- Skip to Content (Accessibility) -->
+    <a href="#home" class="skip-to-content">Skip to content</a>
 
     <!-- Mobile Nav Toggle -->
     <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
@@ -48,53 +128,56 @@
     <!-- ═══════════════ NAVIGATION ═══════════════ -->
     <nav class="nav-sidebar" id="navSidebar">
         <div class="nav-profile">
-            <img src="img/Memoji_wave.jpg" alt="Christian Traxler" class="nav-avatar">
+            <picture>
+                <source srcset="img/Memoji_wave.webp" type="image/webp">
+                <img src="img/Memoji_wave.jpg" alt="Christian Traxler" class="nav-avatar" width="200" height="175">
+            </picture>
             <h2>Christian Traxler</h2>
             <span class="nav-subtitle">Web Developer</span>
         </div>
 
         <div class="nav-links">
             <a href="#home" class="active">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 Home
             </a>
             <a href="#about">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 About Me
             </a>
             <a href="#resume">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
                 Resume
             </a>
             <a href="#portfolio">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
                 Portfolio
             </a>
             <a href="#contact">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 Contact
             </a>
         </div>
 
         <div class="nav-footer">
             <div class="veteran-badge">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 Veteran Owned
             </div>
 
             <div class="social-links">
-                <a href="https://www.facebook.com/DeveloperOfCodeLLC" target="_blank" aria-label="Facebook">
-                    <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+                <a href="https://www.facebook.com/DeveloperOfCodeLLC" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
                 </a>
-                <a href="https://twitter.com/DeveloperOfCode" target="_blank" aria-label="Twitter">
-                    <svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>
+                <a href="https://twitter.com/DeveloperOfCode" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>
                 </a>
-                <a href="https://www.instagram.com/developer_of_code_llc/" target="_blank" aria-label="Instagram">
-                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a href="https://www.instagram.com/developer_of_code_llc/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                 </a>
             </div>
 
-            <p class="nav-copyright">2021 &copy; Developer Of Code, LLC.<br>All Right Reserved.</p>
+            <p class="nav-copyright">2019 &ndash; 2026 &copy; Developer Of Code, LLC.<br>All Rights Reserved.</p>
         </div>
     </nav>
 
@@ -139,7 +222,10 @@
 											have worked	on. Some projects that you will find are websites and videos I have made over time. Taking photos is also a hobby of mine, which most of the pictures that you would see on my site are photos that I have taken, especially the ones that are in my YouTube video.</p>
                     <p>Some hobbies of mine (besides the ones I have already mentioned) are hiking, fishing, camping, exploring different parts of the world (which is a favorite of mine), spending time with loved ones, and just enjoying life all-together. Life is too short, not to enjoy it. Take the time to spend with your loved ones and explore as much of the world as you can. That is how I try to live my life.</p>
                     <div>
-                        <img src="img/signature-white-2.png" alt="Signature" class="signature-img">
+                        <picture>
+                            <source srcset="img/signature-white-2.webp" type="image/webp">
+                            <img src="img/signature-white-2.png" alt="Signature" class="signature-img" loading="lazy" width="242" height="65">
+                        </picture>
                     </div>
                 </div>
 
@@ -164,7 +250,7 @@
                         </li>
                     </ul>
                     <a href="#" class="btn-primary" style="width:100%;justify-content:center;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Download Resume
                     </a>
                 </div>
@@ -176,25 +262,25 @@
                 <div class="services-grid">
                     <div class="service-card reveal reveal-delay-1">
                         <div class="service-icon">
-                            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                         </div>
                         <h4>Web Development</h4>
                     </div>
                     <div class="service-card reveal reveal-delay-2">
                         <div class="service-icon">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                         </div>
                         <h4>Web Design</h4>
                     </div>
                     <div class="service-card reveal reveal-delay-3">
                         <div class="service-icon">
-                            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                         </div>
                         <h4>Videography</h4>
                     </div>
                     <div class="service-card reveal reveal-delay-4">
                         <div class="service-icon">
-                            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                         </div>
                         <h4>Photography</h4>
                     </div>
@@ -205,11 +291,17 @@
             <div class="clients-section reveal">
                 <h3 class="sub-heading">Clients</h3>
                 <div class="clients-row">
-                    <a href="https://www.drreaveschiropractic.com" target="_blank" class="client-card">
-                        <img src="img/clients/Reaves-Chiropractic-Logo.png" alt="Reaves Chiropractic">
+                    <a href="https://www.drreaveschiropractic.com" target="_blank" rel="noopener noreferrer" class="client-card">
+                        <picture>
+                            <source srcset="img/clients/Reaves-Chiropractic-Logo.webp" type="image/webp">
+                            <img src="img/clients/Reaves-Chiropractic-Logo.png" alt="Reaves Chiropractic" loading="lazy" width="200" height="344">
+                        </picture>
                     </a>
-                    <a href="https://renegadewellnesscenter.com" target="_blank" class="client-card">
-                        <img src="img/clients/RWC-logo.png" alt="Renegade Wellness Center">
+                    <a href="https://renegadewellnesscenter.com" target="_blank" rel="noopener noreferrer" class="client-card">
+                        <picture>
+                            <source srcset="img/clients/RWC-logo.webp" type="image/webp">
+                            <img src="img/clients/RWC-logo.png" alt="Renegade Wellness Center" loading="lazy" width="300" height="400">
+                        </picture>
                     </a>
                 </div>
             </div>
@@ -222,10 +314,13 @@
                         <div class="testimonial-quote">&ldquo;</div>
                         <p>Christian is fantastic. He was very thorough and made sure my website had everything that I wanted just perfectly. Highly recommended!</p>
                         <div class="testimonial-author">
-                            <img src="img/testimonials/kelsey.jpg" alt="Kelsey Reaves" class="testimonial-avatar">
+                            <picture>
+                                <source srcset="img/testimonials/kelsey.webp" type="image/webp">
+                                <img src="img/testimonials/kelsey.jpg" alt="Kelsey Reaves" class="testimonial-avatar" loading="lazy" width="200" height="200">
+                            </picture>
                             <div>
                                 <div class="testimonial-name">Kelsey Reaves</div>
-                                <div class="testimonial-role"><a href="https://renegadewellnesscenter.com" target="_blank">Renegade Wellness Center</a></div>
+                                <div class="testimonial-role"><a href="https://renegadewellnesscenter.com" target="_blank" rel="noopener noreferrer">Renegade Wellness Center</a></div>
                             </div>
                         </div>
                     </div>
@@ -235,10 +330,13 @@
                         <p>I really didn't know what I was missing!! I'm old school and not tech savvy so I never knew what having my own web page could do for my business. Not only has it reached out to a whole new potential customer base, but it has saved an enormous amount of time having "Patient Questionnaires" on the site to be downloaded.</p>
                         <p>In my case, not knowing what I needed for my business, Christian Traxler was extremely knowledgeable and made it very easy. I highly recommend using him to build your custom web page. It will be the best decision you will ever make to grow your business!</p>
                         <div class="testimonial-author">
-                            <img src="img/testimonials/DrReaves2.jpg" alt="Dr. Ray Reaves" class="testimonial-avatar">
+                            <picture>
+                                <source srcset="img/testimonials/DrReaves2.webp" type="image/webp">
+                                <img src="img/testimonials/DrReaves2.jpg" alt="Dr. Ray Reaves" class="testimonial-avatar" loading="lazy" width="200" height="186">
+                            </picture>
                             <div>
                                 <div class="testimonial-name">Dr. Ray Reaves</div>
-                                <div class="testimonial-role"><a href="https://www.drreaveschiropractic.com" target="_blank">Reaves Chiropractic Health Centre</a></div>
+                                <div class="testimonial-role"><a href="https://www.drreaveschiropractic.com" target="_blank" rel="noopener noreferrer">Reaves Chiropractic Health Centre</a></div>
                             </div>
                         </div>
                     </div>
@@ -256,7 +354,7 @@
             <div class="resume-columns">
                 <div class="resume-column reveal reveal-delay-1">
                     <h3>
-                        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
                         Experience
                     </h3>
                     <div class="timeline-item">
@@ -268,7 +366,7 @@
 
                 <div class="resume-column reveal reveal-delay-2">
                     <h3>
-                        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 12 3 12 0v-5"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 12 3 12 0v-5"/></svg>
                         Education
                     </h3>
                     <div class="timeline-item">
@@ -281,7 +379,7 @@
 
             <div class="skills-section reveal">
                 <h3>
-                    <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                     Coding Skills
                 </h3>
 
@@ -325,13 +423,16 @@
             </div>
 
             <div class="portfolio-grid">
-                <a href="https://www.drreaveschiropractic.com" target="_blank" class="portfolio-card reveal reveal-delay-1">
+                <a href="https://www.drreaveschiropractic.com" target="_blank" rel="noopener noreferrer" class="portfolio-card reveal reveal-delay-1">
                     <div class="portfolio-img-wrap">
-                        <img src="img/portfolio/IMG_0705.png" alt="Reaves Chiropractic">
+                        <picture>
+                            <source srcset="img/portfolio/IMG_0705.webp" type="image/webp">
+                            <img src="img/portfolio/IMG_0705.png" alt="Reaves Chiropractic" loading="lazy" width="800" height="542">
+                        </picture>
                         <div class="portfolio-img-overlay">
                             <span class="portfolio-visit">
                                 Visit Site
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </span>
                         </div>
                     </div>
@@ -341,13 +442,16 @@
                     </div>
                 </a>
 
-                <a href="https://renegadewellnesscenter.com" target="_blank" class="portfolio-card reveal reveal-delay-2">
+                <a href="https://renegadewellnesscenter.com" target="_blank" rel="noopener noreferrer" class="portfolio-card reveal reveal-delay-2">
 									<div class="portfolio-img-wrap">
-										<img src="img/portfolio/RWC-new.png" alt="Renegade Wellness Center">
+										<picture>
+											<source srcset="img/portfolio/RWC-new.webp" type="image/webp">
+											<img src="img/portfolio/RWC-new.png" alt="Renegade Wellness Center" loading="lazy" width="800" height="500">
+										</picture>
 										<div class="portfolio-img-overlay">
 											<span class="portfolio-visit">
 												Visit Site
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 											</span>
 										</div>
 									</div>
@@ -357,13 +461,16 @@
 									</div>
 								</a>
 
-							<a href="https://www.lhrexcavationandgrading.com" target="_blank" class="portfolio-card reveal reveal-delay-2">
+							<a href="https://www.lhrexcavationandgrading.com" target="_blank" rel="noopener noreferrer" class="portfolio-card reveal reveal-delay-2">
 								<div class="portfolio-img-wrap">
-									<img src="img/portfolio/LHR-excavation.png" alt="LHR Excavation and Grading">
+									<picture>
+										<source srcset="img/portfolio/LHR-excavation.webp" type="image/webp">
+										<img src="img/portfolio/LHR-excavation.png" alt="LHR Excavation and Grading" loading="lazy" width="800" height="500">
+									</picture>
 									<div class="portfolio-img-overlay">
 										<span class="portfolio-visit">
 											Visit Site
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 										</span>
 									</div>
 								</div>
@@ -373,13 +480,16 @@
 								</div>
 							</a>
 
-                <a href="https://project-saas.vercel.app/" target="_blank" class="portfolio-card reveal reveal-delay-1">
+                <a href="https://project-saas.vercel.app/" target="_blank" rel="noopener noreferrer" class="portfolio-card reveal reveal-delay-1">
                     <div class="portfolio-img-wrap">
-                        <img src="img/portfolio/IMG_7031.png" alt="SaaS Project">
+                        <picture>
+                            <source srcset="img/portfolio/IMG_7031.webp" type="image/webp">
+                            <img src="img/portfolio/IMG_7031.png" alt="SaaS Project" loading="lazy" width="800" height="551">
+                        </picture>
                         <div class="portfolio-img-overlay">
                             <span class="portfolio-visit">
                                 Visit Site
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </span>
                         </div>
                     </div>
@@ -393,13 +503,16 @@
             <!-- Personal Projects -->
             <h3 class="personal-projects-label reveal">Personal Projects</h3>
             <div class="personal-grid">
-                <a href="https://christiantraxler.github.io/QR-Code-Component/" target="_blank" class="portfolio-card reveal reveal-delay-1">
+                <a href="https://christiantraxler.github.io/QR-Code-Component/" target="_blank" rel="noopener noreferrer" class="portfolio-card reveal reveal-delay-1">
                     <div class="portfolio-img-wrap">
-                        <img src="img/portfolio/IMG_3949.png" alt="QR Code Component">
+                        <picture>
+                            <source srcset="img/portfolio/IMG_3949.webp" type="image/webp">
+                            <img src="img/portfolio/IMG_3949.png" alt="QR Code Component" loading="lazy" width="800" height="412">
+                        </picture>
                         <div class="portfolio-img-overlay">
                             <span class="portfolio-visit">
                                 Visit Site
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </span>
                         </div>
                     </div>
@@ -423,8 +536,19 @@
 
                 <div class="contact-buttons">
                     <a href="mailto:developerofcodellc@gmail.com" class="btn-primary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         Contact Me
+                    </a>
+                </div>
+
+                <div class="contact-divider"></div>
+
+                <p>Ready to kick things off? Fill out the project intake form so I can understand exactly what you need and put together a custom proposal.</p>
+
+                <div class="contact-buttons">
+                    <a href="intake.html" class="btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                        Start Your Project
                     </a>
                 </div>
 
@@ -433,8 +557,8 @@
                 <p>If you would like to discuss in detail about what service I can provide for you when creating your website, please click the "Book Now" button below.</p>
 
                 <div class="contact-buttons">
-                    <a href="https://squareup.com/appointments/book/qc33nk6zsmcyob/LPPR26E8Q19RH/start" target="_blank" class="btn-outline">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <a href="https://squareup.com/appointments/book/qc33nk6zsmcyob/LPPR26E8Q19RH/start" target="_blank" rel="noopener noreferrer" class="btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         Book Now
                     </a>
                 </div>
@@ -443,21 +567,21 @@
             <div class="contact-info-grid reveal reveal-delay-2">
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     </div>
                     <h5><a href="mailto:developerofcodellc@gmail.com">DeveloperOfCodeLLC@Gmail.com</a></h5>
                 </div>
 
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     </div>
                     <h5>North Carolina, USA</h5>
                 </div>
 
                 <div class="contact-info-item">
                     <div class="contact-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
                     </div>
                     <h5>(+1) 828 781 4674</h5>
                 </div>
@@ -466,12 +590,13 @@
 
         <!-- Scroll to Top Button -->
         <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
-            <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
 
         <!-- Footer -->
         <footer class="site-footer">
-            <p>2021 &copy; Developer Of Code, LLC. All Right Reserved.</p>
+            <p>Veteran-owned web development company based in North Carolina.</p>
+            <p>2019 &ndash; 2026 &copy; Developer Of Code, LLC. All Rights Reserved.</p>
         </footer>
     </main>
 

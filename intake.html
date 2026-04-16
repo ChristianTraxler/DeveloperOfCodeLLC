@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Website Project Intake Form — Developer Of Code, LLC. Tell us about your project and we'll follow up with a custom proposal.">
+    <meta name="author" content="Christian Traxler">
+    <meta name="robots" content="index, follow">
+    <title>Website Project Intake Form | Developer Of Code, LLC</title>
+    <link rel="canonical" href="https://developerofcode.com/intake.html">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Developer Of Code, LLC">
+    <meta property="og:url" content="https://developerofcode.com/intake.html">
+    <meta property="og:title" content="Website Project Intake Form | Developer Of Code, LLC">
+    <meta property="og:description" content="Tell us about your website project. We'll review and respond with a custom proposal.">
+    <meta property="og:image" content="https://developerofcode.com/img/DOC-logo.png">
+
+    <link rel="apple-touch-icon" href="favicon-180.png" sizes="180x180">
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon-16.png" sizes="16x16">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        /* ═════════════════════════════════════════
+           INTAKE FORM — scoped styles
+           ═════════════════════════════════════════ */
+        .intake-main {
+            margin-left: var(--nav-width, 0);
+            min-height: 100vh;
+            background: var(--bg-deep);
+        }
+        @media (max-width: 980px) {
+            .intake-main { margin-left: 0; }
+        }
+
+        .intake-hero {
+            padding: clamp(80px, 12vw, 140px) clamp(24px, 5vw, 64px) clamp(40px, 6vw, 80px);
+            background:
+                radial-gradient(1200px 600px at 30% -10%, var(--accent-glow), transparent 60%),
+                linear-gradient(180deg, var(--bg-primary), var(--bg-deep));
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .intake-hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(circle at 30% 0%, black, transparent 70%);
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        .intake-hero-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .intake-eyebrow {
+            display: inline-block;
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            padding: 6px 14px;
+            border: 1px solid var(--border-accent);
+            border-radius: 999px;
+            background: var(--accent-glow);
+            margin-bottom: 22px;
+        }
+        .intake-hero h1 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            line-height: 1.05;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+        }
+        .intake-hero p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 680px;
+        }
+        .intake-hero p + p { margin-top: 10px; }
+        .required-note { color: var(--accent); font-weight: 500; }
+
+        .intake-wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: clamp(32px, 5vw, 64px) clamp(20px, 5vw, 64px) 120px;
+        }
+
+        .form-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: clamp(24px, 4vw, 40px);
+            margin-bottom: 28px;
+            transition: border-color 0.3s ease, transform 0.3s ease;
+        }
+        .form-section:hover {
+            border-color: var(--border-accent);
+        }
+
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-section-number {
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            padding: 4px 10px;
+            border: 1px solid var(--border-accent);
+            border-radius: 6px;
+            background: var(--accent-glow);
+        }
+        .form-section-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+        .form-section-desc {
+            color: var(--text-secondary);
+            font-size: 0.93rem;
+            margin: 14px 0 26px;
+        }
+
+        .field {
+            margin-bottom: 22px;
+        }
+        .field:last-child { margin-bottom: 0; }
+
+        /* Reset default fieldset chrome — we style fields via .field / .opt */
+        fieldset {
+            border: 0;
+            padding: 0;
+            margin: 0;
+            min-inline-size: 0;
+        }
+        legend {
+            padding: 0;
+            display: block;
+        }
+
+        .field label,
+        .field > legend {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: 0.01em;
+        }
+        .field .req { color: var(--accent); margin-left: 3px; }
+
+        .field input[type="text"],
+        .field input[type="email"],
+        .field input[type="tel"],
+        .field input[type="url"],
+        .field input[type="number"],
+        .field input[type="date"],
+        .field input[type="color"],
+        .field textarea,
+        .field select {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+        .field textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+        .field input[type="color"] {
+            height: 48px;
+            padding: 4px;
+            cursor: pointer;
+        }
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: var(--text-muted);
+        }
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-surface);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .field-row-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 640px) {
+            .field-row, .field-row-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Checkbox / radio grids */
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .option-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 640px) {
+            .option-grid, .option-grid-3 { grid-template-columns: 1fr; }
+        }
+
+        .opt {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            user-select: none;
+        }
+        .opt:hover {
+            border-color: var(--border-accent);
+            background: var(--bg-surface);
+        }
+        .opt input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border: 1.5px solid var(--text-muted);
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            transition: all 0.2s ease;
+        }
+        .opt input[type="radio"] { border-radius: 50%; }
+        .opt input::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: var(--bg-deep);
+            transform: scale(0);
+            transition: transform 0.15s ease;
+        }
+        .opt input[type="radio"]::before { border-radius: 50%; }
+        .opt input:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .opt input:checked::before {
+            transform: scale(1);
+        }
+        .opt input:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .opt:has(input:checked) {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .inline-yesno {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .inline-yesno .opt {
+            flex: 0 1 auto;
+            min-width: 110px;
+            justify-content: flex-start;
+        }
+
+        .question-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+        }
+        .question-row:first-of-type { border-top: none; padding-top: 0; }
+        .question-row .inline-yesno { margin-top: 0; }
+        @media (max-width: 640px) {
+            .question-row { grid-template-columns: 1fr; }
+        }
+
+        /* Submit area */
+        .submit-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .submit-bar p {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            max-width: 520px;
+        }
+
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 24px -8px var(--accent-glow-strong);
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: #ff5a1f;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px -8px var(--accent-glow-strong);
+        }
+        .btn-submit:active:not(:disabled) { transform: translateY(0); }
+        .btn-submit:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+        .btn-submit .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        .btn-submit.loading .spinner { display: inline-block; }
+        .btn-submit.loading .label-submit { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Status messages */
+        .form-status {
+            margin-top: 20px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            display: none;
+        }
+        .form-status.show { display: block; }
+        .form-status.success {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.35);
+            color: #86efac;
+        }
+        .form-status.error {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        /* Honeypot */
+        .hp-field {
+            position: absolute !important;
+            left: -10000px !important;
+            width: 1px; height: 1px;
+            overflow: hidden;
+        }
+
+        /* Back link */
+        .intake-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+            transition: color 0.2s ease;
+        }
+        .intake-back:hover { color: var(--accent); }
+
+        /* Footer */
+        .intake-footer {
+            padding: 32px clamp(20px, 5vw, 64px);
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .intake-footer a { color: var(--text-secondary); }
+        .intake-footer a:hover { color: var(--accent); }
+    </style>
+</head>
+
+<body>
+    <a href="#form" class="skip-to-content">Skip to content</a>
+
+    <main class="intake-main">
+        <section class="intake-hero">
+            <div class="intake-hero-inner">
+                <a href="/" class="intake-back">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to home
+                </a>
+                <span class="intake-eyebrow">New Project</span>
+                <h1>Website Project Intake Form</h1>
+                <p>Thank you for your interest! Please complete this form to help us understand your project needs.</p>
+                <p>Fields marked with <span class="required-note">*</span> are required.</p>
+            </div>
+        </section>
+
+        <div class="intake-wrap">
+            <form id="intakeForm" action="https://api.web3forms.com/submit" method="POST" novalidate>
+                <!-- Web3Forms access key — replace with your key from https://web3forms.com -->
+                <input type="hidden" name="access_key" value="caf43c82-c0f7-4ea8-ad90-56d4075f0be3">
+                <input type="hidden" name="subject" value="New Website Project Intake Submission">
+                <input type="hidden" name="from_name" value="developerofcode.com — Intake Form">
+                <!-- Honeypot field for bots -->
+                <div class="hp-field" aria-hidden="true">
+                    <label>Leave this empty: <input type="text" name="botcheck" tabindex="-1" autocomplete="off"></label>
+                </div>
+
+                <!-- ─── Section 1: Client Information ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">01</span>
+                        <h2 class="form-section-title">Client Information</h2>
+                    </div>
+
+                    <div class="field">
+                        <label for="full_name">Full Name <span class="req">*</span></label>
+                        <input id="full_name" name="Full Name" type="text" required autocomplete="name">
+                    </div>
+
+                    <div class="field">
+                        <label for="company">Company / Organization Name <span class="req">*</span></label>
+                        <input id="company" name="Company" type="text" required autocomplete="organization">
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="email">Email Address <span class="req">*</span></label>
+                            <input id="email" name="Email" type="email" required autocomplete="email">
+                        </div>
+                        <div class="field">
+                            <label for="phone">Phone Number <span class="req">*</span></label>
+                            <input id="phone" name="Phone" type="tel" required autocomplete="tel">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="current_website">Current Website (if applicable)</label>
+                        <input id="current_website" name="Current Website" type="url" placeholder="https://">
+                    </div>
+                </div>
+
+                <!-- ─── Section 2: Project Overview ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">02</span>
+                        <h2 class="form-section-title">Project Overview</h2>
+                    </div>
+
+                    <div class="field">
+                        <label for="business_desc">Brief description of your business / organization <span class="req">*</span></label>
+                        <textarea id="business_desc" name="Business Description" required></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="primary_goal">Primary goal of this website <span class="req">*</span></label>
+                        <textarea id="primary_goal" name="Primary Goal" required placeholder="e.g., generate leads, sell products, share information"></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="target_audience">Who is your target audience?</label>
+                        <textarea id="target_audience" name="Target Audience"></textarea>
+                    </div>
+                </div>
+
+                <!-- ─── Section 3: Structure & Features ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">03</span>
+                        <h2 class="form-section-title">Website Structure &amp; Features</h2>
+                    </div>
+
+                    <fieldset class="field">
+                        <legend>How many pages will your website need? <span class="req">*</span></legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="Page Count" value="1-3 pages (simple site)" required> 1–3 pages (simple site)</label>
+                            <label class="opt"><input type="radio" name="Page Count" value="4-7 pages (standard site)"> 4–7 pages (standard site)</label>
+                            <label class="opt"><input type="radio" name="Page Count" value="8-15 pages (medium site)"> 8–15 pages (medium site)</label>
+                            <label class="opt"><input type="radio" name="Page Count" value="16+ pages (large site)"> 16+ pages (large site)</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>What page types do you need? (select all that apply)</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Home page"> Home page</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="About Us"> About Us</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Services/Products"> Services / Products</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Contact page"> Contact page</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Blog"> Blog</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Portfolio/Gallery"> Portfolio / Gallery</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="FAQ"> FAQ</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Team/Staff"> Team / Staff</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Testimonials"> Testimonials</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Pricing"> Pricing</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Resources/Downloads"> Resources / Downloads</label>
+                        </div>
+                        <div class="field" style="margin-top:14px;">
+                            <label for="other_pages">Other pages needed</label>
+                            <input id="other_pages" name="Other Pages" type="text">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>What functionality do you require? (select all that apply)</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Contact form"> Contact form</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="E-commerce/Online store"> E-commerce / Online store</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Shopping cart & checkout"> Shopping cart &amp; checkout</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Product catalog with inventory"> Product catalog with inventory</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Database integration"> Database integration</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="User accounts/login"> User accounts / login</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Payment processing"> Payment processing</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Booking/Scheduling system"> Booking / Scheduling</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Search functionality"> Search functionality</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Newsletter/Email signup"> Newsletter / Email signup</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Social media integration"> Social media integration</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Live chat support"> Live chat support</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Multi-language support"> Multi-language support</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Blog/News section"> Blog / News section</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Member portal"> Member portal</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Photo/Video gallery"> Photo / Video gallery</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Customer reviews/ratings"> Customer reviews / ratings</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Live streaming"> Live streaming</label>
+                        </div>
+                        <div class="field" style="margin-top:14px;">
+                            <label for="other_func">Other functionality needed</label>
+                            <input id="other_func" name="Other Functionality" type="text">
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- ─── Section 4: E-commerce Details ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">04</span>
+                        <h2 class="form-section-title">E-commerce Details</h2>
+                    </div>
+                    <p class="form-section-desc">Only complete this section if your site needs e-commerce capability.</p>
+
+                    <div class="field">
+                        <label for="product_count">Approximate number of products</label>
+                        <input id="product_count" name="Product Count" type="number" min="0" inputmode="numeric">
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Do you need inventory tracking?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Unsure"> Unsure</label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="payment_methods">Payment methods required</label>
+                        <input id="payment_methods" name="Payment Methods" type="text" placeholder="e.g., credit card, PayPal, etc.">
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Shipping integration needed?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="Unsure"> Unsure</label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="ecom_special">Special e-commerce requirements</label>
+                        <textarea id="ecom_special" name="E-commerce Special Requirements"></textarea>
+                    </div>
+                </div>
+
+                <!-- ─── Section 5: Design & Branding ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">05</span>
+                        <h2 class="form-section-title">Design &amp; Branding</h2>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Do you have existing brand guidelines?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Brand Guidelines" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Brand Guidelines" value="No"> No</label>
+                        </div>
+                    </div>
+
+                    <fieldset class="field">
+                        <legend>Brand colors (if applicable)</legend>
+                        <div class="field-row-3">
+                            <div class="field">
+                                <label for="color_primary" style="font-size:0.8rem;color:var(--text-secondary);">Primary</label>
+                                <input id="color_primary" name="Primary Color" type="color" value="#ff4500">
+                            </div>
+                            <div class="field">
+                                <label for="color_secondary" style="font-size:0.8rem;color:var(--text-secondary);">Secondary</label>
+                                <input id="color_secondary" name="Secondary Color" type="color" value="#0a0e17">
+                            </div>
+                            <div class="field">
+                                <label for="color_accent" style="font-size:0.8rem;color:var(--text-secondary);">Accent</label>
+                                <input id="color_accent" name="Accent Color" type="color" value="#e6edf3">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>Preferred design style</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Modern/Minimalist"> Modern / Minimalist</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Classic/Traditional"> Classic / Traditional</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Bold/Creative"> Bold / Creative</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Professional/Corporate"> Professional / Corporate</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Playful/Fun"> Playful / Fun</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Elegant/Luxury"> Elegant / Luxury</label>
+                        </div>
+                        <div class="field" style="margin-top:14px;">
+                            <label for="other_style">Other style preferences</label>
+                            <input id="other_style" name="Other Style" type="text">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>Website inspiration — 2–3 URLs of sites you like</legend>
+                        <div class="field">
+                            <input name="Inspiration URL 1" type="url" placeholder="https://example.com">
+                        </div>
+                        <div class="field">
+                            <input name="Inspiration URL 2" type="url" placeholder="https://example.com">
+                        </div>
+                        <div class="field" style="margin-bottom:0;">
+                            <input name="Inspiration URL 3" type="url" placeholder="https://example.com">
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- ─── Section 6: Content & Media ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">06</span>
+                        <h2 class="form-section-title">Content &amp; Media</h2>
+                    </div>
+
+                    <fieldset class="field">
+                        <legend>What content will you provide?</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Logo (existing)"> Logo (existing)</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Written content/copy"> Written content / copy</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Professional photos"> Professional photos</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Product images"> Product images</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Videos"> Videos</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Graphics/Icons"> Graphics / Icons</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>What services do you need help with?</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Logo design"> Logo design</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Copywriting"> Copywriting</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Professional photography"> Professional photography</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Stock images"> Stock images</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Video production"> Video production</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Content strategy"> Content strategy</label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- ─── Section 7: Technical Requirements ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">07</span>
+                        <h2 class="form-section-title">Technical Requirements</h2>
+                    </div>
+
+                    <fieldset class="field">
+                        <legend>Domain name</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="Domain Status" value="I have a domain"> I have a domain</label>
+                            <label class="opt"><input type="radio" name="Domain Status" value="I need help purchasing a domain"> I need help purchasing a domain</label>
+                        </div>
+                        <div class="field" style="margin-top:14px; margin-bottom:0;">
+                            <label for="domain_name">If you have a domain, please specify</label>
+                            <input id="domain_name" name="Domain Name" type="text" placeholder="example.com">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>Web hosting</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="Hosting Status" value="I have hosting"> I have hosting</label>
+                            <label class="opt"><input type="radio" name="Hosting Status" value="I need hosting services"> I need hosting services</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>CMS preference</legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="CMS Preference" value="WordPress"> WordPress</label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Shopify"> Shopify</label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Wix/Squarespace"> Wix / Squarespace</label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Custom-built"> Custom-built</label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="No preference (please recommend)"> No preference (please recommend)</label>
+                        </div>
+                        <div class="field" style="margin-top:14px; margin-bottom:0;">
+                            <label for="other_cms">Other CMS</label>
+                            <input id="other_cms" name="Other CMS" type="text">
+                        </div>
+                    </fieldset>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Mobile optimization required?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Mobile Optimization" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Mobile Optimization" value="No"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">SEO services needed?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="SEO Needed" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="SEO Needed" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="SEO Needed" value="Unsure"> Unsure</label>
+                        </div>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Analytics / tracking required?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Analytics" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Analytics" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Analytics" value="Unsure"> Unsure</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── Section 8: Timeline & Budget ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">08</span>
+                        <h2 class="form-section-title">Timeline &amp; Budget</h2>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="target_date">Target completion date</label>
+                            <input id="target_date" name="Target Date" type="date">
+                        </div>
+                        <div class="field">
+                            <label>Is this date flexible?</label>
+                            <div class="inline-yesno">
+                                <label class="opt"><input type="radio" name="Date Flexible" value="Yes"> Yes</label>
+                                <label class="opt"><input type="radio" name="Date Flexible" value="No"> No</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Do you have a specific event / deadline?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Has Event Deadline" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Has Event Deadline" value="No"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="event_desc">If yes, please explain the event / deadline</label>
+                        <textarea id="event_desc" name="Event Description"></textarea>
+                    </div>
+
+                    <fieldset class="field">
+                        <legend>Preferred project timeframe <span class="req">*</span></legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Rush (2-4 weeks)" required> Rush (2–4 weeks)</label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Standard (1-2 months)"> Standard (1–2 months)</label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Extended (3-4 months)"> Extended (3–4 months)</label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Flexible / No specific deadline"> Flexible / No specific deadline</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend>Estimated budget range <span class="req">*</span></legend>
+                        <div class="option-grid">
+                            <label class="opt"><input type="radio" name="Budget" value="Under $1,000" required> Under $1,000</label>
+                            <label class="opt"><input type="radio" name="Budget" value="$1,000 - $3,000"> $1,000 – $3,000</label>
+                            <label class="opt"><input type="radio" name="Budget" value="$3,000 - $5,000"> $3,000 – $5,000</label>
+                            <label class="opt"><input type="radio" name="Budget" value="$5,000 - $10,000"> $5,000 – $10,000</label>
+                            <label class="opt"><input type="radio" name="Budget" value="$10,000+"> $10,000+</label>
+                            <label class="opt"><input type="radio" name="Budget" value="Not sure yet"> Not sure yet</label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- ─── Section 9: Maintenance & Support ─── -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <span class="form-section-number">09</span>
+                        <h2 class="form-section-title">Maintenance &amp; Support</h2>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Will you need ongoing maintenance / updates?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Unsure"> Unsure</label>
+                        </div>
+                    </div>
+
+                    <div class="question-row">
+                        <label style="margin:0;">Do you need training to update the site?</label>
+                        <div class="inline-yesno">
+                            <label class="opt"><input type="radio" name="Training Needed" value="Yes"> Yes</label>
+                            <label class="opt"><input type="radio" name="Training Needed" value="No"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="maint_needs">Specific maintenance needs or concerns</label>
+                        <textarea id="maint_needs" name="Maintenance Needs"></textarea>
+                    </div>
+                </div>
+
+                <!-- ─── Section 10: Additional Information ─── -->
+                <div class="form-section" id="form">
+                    <div class="form-section-header">
+                        <span class="form-section-number">10</span>
+                        <h2 class="form-section-title">Additional Information</h2>
+                    </div>
+
+                    <div class="field">
+                        <label for="competitors">Competitor websites (for reference)</label>
+                        <textarea id="competitors" name="Competitors"></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="other_details">Any other details we should know about your project</label>
+                        <textarea id="other_details" name="Other Details"></textarea>
+                    </div>
+                </div>
+
+                <!-- ─── Submit ─── -->
+                <div class="submit-bar">
+                    <p>By submitting, your responses will be sent directly to Developer Of Code, LLC. We'll review and respond with a proposal soon.</p>
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span class="label-submit">Submit Form</span>
+                        <span class="spinner" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+            </form>
+        </div>
+
+        <footer class="intake-footer">
+            <p>2019 – 2026 &copy; Developer Of Code, LLC. All rights reserved. &nbsp;·&nbsp; <a href="/">Return home</a></p>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            const form = document.getElementById('intakeForm');
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('formStatus');
+
+            function showStatus(type, msg) {
+                status.className = 'form-status show ' + type;
+                status.textContent = msg;
+                status.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                // Native validation
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                // Collect FormData. Browsers send repeated fields (checkboxes) as multiple entries,
+                // which Web3Forms handles, but we'll aggregate them into CSV strings for clean emails.
+                const raw = new FormData(form);
+                const aggregated = new FormData();
+                const seen = new Map();
+
+                for (const [key, value] of raw.entries()) {
+                    if (seen.has(key)) {
+                        seen.set(key, seen.get(key) + ', ' + value);
+                    } else {
+                        seen.set(key, value);
+                    }
+                }
+                for (const [key, value] of seen.entries()) {
+                    aggregated.append(key, value);
+                }
+
+                btn.classList.add('loading');
+                btn.disabled = true;
+                status.className = 'form-status';
+                status.textContent = '';
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: aggregated,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await res.json().catch(() => ({}));
+
+                    if (res.ok && (data.success === true || data.success === 'true')) {
+                        showStatus('success', 'Thank you! Your intake form has been sent. We\'ll review your project and respond shortly.');
+                        form.reset();
+                    } else {
+                        const msg = (data && data.message) ? data.message : 'Something went wrong sending your form. Please try again or email us directly.';
+                        showStatus('error', msg);
+                    }
+                } catch (err) {
+                    showStatus('error', 'Network error — please check your connection and try again, or email us directly at developerofcodellc@gmail.com.');
+                } finally {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

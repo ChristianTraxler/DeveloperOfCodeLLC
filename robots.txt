@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /documentation/
+Disallow: /mail.php
+
+Sitemap: https://developerofcode.com/sitemap.xml

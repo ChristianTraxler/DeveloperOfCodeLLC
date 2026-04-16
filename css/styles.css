@@ -50,6 +50,36 @@ img { max-width: 100%; height: auto; display: block; }
 ul { list-style: none; }
 
 /* ═══════════════════════════════════════════
+   SKIP TO CONTENT (Accessibility)
+   ═══════════════════════════════════════════ */
+.skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    z-index: 10000;
+    padding: 12px 24px;
+    background: var(--accent);
+    color: var(--bg-deep);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 0 0 8px 0;
+    text-decoration: none;
+}
+
+.skip-to-content:focus {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: auto;
+    height: auto;
+    overflow: visible;
+}
+
+/* ═══════════════════════════════════════════
    NOISE TEXTURE OVERLAY
    ═══════════════════════════════════════════ */
 body::before {
