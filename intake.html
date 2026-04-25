@@ -211,6 +211,38 @@
             padding: 4px;
             cursor: pointer;
         }
+
+        /* Date input — normalize native iOS/Android rendering */
+        .field input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 48px;
+            display: block;
+            text-align: left;
+            font-variant-numeric: tabular-nums;
+        }
+        .field input[type="date"]::-webkit-date-and-time-value {
+            text-align: left;
+            min-height: 1.5em;
+        }
+        .field input[type="date"]::-webkit-datetime-edit {
+            color: var(--text-primary);
+            padding: 0;
+        }
+        .field input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+        .field input[type="date"]::-webkit-datetime-edit-text { color: var(--text-muted); padding: 0 2px; }
+        .field input[type="date"]:not(:focus):invalid::-webkit-datetime-edit-month-field,
+        .field input[type="date"]:not(:focus):invalid::-webkit-datetime-edit-day-field,
+        .field input[type="date"]:not(:focus):invalid::-webkit-datetime-edit-year-field {
+            color: var(--text-muted);
+        }
+        .field input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(0.85);
+            opacity: 0.7;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .field input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         .field input::placeholder,
         .field textarea::placeholder {
             color: var(--text-muted);
