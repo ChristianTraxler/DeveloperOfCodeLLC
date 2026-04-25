@@ -465,12 +465,13 @@
 
         /* Back link */
         .intake-back {
-            display: inline-flex;
+            display: flex;
+            width: fit-content;
             align-items: center;
             gap: 8px;
             color: var(--text-secondary);
             font-size: 0.88rem;
-            margin-bottom: 20px;
+            margin-bottom: 28px;
             transition: color 0.2s ease;
         }
         .intake-back:hover { color: var(--accent); }
@@ -967,6 +968,11 @@
         <footer class="intake-footer">
             <p>2019 – 2026 &copy; Developer Of Code, LLC. All rights reserved. &nbsp;·&nbsp; <a href="/">Return home</a></p>
         </footer>
+
+        <!-- Scroll to Top Button -->
+        <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
     </main>
 
     <script>
@@ -974,6 +980,22 @@
             const form = document.getElementById('intakeForm');
             const btn = document.getElementById('submitBtn');
             const status = document.getElementById('formStatus');
+
+            // ── Scroll to Top Button ──
+            const scrollTopBtn = document.getElementById('scrollTop');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 300) {
+                    scrollTopBtn.classList.add('visible');
+                } else {
+                    scrollTopBtn.classList.remove('visible');
+                }
+            }, { passive: true });
+
+            scrollTopBtn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+            });
 
             // Allow radios to be unchecked by clicking again
             form.querySelectorAll('input[type="radio"]').forEach(function (radio) {
