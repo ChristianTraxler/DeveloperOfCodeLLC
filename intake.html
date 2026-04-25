@@ -284,10 +284,8 @@
 
         .opt {
             position: relative;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
+            display: block;
+            padding: 14px 16px 14px 50px;
             background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -296,46 +294,56 @@
             font-size: 0.92rem;
             color: var(--text-primary);
             user-select: none;
+            min-height: 50px;
         }
         .opt:hover {
             border-color: var(--border-accent);
             background: var(--bg-surface);
         }
-        .opt input {
+        .opt > input {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            padding: 0;
             appearance: none;
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            min-width: 18px;
             border: 1.5px solid var(--text-muted);
-            border-radius: 4px;
+            border-radius: 50%;
             background: transparent;
             cursor: pointer;
-            display: grid;
-            place-content: center;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            box-sizing: border-box;
         }
-        .opt input[type="radio"] { border-radius: 50%; }
-        .opt input::before {
+        .opt > input::before {
             content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
             width: 10px;
             height: 10px;
-            border-radius: 2px;
-            background: var(--bg-deep);
-            transform: scale(0);
+            border-radius: 50%;
+            background: #fff;
+            transform: translate(-50%, -50%) scale(0);
             transition: transform 0.15s ease;
         }
-        .opt input[type="radio"]::before { border-radius: 50%; }
-        .opt input:checked {
+        .opt > input:checked {
             background: var(--accent);
             border-color: var(--accent);
         }
-        .opt input:checked::before {
-            transform: scale(1);
+        .opt > input:checked::before {
+            transform: translate(-50%, -50%) scale(1);
         }
-        .opt input:focus-visible {
+        .opt > input:focus-visible {
             outline: 2px solid var(--accent);
             outline-offset: 2px;
+        }
+        .opt > span {
+            display: block;
+            line-height: 1.4;
         }
         .opt:has(input:checked) {
             border-color: var(--accent);
@@ -575,27 +583,27 @@
                     <fieldset class="field">
                         <legend>How many pages will your website need? <span class="req">*</span></legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="Page Count" value="1-3 pages (simple site)" required> 1–3 pages (simple site)</label>
-                            <label class="opt"><input type="radio" name="Page Count" value="4-7 pages (standard site)"> 4–7 pages (standard site)</label>
-                            <label class="opt"><input type="radio" name="Page Count" value="8-15 pages (medium site)"> 8–15 pages (medium site)</label>
-                            <label class="opt"><input type="radio" name="Page Count" value="16+ pages (large site)"> 16+ pages (large site)</label>
+                            <label class="opt"><input type="radio" name="Page Count" value="1-3 pages (simple site)" required><span>1–3 pages (simple site)</span></label>
+                            <label class="opt"><input type="radio" name="Page Count" value="4-7 pages (standard site)"><span>4–7 pages (standard site)</span></label>
+                            <label class="opt"><input type="radio" name="Page Count" value="8-15 pages (medium site)"><span>8–15 pages (medium site)</span></label>
+                            <label class="opt"><input type="radio" name="Page Count" value="16+ pages (large site)"><span>16+ pages (large site)</span></label>
                         </div>
                     </fieldset>
 
                     <fieldset class="field">
                         <legend>What page types do you need? (select all that apply)</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Home page"> Home page</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="About Us"> About Us</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Services/Products"> Services / Products</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Contact page"> Contact page</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Blog"> Blog</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Portfolio/Gallery"> Portfolio / Gallery</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="FAQ"> FAQ</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Team/Staff"> Team / Staff</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Testimonials"> Testimonials</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Pricing"> Pricing</label>
-                            <label class="opt"><input type="checkbox" name="Page Types" value="Resources/Downloads"> Resources / Downloads</label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Home page"><span>Home page</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="About Us"><span>About Us</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Services/Products"><span>Services / Products</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Contact page"><span>Contact page</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Blog"><span>Blog</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Portfolio/Gallery"><span>Portfolio / Gallery</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="FAQ"><span>FAQ</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Team/Staff"><span>Team / Staff</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Testimonials"><span>Testimonials</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Pricing"><span>Pricing</span></label>
+                            <label class="opt"><input type="checkbox" name="Page Types" value="Resources/Downloads"><span>Resources / Downloads</span></label>
                         </div>
                         <div class="field" style="margin-top:14px;">
                             <label for="other_pages">Other pages needed</label>
@@ -606,24 +614,24 @@
                     <fieldset class="field">
                         <legend>What functionality do you require? (select all that apply)</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Contact form"> Contact form</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="E-commerce/Online store"> E-commerce / Online store</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Shopping cart & checkout"> Shopping cart &amp; checkout</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Product catalog with inventory"> Product catalog with inventory</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Database integration"> Database integration</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="User accounts/login"> User accounts / login</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Payment processing"> Payment processing</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Booking/Scheduling system"> Booking / Scheduling</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Search functionality"> Search functionality</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Newsletter/Email signup"> Newsletter / Email signup</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Social media integration"> Social media integration</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Live chat support"> Live chat support</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Multi-language support"> Multi-language support</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Blog/News section"> Blog / News section</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Member portal"> Member portal</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Photo/Video gallery"> Photo / Video gallery</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Customer reviews/ratings"> Customer reviews / ratings</label>
-                            <label class="opt"><input type="checkbox" name="Functionality" value="Live streaming"> Live streaming</label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Contact form"><span>Contact form</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="E-commerce/Online store"><span>E-commerce / Online store</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Shopping cart & checkout"><span>Shopping cart &amp; checkout</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Product catalog with inventory"><span>Product catalog with inventory</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Database integration"><span>Database integration</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="User accounts/login"><span>User accounts / login</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Payment processing"><span>Payment processing</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Booking/Scheduling system"><span>Booking / Scheduling</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Search functionality"><span>Search functionality</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Newsletter/Email signup"><span>Newsletter / Email signup</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Social media integration"><span>Social media integration</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Live chat support"><span>Live chat support</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Multi-language support"><span>Multi-language support</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Blog/News section"><span>Blog / News section</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Member portal"><span>Member portal</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Photo/Video gallery"><span>Photo / Video gallery</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Customer reviews/ratings"><span>Customer reviews / ratings</span></label>
+                            <label class="opt"><input type="checkbox" name="Functionality" value="Live streaming"><span>Live streaming</span></label>
                         </div>
                         <div class="field" style="margin-top:14px;">
                             <label for="other_func">Other functionality needed</label>
@@ -648,9 +656,9 @@
                     <div class="question-row">
                         <label style="margin:0;">Do you need inventory tracking?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Inventory Tracking" value="No"> No</label>
-                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Unsure"> Unsure</label>
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="No"><span>No</span></label>
+                            <label class="opt"><input type="radio" name="Inventory Tracking" value="Unsure"><span>Unsure</span></label>
                         </div>
                     </div>
 
@@ -662,9 +670,9 @@
                     <div class="question-row">
                         <label style="margin:0;">Shipping integration needed?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Shipping Integration" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Shipping Integration" value="No"> No</label>
-                            <label class="opt"><input type="radio" name="Shipping Integration" value="Unsure"> Unsure</label>
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="No"><span>No</span></label>
+                            <label class="opt"><input type="radio" name="Shipping Integration" value="Unsure"><span>Unsure</span></label>
                         </div>
                     </div>
 
@@ -684,8 +692,8 @@
                     <div class="question-row">
                         <label style="margin:0;">Do you have existing brand guidelines?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Brand Guidelines" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Brand Guidelines" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Brand Guidelines" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Brand Guidelines" value="No"><span>No</span></label>
                         </div>
                     </div>
 
@@ -710,12 +718,12 @@
                     <fieldset class="field">
                         <legend>Preferred design style</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Modern/Minimalist"> Modern / Minimalist</label>
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Classic/Traditional"> Classic / Traditional</label>
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Bold/Creative"> Bold / Creative</label>
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Professional/Corporate"> Professional / Corporate</label>
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Playful/Fun"> Playful / Fun</label>
-                            <label class="opt"><input type="checkbox" name="Design Style" value="Elegant/Luxury"> Elegant / Luxury</label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Modern/Minimalist"><span>Modern / Minimalist</span></label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Classic/Traditional"><span>Classic / Traditional</span></label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Bold/Creative"><span>Bold / Creative</span></label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Professional/Corporate"><span>Professional / Corporate</span></label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Playful/Fun"><span>Playful / Fun</span></label>
+                            <label class="opt"><input type="checkbox" name="Design Style" value="Elegant/Luxury"><span>Elegant / Luxury</span></label>
                         </div>
                         <div class="field" style="margin-top:14px;">
                             <label for="other_style">Other style preferences</label>
@@ -747,24 +755,24 @@
                     <fieldset class="field">
                         <legend>What content will you provide?</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Logo (existing)"> Logo (existing)</label>
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Written content/copy"> Written content / copy</label>
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Professional photos"> Professional photos</label>
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Product images"> Product images</label>
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Videos"> Videos</label>
-                            <label class="opt"><input type="checkbox" name="Content Provided" value="Graphics/Icons"> Graphics / Icons</label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Logo (existing)"><span>Logo (existing)</span></label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Written content/copy"><span>Written content / copy</span></label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Professional photos"><span>Professional photos</span></label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Product images"><span>Product images</span></label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Videos"><span>Videos</span></label>
+                            <label class="opt"><input type="checkbox" name="Content Provided" value="Graphics/Icons"><span>Graphics / Icons</span></label>
                         </div>
                     </fieldset>
 
                     <fieldset class="field">
                         <legend>What services do you need help with?</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Logo design"> Logo design</label>
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Copywriting"> Copywriting</label>
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Professional photography"> Professional photography</label>
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Stock images"> Stock images</label>
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Video production"> Video production</label>
-                            <label class="opt"><input type="checkbox" name="Services Needed" value="Content strategy"> Content strategy</label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Logo design"><span>Logo design</span></label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Copywriting"><span>Copywriting</span></label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Professional photography"><span>Professional photography</span></label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Stock images"><span>Stock images</span></label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Video production"><span>Video production</span></label>
+                            <label class="opt"><input type="checkbox" name="Services Needed" value="Content strategy"><span>Content strategy</span></label>
                         </div>
                     </fieldset>
                 </div>
@@ -779,8 +787,8 @@
                     <fieldset class="field">
                         <legend>Domain name</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="Domain Status" value="I have a domain"> I have a domain</label>
-                            <label class="opt"><input type="radio" name="Domain Status" value="I need help purchasing a domain"> I need help purchasing a domain</label>
+                            <label class="opt"><input type="radio" name="Domain Status" value="I have a domain"><span>I have a domain</span></label>
+                            <label class="opt"><input type="radio" name="Domain Status" value="I need help purchasing a domain"><span>I need help purchasing a domain</span></label>
                         </div>
                         <div class="field" style="margin-top:14px; margin-bottom:0;">
                             <label for="domain_name">If you have a domain, please specify</label>
@@ -791,19 +799,19 @@
                     <fieldset class="field">
                         <legend>Web hosting</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="Hosting Status" value="I have hosting"> I have hosting</label>
-                            <label class="opt"><input type="radio" name="Hosting Status" value="I need hosting services"> I need hosting services</label>
+                            <label class="opt"><input type="radio" name="Hosting Status" value="I have hosting"><span>I have hosting</span></label>
+                            <label class="opt"><input type="radio" name="Hosting Status" value="I need hosting services"><span>I need hosting services</span></label>
                         </div>
                     </fieldset>
 
                     <fieldset class="field">
                         <legend>CMS preference</legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="CMS Preference" value="WordPress"> WordPress</label>
-                            <label class="opt"><input type="radio" name="CMS Preference" value="Shopify"> Shopify</label>
-                            <label class="opt"><input type="radio" name="CMS Preference" value="Wix/Squarespace"> Wix / Squarespace</label>
-                            <label class="opt"><input type="radio" name="CMS Preference" value="Custom-built"> Custom-built</label>
-                            <label class="opt"><input type="radio" name="CMS Preference" value="No preference (please recommend)"> No preference (please recommend)</label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="WordPress"><span>WordPress</span></label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Shopify"><span>Shopify</span></label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Wix/Squarespace"><span>Wix / Squarespace</span></label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="Custom-built"><span>Custom-built</span></label>
+                            <label class="opt"><input type="radio" name="CMS Preference" value="No preference (please recommend)"><span>No preference (please recommend)</span></label>
                         </div>
                         <div class="field" style="margin-top:14px; margin-bottom:0;">
                             <label for="other_cms">Other CMS</label>
@@ -814,26 +822,26 @@
                     <div class="question-row">
                         <label style="margin:0;">Mobile optimization required?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Mobile Optimization" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Mobile Optimization" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Mobile Optimization" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Mobile Optimization" value="No"><span>No</span></label>
                         </div>
                     </div>
 
                     <div class="question-row">
                         <label style="margin:0;">SEO services needed?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="SEO Needed" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="SEO Needed" value="No"> No</label>
-                            <label class="opt"><input type="radio" name="SEO Needed" value="Unsure"> Unsure</label>
+                            <label class="opt"><input type="radio" name="SEO Needed" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="SEO Needed" value="No"><span>No</span></label>
+                            <label class="opt"><input type="radio" name="SEO Needed" value="Unsure"><span>Unsure</span></label>
                         </div>
                     </div>
 
                     <div class="question-row">
                         <label style="margin:0;">Analytics / tracking required?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Analytics" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Analytics" value="No"> No</label>
-                            <label class="opt"><input type="radio" name="Analytics" value="Unsure"> Unsure</label>
+                            <label class="opt"><input type="radio" name="Analytics" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Analytics" value="No"><span>No</span></label>
+                            <label class="opt"><input type="radio" name="Analytics" value="Unsure"><span>Unsure</span></label>
                         </div>
                     </div>
                 </div>
@@ -853,8 +861,8 @@
                         <div class="field">
                             <label>Is this date flexible?</label>
                             <div class="inline-yesno">
-                                <label class="opt"><input type="radio" name="Date Flexible" value="Yes"> Yes</label>
-                                <label class="opt"><input type="radio" name="Date Flexible" value="No"> No</label>
+                                <label class="opt"><input type="radio" name="Date Flexible" value="Yes"><span>Yes</span></label>
+                                <label class="opt"><input type="radio" name="Date Flexible" value="No"><span>No</span></label>
                             </div>
                         </div>
                     </div>
@@ -862,8 +870,8 @@
                     <div class="question-row">
                         <label style="margin:0;">Do you have a specific event / deadline?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Has Event Deadline" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Has Event Deadline" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Has Event Deadline" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Has Event Deadline" value="No"><span>No</span></label>
                         </div>
                     </div>
 
@@ -875,22 +883,22 @@
                     <fieldset class="field">
                         <legend>Preferred project timeframe <span class="req">*</span></legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="Project Timeframe" value="Rush (2-4 weeks)" required> Rush (2–4 weeks)</label>
-                            <label class="opt"><input type="radio" name="Project Timeframe" value="Standard (1-2 months)"> Standard (1–2 months)</label>
-                            <label class="opt"><input type="radio" name="Project Timeframe" value="Extended (3-4 months)"> Extended (3–4 months)</label>
-                            <label class="opt"><input type="radio" name="Project Timeframe" value="Flexible / No specific deadline"> Flexible / No specific deadline</label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Rush (2-4 weeks)" required><span>Rush (2–4 weeks)</span></label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Standard (1-2 months)"><span>Standard (1–2 months)</span></label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Extended (3-4 months)"><span>Extended (3–4 months)</span></label>
+                            <label class="opt"><input type="radio" name="Project Timeframe" value="Flexible / No specific deadline"><span>Flexible / No specific deadline</span></label>
                         </div>
                     </fieldset>
 
                     <fieldset class="field">
                         <legend>Estimated budget range <span class="req">*</span></legend>
                         <div class="option-grid">
-                            <label class="opt"><input type="radio" name="Budget" value="Under $1,000" required> Under $1,000</label>
-                            <label class="opt"><input type="radio" name="Budget" value="$1,000 - $3,000"> $1,000 – $3,000</label>
-                            <label class="opt"><input type="radio" name="Budget" value="$3,000 - $5,000"> $3,000 – $5,000</label>
-                            <label class="opt"><input type="radio" name="Budget" value="$5,000 - $10,000"> $5,000 – $10,000</label>
-                            <label class="opt"><input type="radio" name="Budget" value="$10,000+"> $10,000+</label>
-                            <label class="opt"><input type="radio" name="Budget" value="Not sure yet"> Not sure yet</label>
+                            <label class="opt"><input type="radio" name="Budget" value="Under $1,000" required><span>Under $1,000</span></label>
+                            <label class="opt"><input type="radio" name="Budget" value="$1,000 - $3,000"><span>$1,000 – $3,000</span></label>
+                            <label class="opt"><input type="radio" name="Budget" value="$3,000 - $5,000"><span>$3,000 – $5,000</span></label>
+                            <label class="opt"><input type="radio" name="Budget" value="$5,000 - $10,000"><span>$5,000 – $10,000</span></label>
+                            <label class="opt"><input type="radio" name="Budget" value="$10,000+"><span>$10,000+</span></label>
+                            <label class="opt"><input type="radio" name="Budget" value="Not sure yet"><span>Not sure yet</span></label>
                         </div>
                     </fieldset>
                 </div>
@@ -905,17 +913,17 @@
                     <div class="question-row">
                         <label style="margin:0;">Will you need ongoing maintenance / updates?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="No"> No</label>
-                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Unsure"> Unsure</label>
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="No"><span>No</span></label>
+                            <label class="opt"><input type="radio" name="Ongoing Maintenance" value="Unsure"><span>Unsure</span></label>
                         </div>
                     </div>
 
                     <div class="question-row">
                         <label style="margin:0;">Do you need training to update the site?</label>
                         <div class="inline-yesno">
-                            <label class="opt"><input type="radio" name="Training Needed" value="Yes"> Yes</label>
-                            <label class="opt"><input type="radio" name="Training Needed" value="No"> No</label>
+                            <label class="opt"><input type="radio" name="Training Needed" value="Yes"><span>Yes</span></label>
+                            <label class="opt"><input type="radio" name="Training Needed" value="No"><span>No</span></label>
                         </div>
                     </div>
 
@@ -966,6 +974,26 @@
             const form = document.getElementById('intakeForm');
             const btn = document.getElementById('submitBtn');
             const status = document.getElementById('formStatus');
+
+            // Allow radios to be unchecked by clicking again
+            form.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+                radio.addEventListener('mousedown', handleRadioToggle);
+                radio.addEventListener('touchstart', handleRadioToggle, { passive: true });
+                radio.addEventListener('keydown', function (e) {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        radio.dataset.wasChecked = radio.checked ? '1' : '';
+                    }
+                });
+                radio.addEventListener('click', function () {
+                    if (radio.dataset.wasChecked === '1') {
+                        radio.checked = false;
+                    }
+                    radio.dataset.wasChecked = '';
+                });
+            });
+            function handleRadioToggle(e) {
+                e.currentTarget.dataset.wasChecked = e.currentTarget.checked ? '1' : '';
+            }
 
             function showStatus(type, msg) {
                 status.className = 'form-status show ' + type;
