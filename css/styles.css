@@ -1272,7 +1272,7 @@ a.service-card * {
 /* ═══════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════ */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
     :root { --nav-width: 0px; }
 
     .nav-sidebar {
