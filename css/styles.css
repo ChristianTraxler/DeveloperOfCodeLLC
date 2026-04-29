@@ -685,6 +685,9 @@ body::before {
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    display: block;
 }
 
 .service-card::before {
@@ -703,6 +706,11 @@ body::before {
     border-color: var(--border-accent);
     background: var(--bg-card-hover);
     transform: translateY(-4px);
+}
+
+a.service-card,
+a.service-card * {
+    cursor: pointer;
 }
 
 .service-card:hover::before {
