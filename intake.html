@@ -486,6 +486,32 @@
         }
         .intake-footer a { color: var(--text-secondary); }
         .intake-footer a:hover { color: var(--accent); }
+
+        .intake-footer .support-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 5px 12px;
+            border: 1px solid var(--accent);
+            border-radius: 999px;
+            color: var(--accent);
+            background: var(--accent-glow, rgba(255, 69, 0, 0.15));
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+            transition: color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+        }
+        .intake-footer .support-link:hover,
+        .intake-footer .support-link:focus-visible {
+            color: var(--bg-deep, #060a13);
+            background: var(--accent);
+            box-shadow: 0 0 18px var(--accent-glow-strong, rgba(255, 69, 0, 0.3));
+            transform: translateY(-1px);
+            outline: none;
+        }
+        .intake-footer .support-link svg { width: 12px; height: 12px; stroke-width: 2; }
     </style>
 </head>
 
@@ -967,6 +993,10 @@
 
         <footer class="intake-footer">
             <p>2019 – 2026 &copy; Developer Of Code, LLC. All rights reserved. &nbsp;·&nbsp; <a href="/">Return home</a></p>
+            <a class="support-link" href="https://support.developerofcode.com" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2.3-2.5 4"/><circle cx="12" cy="17.2" r="0.6" fill="currentColor" stroke="none"/></svg>
+                Client Support
+            </a>
         </footer>
 
         <!-- Scroll to Top Button -->

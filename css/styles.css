@@ -1231,6 +1231,38 @@ a.service-card * {
     font-size: 0.75rem;
 }
 
+.support-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.support-link:hover,
+.support-link:focus-visible {
+    color: var(--bg-deep);
+    background: var(--accent);
+    box-shadow: 0 0 18px var(--accent-glow-strong);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.support-link svg {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2;
+}
+
 /* ═══════════════════════════════════════════
    SCROLL REVEAL ANIMATIONS
    ═══════════════════════════════════════════ */
