@@ -368,6 +368,24 @@
 .product-cta svg { width: 14px; height: 14px; transition: transform 0.25s ease; }
 .product-cta:hover svg { transform: translateX(3px); }
 
+/* Notify-Me CTAs: the bell jiggles on hover instead of sliding */
+.product-cta[href^="notify.html"] svg { transform-origin: top center; }
+.product-cta[href^="notify.html"]:hover svg {
+    transform: none;
+    animation: notify-bell-jiggle 0.6s ease-in-out;
+}
+@keyframes notify-bell-jiggle {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(13deg); }
+    30% { transform: rotate(-11deg); }
+    45% { transform: rotate(8deg); }
+    60% { transform: rotate(-6deg); }
+    75% { transform: rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .product-cta[href^="notify.html"]:hover svg { animation: none; }
+}
+
 .product-cta.disabled {
     background: transparent;
     color: var(--text-secondary);
