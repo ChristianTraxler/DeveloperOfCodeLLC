@@ -1,0 +1,194 @@
+/* ═══════════════ NOTIFY ME PAGE ═══════════════ */
+
+.notify-section {
+    padding: clamp(32px, 5vw, 56px) clamp(24px, 6vw, 80px) clamp(60px, 8vw, 120px);
+}
+
+.notify-card {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: clamp(28px, 5vw, 48px);
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
+    border: 1px solid var(--border-accent);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.notify-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 60%);
+    pointer-events: none;
+}
+
+/* ───────── FORM ───────── */
+.notify-form {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.notify-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notify-label {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+}
+
+.notify-input {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.notify-input::placeholder { color: var(--text-muted); }
+.notify-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.notify-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+    padding: 14px 20px;
+    background: var(--accent);
+    color: var(--bg-deep);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.1s ease;
+}
+.notify-submit:hover { background: #ff6a33; }
+.notify-submit:active { transform: translateY(1px); }
+.notify-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.notify-submit svg {
+    width: 16px;
+    height: 16px;
+    transform-origin: top center;
+}
+
+/* Bell gives a little jiggle on hover */
+.notify-submit:hover:not(:disabled) svg {
+    animation: notify-bell-jiggle 0.6s ease-in-out;
+}
+@keyframes notify-bell-jiggle {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(13deg); }
+    30% { transform: rotate(-11deg); }
+    45% { transform: rotate(8deg); }
+    60% { transform: rotate(-6deg); }
+    75% { transform: rotate(3deg); }
+}
+
+.notify-hint {
+    position: relative;
+    z-index: 1;
+    margin-top: 18px;
+    text-align: center;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+/* ───────── INLINE ERROR ───────── */
+.notify-formerror {
+    display: none;
+    padding: 10px 14px;
+    background: rgba(255, 69, 0, 0.08);
+    border: 1px solid var(--border-accent);
+    border-radius: 10px;
+    color: #ff8a5c;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+.notify-formerror.is-visible { display: block; }
+
+/* ───────── SUCCESS STATE ───────── */
+.notify-status {
+    position: relative;
+    z-index: 1;
+    display: none;
+    text-align: center;
+    padding: 8px 0;
+}
+.notify-status.is-visible { display: block; }
+.notify-status-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    display: grid;
+    place-items: center;
+    background: var(--accent-glow);
+    border: 1px solid var(--border-accent);
+    border-radius: 50%;
+}
+.notify-status-icon svg {
+    width: 28px;
+    height: 28px;
+    stroke: var(--accent);
+}
+.notify-status-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.notify-status-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ───────── BACK LINK ───────── */
+.notify-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 28px;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.notify-back:hover { color: var(--accent); }
+.notify-back svg { width: 16px; height: 16px; }
+
+/* ───────── HONEYPOT (spam trap) ───────── */
+.notify-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notify-input,
+    .notify-submit { transition: none; }
+    .notify-submit:hover:not(:disabled) svg { animation: none; }
+}
