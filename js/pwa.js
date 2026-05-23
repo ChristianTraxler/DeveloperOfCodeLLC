@@ -45,7 +45,7 @@
     var EDGE = 30;          // px from the left edge that starts an open-swipe
     var THRESHOLD = 60;     // px of horizontal travel needed to trigger
     var OFF_AXIS = 0.6;     // dy/dx ratio above which it's treated as a scroll
-    var startX = 0, startY = 0, tracking = false, opening = false;
+    var startX = 0, startY = 0, tracking = false, opening = false, decided = false;
 
     function offCanvas() { return window.innerWidth <= 1280; }
     function isOpen() { return sidebar.classList.contains('open'); }
@@ -66,10 +66,26 @@
         var t = e.touches[0];
         startX = t.clientX;
         startY = t.clientY;
+        decided = false;
         if (!isOpen() && startX <= EDGE) { tracking = true; opening = true; }
         else if (isOpen()) { tracking = true; opening = false; }
         else { tracking = false; }
     }, { passive: true });
+
+    // Non-passive so we can cancel iOS's left-edge "swipe back" gesture, which
+    // would otherwise navigate to the previous page instead of opening the nav.
+    document.addEventListener('touchmove', function (e) {
+        if (!tracking || !opening) return;
+        var t = e.touches[0];
+        var dx = t.clientX - startX;
+        var dy = t.clientY - startY;
+        if (!decided) {
+            if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) return;            // wait for intent
+            decided = true;
+            if (Math.abs(dy) > Math.abs(dx)) { tracking = false; return; } // vertical → allow scroll
+        }
+        e.preventDefault();   // horizontal edge swipe → block back-nav + scroll
+    }, { passive: false });
 
     document.addEventListener('touchend', function (e) {
         if (!tracking) return;
