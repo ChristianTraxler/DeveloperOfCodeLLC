@@ -45,12 +45,12 @@ export default function ProjectCard({ project }) {
       )}
 
       {project.tech_stack && project.tech_stack.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap items-center gap-1.5 mb-4">
           {project.tech_stack.slice(0, 4).map((t) => (
             <TechTag key={t} name={t} />
           ))}
           {project.tech_stack.length > 4 && (
-            <span className="text-[11px] text-muted font-mono">+{project.tech_stack.length - 4}</span>
+            <span className="text-[11px] text-muted font-mono leading-none">+{project.tech_stack.length - 4}</span>
           )}
         </div>
       )}
