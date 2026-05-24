@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin Hub &mdash; &lt;/DOC&gt;</title>
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-deep: #060a13;
+    --bg-surface: #111827;
+    --bg-card: #1a2236;
+    --bg-card-hover: #1f2a42;
+    --accent: #ff4500;
+    --accent-hover: #ff6a33;
+    --accent-glow: rgba(255, 69, 0, 0.15);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --border: rgba(139, 148, 158, 0.14);
+    --border-accent: rgba(255, 69, 0, 0.28);
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-deep); color: var(--text-primary);
+    font-family: var(--font-body); min-height: 100vh; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--accent-glow), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 69, 0, 0.06), transparent 50%);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 69, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 69, 0, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .root { position: relative; z-index: 1; }
+
+  header {
+    position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border);
+    background: rgba(6, 10, 19, 0.85); backdrop-filter: blur(12px);
+  }
+  .nav-inner { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .brand { display: flex; align-items: center; gap: 0.8rem; }
+  .code-tag { font-family: var(--font-display); color: var(--accent); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; }
+  .brand-divider { width: 1px; height: 20px; background: var(--border); }
+  .brand-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; }
+  .nav-right { display: flex; align-items: center; gap: 0.85rem; }
+  .user-email { font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-body); max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .signout {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem; border-radius: 8px;
+    font-family: var(--font-display); font-weight: 500; font-size: 0.78rem; color: var(--text-secondary);
+    background: transparent; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+  }
+  .signout:hover { color: var(--accent); border-color: var(--border-accent); }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  .page-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em; }
+  .page-sub { color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem; }
+
+  .grid { margin-top: 2.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+  .tool-card {
+    display: flex; flex-direction: column; min-height: 168px; padding: 1.5rem;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    text-decoration: none; color: inherit; transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .tool-card:hover { transform: translateY(-3px); background: var(--bg-card-hover); border-color: var(--border-accent); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35); }
+  .tool-icon {
+    width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 1rem;
+    background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border-accent);
+  }
+  .tool-name { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+  .tool-desc { color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.4rem; flex: 1; }
+  .tool-go { margin-top: 1rem; font-family: var(--font-display); font-weight: 600; font-size: 0.8rem; color: var(--accent); display: inline-flex; align-items: center; gap: 0.35rem; }
+
+  .tool-card.placeholder {
+    border-style: dashed; background: transparent; cursor: default; align-items: flex-start; justify-content: center;
+    color: var(--text-muted);
+  }
+  .tool-card.placeholder:hover { transform: none; background: transparent; border-color: var(--border); box-shadow: none; }
+  .placeholder-title { font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--text-secondary); }
+  .placeholder-sub { font-size: 0.85rem; margin-top: 0.35rem; }
+
+  .loading { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; color: var(--text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
+
+  /* Scroll-to-top */
+  #scrollTop {
+    position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 40;
+    width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: var(--bg-deep);
+    border: none; cursor: pointer; box-shadow: 0 8px 24px var(--accent-glow);
+    opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+  }
+  #scrollTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  #scrollTop:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { #scrollTop { transition: opacity 0.25s, visibility 0.25s; } }
+</style>
+</head>
+<body>
+  <div class="loading" id="loading">Checking access&hellip;</div>
+
+  <div class="root" id="app" hidden>
+    <header>
+      <div class="nav-inner">
+        <div class="brand">
+          <span class="code-tag">&lt;/DOC&gt;</span>
+          <span class="brand-divider"></span>
+          <span class="brand-label">Admin</span>
+        </div>
+        <div class="nav-right">
+          <span class="user-email" id="userEmail"></span>
+          <button class="signout" id="signoutBtn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="page-title">Admin Hub</h1>
+      <p class="page-sub">Your internal tools, all behind one login.</p>
+
+      <div class="grid">
+        <a class="tool-card" href="/admin/tracker/">
+          <div class="tool-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          </div>
+          <div class="tool-name">Projects Tracker</div>
+          <div class="tool-desc">Track builds, tasks, time and notes across every project.</div>
+          <span class="tool-go">Open
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </span>
+        </a>
+
+        <div class="tool-card placeholder">
+          <div class="placeholder-title">+ Add a tool</div>
+          <div class="placeholder-sub">More tools land here as you build them.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <button id="scrollTop" type="button" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <script type="module">
+    import { supabase } from '/admin/supabase.js';
+
+    const loading = document.getElementById('loading');
+    const app = document.getElementById('app');
+
+    // Gate the page on a valid session. Note: hide the loader with an inline
+    // style, not the `hidden` attribute — `.loading { display: grid }` would
+    // otherwise override `[hidden] { display: none }` and keep it painted.
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        loading.textContent = 'Sign-in problem: ' + error.message;
+      } else if (!data.session) {
+        window.location.replace('/admin/login.html');
+      } else {
+        document.getElementById('userEmail').textContent = data.session.user?.email || '';
+        loading.style.display = 'none';
+        app.hidden = false;
+      }
+    } catch (e) {
+      loading.textContent = 'Sign-in problem: ' + (e?.message || e);
+    }
+
+    // Redirect to login if the session ends (e.g. signed out in another tab).
+    supabase.auth.onAuthStateChange((_event, s) => {
+      if (!s) window.location.replace('/admin/login.html');
+    });
+
+    document.getElementById('signoutBtn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.replace('/admin/login.html');
+    });
+
+    // Scroll-to-top button.
+    const scrollBtn = document.getElementById('scrollTop');
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const onScroll = () => scrollBtn.classList.toggle('show', window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    scrollBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+    });
+  </script>
+</body>
+</html>

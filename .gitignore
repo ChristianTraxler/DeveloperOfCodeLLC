@@ -1,2 +1,17 @@
 .vercel
 .claude/settings.local.json
+
+# Dependencies
+node_modules/
+
+# Tracker build output (Vercel regenerates from tools/project-tracker on deploy)
+admin/tracker/
+
+# Local env + cruft
+.env
+.env.local
+.DS_Store
+*.log
+
+# DOC Tracker project mapping (harmless, but no need to ship it)
+.doc-tracker.json

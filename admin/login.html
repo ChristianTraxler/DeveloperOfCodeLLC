@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin Access &mdash; &lt;/DOC&gt;</title>
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-deep: #060a13;
+    --bg-surface: #111827;
+    --bg-card: #1a2236;
+    --accent: #ff4500;
+    --accent-hover: #ff6a33;
+    --accent-glow: rgba(255, 69, 0, 0.15);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --border: rgba(139, 148, 158, 0.14);
+    --border-accent: rgba(255, 69, 0, 0.28);
+    --danger: #ff5c5c;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-deep); color: var(--text-primary);
+    font-family: var(--font-body); min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: grid; place-items: center; padding: 1.5rem;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--accent-glow), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 69, 0, 0.06), transparent 50%);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 69, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 69, 0, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .card {
+    position: relative; z-index: 1; width: 100%; max-width: 400px;
+    background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 2.5rem 2rem; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .brand { text-align: center; margin-bottom: 1.75rem; }
+  .code-tag { font-family: var(--font-display); color: var(--accent); font-weight: 700; font-size: 1.75rem; letter-spacing: -0.02em; }
+  .brand-label { margin-top: 0.5rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.24em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; }
+  label { display: block; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; margin-bottom: 0.45rem; }
+  .field { margin-bottom: 1.1rem; }
+  input {
+    width: 100%; padding: 0.75rem 0.9rem; font-size: 0.95rem; font-family: var(--font-body);
+    color: var(--text-primary); background: var(--bg-deep);
+    border: 1px solid var(--border); border-radius: 9px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus { outline: none; border-color: var(--border-accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  input::placeholder { color: var(--text-muted); }
+  button[type=submit] {
+    width: 100%; margin-top: 0.4rem; padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: var(--bg-deep);
+    font-family: var(--font-display); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase;
+    border: none; border-radius: 9px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  }
+  button[type=submit]:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+  button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
+  .msg { margin-top: 1rem; font-size: 0.85rem; text-align: center; min-height: 1.2em; }
+  .msg.error { color: var(--danger); }
+  .msg.info { color: var(--text-secondary); }
+  .config-warn {
+    display: none; margin-bottom: 1.25rem; padding: 0.7rem 0.85rem; border-radius: 9px; font-size: 0.8rem; line-height: 1.5;
+    color: #ffce8a; background: rgba(255, 170, 60, 0.08); border: 1px solid rgba(255, 170, 60, 0.25);
+  }
+  .footer-note { margin-top: 1.5rem; text-align: center; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-display); letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">
+      <div class="code-tag">&lt;/DOC&gt;</div>
+      <div class="brand-label">Admin Access</div>
+    </div>
+
+    <div class="config-warn" id="configWarn">
+      Supabase isn&rsquo;t configured yet. Add your project URL and anon key in
+      <code>admin/supabase.js</code>. See <code>admin/SETUP.md</code>.
+    </div>
+
+    <form id="loginForm" autocomplete="on">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" inputmode="email" autocomplete="username" required placeholder="you@developerofcode.com" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+      </div>
+      <button type="submit" id="submitBtn">Sign In</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+
+    <p class="footer-note">Developer of Code, LLC</p>
+  </main>
+
+  <script type="module">
+    import { supabase, isConfigured, requireSession } from '/admin/supabase.js';
+
+    const form = document.getElementById('loginForm');
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
+
+    const HUB = '/admin/';
+
+    function setMsg(text, kind = 'error') {
+      msg.textContent = text;
+      msg.className = 'msg ' + kind;
+    }
+
+    if (!isConfigured) {
+      document.getElementById('configWarn').style.display = 'block';
+    }
+
+    // Already signed in? Skip the form.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.replace(HUB);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!isConfigured) { setMsg('Supabase isn’t configured yet — see admin/SETUP.md.'); return; }
+
+      submitBtn.disabled = true;
+      setMsg('Signing in…', 'info');
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailEl.value.trim(),
+        password: passwordEl.value,
+      });
+
+      if (error) {
+        setMsg(error.message || 'Sign-in failed. Check your email and password.');
+        submitBtn.disabled = false;
+        passwordEl.select();
+        return;
+      }
+
+      setMsg('Success — redirecting…', 'info');
+      window.location.replace(HUB);
+    });
+  </script>
+</body>
+</html>
