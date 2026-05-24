@@ -70,9 +70,32 @@ export function useProject(id) {
     setLoading(false)
   }, [id])
 
+  const refetchNotes = useCallback(async () => {
+    if (!id) return
+    const { data } = await supabase
+      .from('notes').select('*').eq('project_id', id)
+      .order('created_at', { ascending: false })
+    setNotes(data || [])
+  }, [id])
+
   useEffect(() => {
     refetch()
   }, [refetch])
+
+  // Live updates: when a note is inserted/changed for this project (e.g. from a
+  // git commit), refresh just the changelog — no page refresh, no loading flash.
+  useEffect(() => {
+    if (!id) return
+    const channel = supabase
+      .channel(`notes-${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notes', filter: `project_id=eq.${id}` },
+        () => refetchNotes()
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id, refetchNotes])
 
   return { project, tasks, timeEntries, notes, loading, refetch }
 }
