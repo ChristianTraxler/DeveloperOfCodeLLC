@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
-<title>Admin Hub &mdash; &lt;/DOC&gt;</title>
+<title>Admin &mdash; &lt;/DOC&gt;</title>
 <!-- PWA: behave as part of the installed app (no in-app Safari sheet) -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -31,6 +31,7 @@
     --text-muted: #484f58;
     --border: rgba(139, 148, 158, 0.14);
     --border-accent: rgba(255, 69, 0, 0.28);
+    --danger: #ff5c5c;
     --font-display: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
   }
@@ -38,7 +39,7 @@
   html, body {
     background: var(--bg-deep); color: var(--text-primary);
     font-family: var(--font-body); min-height: 100vh; line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
   body {
     background-image:
@@ -55,30 +56,72 @@
     -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
   }
-  .root { position: relative; z-index: 1; }
 
+  /* ── Loading ── */
+  .loading { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; color: var(--text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
+
+  /* ── Login view ── */
+  #loginView { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+  .card {
+    width: 100%; max-width: 400px;
+    background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 2.5rem 2rem; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .login-brand { text-align: center; margin-bottom: 1.75rem; }
+  .login-brand .code-tag { font-size: 1.75rem; }
+  .login-brand .brand-label { margin-top: 0.5rem; }
+  label { display: block; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; margin-bottom: 0.45rem; }
+  .field { margin-bottom: 1.1rem; }
+  input {
+    width: 100%; padding: 0.75rem 0.9rem; font-size: 0.95rem; font-family: var(--font-body);
+    color: var(--text-primary); background: var(--bg-deep);
+    border: 1px solid var(--border); border-radius: 9px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus { outline: none; border-color: var(--border-accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  input::placeholder { color: var(--text-muted); }
+  button[type=submit] {
+    width: 100%; margin-top: 0.4rem; padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: var(--bg-deep);
+    font-family: var(--font-display); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase;
+    border: none; border-radius: 9px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  }
+  button[type=submit]:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+  button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
+  .msg { margin-top: 1rem; font-size: 0.85rem; text-align: center; min-height: 1.2em; }
+  .msg.error { color: var(--danger); }
+  .msg.info { color: var(--text-secondary); }
+  .config-warn {
+    display: none; margin-bottom: 1.25rem; padding: 0.7rem 0.85rem; border-radius: 9px; font-size: 0.8rem; line-height: 1.5;
+    color: #ffce8a; background: rgba(255, 170, 60, 0.08); border: 1px solid rgba(255, 170, 60, 0.25);
+  }
+  .footer-note { margin-top: 1.5rem; text-align: center; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-display); letter-spacing: 0.04em; }
+
+  /* ── Shared brand bits ── */
+  .code-tag { font-family: var(--font-display); color: var(--accent); font-weight: 700; letter-spacing: -0.02em; }
+  .brand-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; }
+
+  /* ── Hub view ── */
+  .root { position: relative; z-index: 1; }
   header {
     position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border);
     background: rgba(6, 10, 19, 0.85); backdrop-filter: blur(12px);
   }
   .nav-inner { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .brand { display: flex; align-items: center; gap: 0.8rem; }
-  .code-tag { font-family: var(--font-display); color: var(--accent); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; }
+  .brand .code-tag { font-size: 1.3rem; }
   .brand-divider { width: 1px; height: 20px; background: var(--border); }
-  .brand-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; }
   .nav-right { display: flex; align-items: center; gap: 0.85rem; }
-  .user-email { font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-body); max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-email { font-size: 0.8rem; color: var(--text-secondary); max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .signout {
     display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem; border-radius: 8px;
     font-family: var(--font-display); font-weight: 500; font-size: 0.78rem; color: var(--text-secondary);
     background: transparent; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
   }
   .signout:hover { color: var(--accent); border-color: var(--border-accent); }
-
-  main { max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  main.hub { max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
   .page-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.02em; }
   .page-sub { color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem; }
-
   .grid { margin-top: 2.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
   .tool-card {
     display: flex; flex-direction: column; min-height: 168px; padding: 1.5rem;
@@ -86,23 +129,14 @@
     text-decoration: none; color: inherit; transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
   }
   .tool-card:hover { transform: translateY(-3px); background: var(--bg-card-hover); border-color: var(--border-accent); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35); }
-  .tool-icon {
-    width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 1rem;
-    background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border-accent);
-  }
+  .tool-icon { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 1rem; background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border-accent); }
   .tool-name { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
   .tool-desc { color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.4rem; flex: 1; }
   .tool-go { margin-top: 1rem; font-family: var(--font-display); font-weight: 600; font-size: 0.8rem; color: var(--accent); display: inline-flex; align-items: center; gap: 0.35rem; }
-
-  .tool-card.placeholder {
-    border-style: dashed; background: transparent; cursor: default; align-items: flex-start; justify-content: center;
-    color: var(--text-muted);
-  }
+  .tool-card.placeholder { border-style: dashed; background: transparent; cursor: default; align-items: flex-start; justify-content: center; color: var(--text-muted); }
   .tool-card.placeholder:hover { transform: none; background: transparent; border-color: var(--border); box-shadow: none; }
   .placeholder-title { font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--text-secondary); }
   .placeholder-sub { font-size: 0.85rem; margin-top: 0.35rem; }
-
-  .loading { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; color: var(--text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
 
   /* Scroll-to-top */
   #scrollTop {
@@ -118,19 +152,48 @@
 
   /* Phones: keep the header from overflowing — show just the logo + Sign out */
   @media (max-width: 600px) {
-    html, body { overflow-x: hidden; }
     .nav-inner { padding: 0 1rem; gap: 0.6rem; }
-    .brand-divider, .brand-label, .user-email { display: none; }
+    .brand-divider, .brand .brand-label, .user-email { display: none; }
     .signout { padding: 0.5rem 0.8rem; }
-    main { padding: 2rem 1.25rem 4rem; }
+    main.hub { padding: 2rem 1.25rem 4rem; }
     .page-title { font-size: 1.7rem; }
     #scrollTop { right: 1rem; bottom: 1rem; }
   }
 </style>
 </head>
 <body>
+  <!-- While we check the session -->
   <div class="loading" id="loading">Checking access&hellip;</div>
 
+  <!-- Login (shown when signed out). Inline display so the #loginView grid rule
+       can't override hiding (an attribute selector would lose to the ID rule). -->
+  <main id="loginView" style="display:none">
+    <div class="card">
+      <div class="login-brand">
+        <div class="code-tag" style="font-size:1.75rem;">&lt;/DOC&gt;</div>
+        <div class="brand-label">Admin Access</div>
+      </div>
+      <div class="config-warn" id="configWarn">
+        Supabase isn&rsquo;t configured yet. Add your project URL and anon key in
+        <code>admin/supabase.js</code>.
+      </div>
+      <form id="loginForm" autocomplete="on">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="username" required placeholder="you@developerofcode.com" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+        </div>
+        <button type="submit" id="submitBtn">Sign In</button>
+        <p class="msg" id="msg" role="status" aria-live="polite"></p>
+      </form>
+      <p class="footer-note">Developer of Code, LLC</p>
+    </div>
+  </main>
+
+  <!-- Hub (shown when signed in) -->
   <div class="root" id="app" hidden>
     <header>
       <div class="nav-inner">
@@ -149,7 +212,7 @@
       </div>
     </header>
 
-    <main>
+    <main class="hub">
       <h1 class="page-title">Admin Hub</h1>
       <p class="page-sub">Your internal tools, all behind one login.</p>
 
@@ -178,48 +241,77 @@
   </button>
 
   <script type="module">
-    import { supabase } from '/admin/supabase.js';
+    import { supabase, isConfigured } from '/admin/supabase.js';
 
     const loading = document.getElementById('loading');
+    const loginView = document.getElementById('loginView');
     const app = document.getElementById('app');
+    const form = document.getElementById('loginForm');
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
 
-    // Gate the page on a valid session. Note: hide the loader with an inline
-    // style, not the `hidden` attribute — `.loading { display: grid }` would
-    // otherwise override `[hidden] { display: none }` and keep it painted.
-    try {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        loading.textContent = 'Sign-in problem: ' + error.message;
-      } else if (!data.session) {
-        window.location.replace('/admin/login.html');
-      } else {
-        document.getElementById('userEmail').textContent = data.session.user?.email || '';
-        loading.style.display = 'none';
-        app.hidden = false;
-      }
-    } catch (e) {
-      loading.textContent = 'Sign-in problem: ' + (e?.message || e);
+    const setMsg = (t, kind = 'error') => { msg.textContent = t; msg.className = 'msg ' + kind; };
+
+    function showLogin() {
+      loading.style.display = 'none';
+      app.hidden = true;
+      loginView.style.display = 'grid';
+      if (!isConfigured) document.getElementById('configWarn').style.display = 'block';
+    }
+    function showHub(session) {
+      loading.style.display = 'none';
+      loginView.style.display = 'none';
+      app.hidden = false;
+      document.getElementById('userEmail').textContent = session?.user?.email || '';
     }
 
-    // Redirect to login if the session ends (e.g. signed out in another tab).
-    supabase.auth.onAuthStateChange((_event, s) => {
-      if (!s) window.location.replace('/admin/login.html');
+    // Decide which view to show — no page navigation involved.
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) { setMsg('Auth problem: ' + error.message); showLogin(); }
+      else if (data.session) showHub(data.session);
+      else showLogin();
+    } catch (e) {
+      setMsg('Auth problem: ' + (e?.message || e));
+      showLogin();
+    }
+
+    // Sign in IN PLACE — swap to the hub, never navigate to another page.
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!isConfigured) { setMsg('Supabase isn’t configured yet — see admin/SETUP.md.'); return; }
+      submitBtn.disabled = true;
+      setMsg('Signing in…', 'info');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailEl.value.trim(),
+        password: passwordEl.value,
+      });
+      submitBtn.disabled = false;
+      if (error) { setMsg(error.message || 'Sign-in failed.'); passwordEl.select(); return; }
+      setMsg('');
+      passwordEl.value = '';
+      showHub(data.session);
     });
 
     document.getElementById('signoutBtn').addEventListener('click', async () => {
       await supabase.auth.signOut();
-      window.location.replace('/admin/login.html');
+      showLogin();
     });
 
-    // Scroll-to-top button.
+    // If the session ends elsewhere, fall back to the login view (no navigation).
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) showLogin();
+    });
+
+    // Scroll-to-top.
     const scrollBtn = document.getElementById('scrollTop');
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const onScroll = () => scrollBtn.classList.toggle('show', window.scrollY > 300);
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    scrollBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
-    });
+    scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }));
   </script>
   <script src="/js/pwa.js" defer></script>
 </body>
