@@ -22,7 +22,7 @@ export default function Layout({ children }) {
         }`}
       >
         <Icon size={16} strokeWidth={2} />
-        <span>{label}</span>
+        <span className="hidden sm:inline">{label}</span>
       </Link>
     )
   }
@@ -53,7 +53,7 @@ export default function Layout({ children }) {
               className="btn-primary ml-2 flex items-center gap-1.5"
             >
               <Plus size={15} strokeWidth={2.5} />
-              <span>New</span>
+              <span className="hidden sm:inline">New</span>
             </Link>
             <button
               onClick={handleSignOut}

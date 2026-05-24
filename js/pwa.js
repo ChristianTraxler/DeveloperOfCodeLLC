@@ -22,6 +22,7 @@
        keeps them in the app's own view. External / new-window / native
        links are left untouched so they still open where they should. */
     document.addEventListener('click', function (e) {
+        if (e.defaultPrevented) return;                     // already handled (e.g. SPA router)
         var a = e.target.closest ? e.target.closest('a[href]') : null;
         if (!a) return;
 
