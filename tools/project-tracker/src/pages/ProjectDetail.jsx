@@ -315,6 +315,24 @@ const NOTE_KINDS = [
   { value: 'release',   label: 'Release',   Icon: Rocket,          color: 'text-accent' },
 ]
 
+// Commit bodies arrive hard-wrapped at ~72 columns (git convention), so a
+// sentence that continues naturally still shows a line break mid-thought.
+// Re-flow each paragraph back into one line so it wraps at the container edge
+// instead — while keeping blank-line paragraph breaks and the changed-files
+// list (git name-status lines like "M  path") exactly as they are.
+function reflowDetails(text) {
+  return text
+    .split(/\n{2,}/)
+    .map(block => {
+      const lines = block.split('\n')
+      const isFileList = lines.every(l =>
+        /^[A-Z]\d*\s{2,}\S/.test(l) || /^…/.test(l)
+      )
+      return isFileList ? block : lines.join(' ').replace(/[ \t]+/g, ' ').trim()
+    })
+    .join('\n\n')
+}
+
 function NoteItem({ n, onRemove }) {
   const [open, setOpen] = useState(false)
   const k = NOTE_KINDS.find(x => x.value === n.kind) || NOTE_KINDS[0]
@@ -341,7 +359,7 @@ function NoteItem({ n, onRemove }) {
       </div>
 
       {hasDetails && open && (
-        <pre className="mt-2 ml-1 p-3 rounded-lg bg-ink-950/60 border border-ink-700 text-xs text-muted font-mono whitespace-pre-wrap break-words">{n.details}</pre>
+        <pre className="mt-2 ml-1 p-3 rounded-lg bg-ink-950/60 border border-ink-700 text-xs text-muted font-mono whitespace-pre-wrap break-words">{reflowDetails(n.details)}</pre>
       )}
 
       <div className="flex items-center gap-2 mt-1">
