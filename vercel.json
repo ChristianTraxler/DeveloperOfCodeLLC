@@ -3,5 +3,11 @@
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/admin.webmanifest",
+      "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }]
+    }
   ]
 }
