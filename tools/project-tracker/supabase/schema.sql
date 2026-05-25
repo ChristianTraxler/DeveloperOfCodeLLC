@@ -10,6 +10,7 @@ create table if not exists projects (
   description text,
   category text not null default 'personal' check (category in ('client', 'personal')),
   status text not null default 'active' check (status in ('planning', 'active', 'paused', 'completed', 'archived')),
+  in_production boolean not null default false,
   client_name text,
   repo_url text,
   live_url text,

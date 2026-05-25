@@ -11,6 +11,7 @@ const EMPTY = {
   description: '',
   category: 'personal',
   status: 'planning',
+  in_production: false,
   client_name: '',
   repo_url: '',
   live_url: '',
@@ -99,6 +100,7 @@ export default function ProjectForm() {
       description: form.description || null,
       category: form.category,
       status: form.status,
+      in_production: form.in_production,
       client_name: form.client_name || null,
       repo_url: form.repo_url || null,
       live_url: form.live_url || null,
@@ -161,6 +163,32 @@ export default function ProjectForm() {
                 {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
+          </div>
+
+          <div>
+            <span className="text-xs font-mono uppercase tracking-wider text-muted mb-1.5 block">
+              Production
+            </span>
+            <button
+              type="button"
+              onClick={() => update({ in_production: !form.in_production })}
+              aria-pressed={form.in_production}
+              className={`inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border font-mono text-sm uppercase tracking-wider transition-all ${
+                form.in_production
+                  ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+                  : 'border-ink-600 text-muted hover:border-emerald-400/30 hover:text-emerald-300'
+              }`}
+            >
+              {form.in_production ? (
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-sonar motion-reduce:hidden" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400" />
+                </span>
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-ink-500" />
+              )}
+              {form.in_production ? 'In production · Live' : 'Mark as in production'}
+            </button>
           </div>
 
           {form.category === 'client' && (

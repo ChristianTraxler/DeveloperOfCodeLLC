@@ -40,11 +40,17 @@ export default {
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
+        // Like Tailwind's ping, but the ring fans out further (3.2x vs 2x).
+        'sonar': 'sonar 1.6s cubic-bezier(0, 0, 0.2, 1) infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        sonar: {
+          '0%': { transform: 'scale(1)', opacity: '0.75' },
+          '75%, 100%': { transform: 'scale(3.2)', opacity: '0' },
         },
       },
     },
