@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, Github, ExternalLink, Edit2, Trash2, Plus,
   Clock, Calendar, MessageSquare, CheckSquare, AlertTriangle,
-  Rocket, FileText, ChevronRight
+  Rocket, FileText, ChevronRight, Play, Pause, Square
 } from 'lucide-react'
 import { useProject } from '../hooks/useProjects'
 import { supabase } from '../lib/supabase'
 import StatusBadge, { CategoryBadge } from '../components/StatusBadge'
 import TechTag from '../components/TechTag'
+import { timerState, elapsedSeconds, secondsToHours, formatHMS } from '../lib/timer'
 
 export default function ProjectDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { project, tasks, timeEntries, notes, loading, refetch } = useProject(id)
+  const { project, tasks, timeEntries, notes, timer, loading, refetch, refetchTimer } = useProject(id)
 
   if (loading && !project) return <div className="text-muted font-mono">Loading…</div>
   if (!project) return <div className="text-muted">Project not found.</div>
@@ -128,7 +129,7 @@ export default function ProjectDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TaskList projectId={id} tasks={tasks} onChange={refetch} />
         <div className="space-y-6">
-          <TimeLog projectId={id} entries={timeEntries} onChange={refetch} />
+          <TimeLog projectId={id} entries={timeEntries} timer={timer} onChange={refetch} onTimerChange={refetchTimer} />
           <NotesTimeline projectId={id} notes={notes} onChange={refetch} />
         </div>
       </div>
@@ -223,10 +224,53 @@ function TaskList({ projectId, tasks, onChange }) {
 // ============================================================
 // Time tracking
 // ============================================================
-function TimeLog({ projectId, entries, onChange }) {
+function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
   const [hours, setHours] = useState('')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [now, setNow] = useState(() => Date.now())
+
+  const state = timerState(timer)
+
+  // Tick once a second only while running; frozen while paused or absent.
+  useEffect(() => {
+    if (state !== 'running') return
+    const handle = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(handle)
+  }, [state])
+
+  const startTimer = async () => {
+    await supabase.from('timers').insert({
+      project_id: projectId,
+      started_at: new Date().toISOString(),
+      accumulated_seconds: 0,
+    })
+    setNow(Date.now())
+    onTimerChange()
+  }
+
+  const pauseTimer = async () => {
+    await supabase.from('timers').update({
+      accumulated_seconds: elapsedSeconds(timer),
+      started_at: null,
+    }).eq('project_id', projectId)
+    onTimerChange()
+  }
+
+  const resumeTimer = async () => {
+    await supabase.from('timers').update({
+      started_at: new Date().toISOString(),
+    }).eq('project_id', projectId)
+    setNow(Date.now())
+    onTimerChange()
+  }
+
+  const stopTimer = async () => {
+    const total = elapsedSeconds(timer)
+    await supabase.from('timers').delete().eq('project_id', projectId)
+    setHours(String(secondsToHours(total)))
+    onTimerChange()
+  }
 
   const add = async (e) => {
     e.preventDefault()
@@ -255,6 +299,45 @@ function TimeLog({ projectId, entries, onChange }) {
         <Clock size={16} className="text-accent" />
         <h2 className="font-display font-bold text-bone">Time Log</h2>
       </div>
+
+      {/* Work timer */}
+      {state === 'none' ? (
+        <button
+          onClick={startTimer}
+          className="btn-secondary w-full flex items-center justify-center gap-2 mb-4"
+        >
+          <Play size={14} /> Start timer
+        </button>
+      ) : (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-ink-800/60 border border-ink-700">
+          <span className="font-mono text-xl font-bold text-bone tabular-nums">
+            {formatHMS(elapsedSeconds(timer, now))}
+          </span>
+          {state === 'running' ? (
+            <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-accent">
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" /> running
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-muted">
+              <Pause size={11} /> paused
+            </span>
+          )}
+          <div className="ml-auto flex gap-2">
+            {state === 'running' ? (
+              <button onClick={pauseTimer} className="btn-secondary !py-1.5 !px-3 flex items-center gap-1.5">
+                <Pause size={13} /> Pause
+              </button>
+            ) : (
+              <button onClick={resumeTimer} className="btn-secondary !py-1.5 !px-3 flex items-center gap-1.5">
+                <Play size={13} /> Resume
+              </button>
+            )}
+            <button onClick={stopTimer} className="btn-primary !py-1.5 !px-3 flex items-center gap-1.5">
+              <Square size={13} /> Stop
+            </button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={add} className="space-y-2 mb-4">
         <div className="grid grid-cols-2 gap-2">
