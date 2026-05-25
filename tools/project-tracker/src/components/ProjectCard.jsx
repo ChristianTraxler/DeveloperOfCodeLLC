@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Github, ExternalLink, Clock } from 'lucide-react'
-import StatusBadge, { CategoryBadge } from './StatusBadge'
+import StatusBadge, { CategoryBadge, LiveBadge } from './StatusBadge'
 import TechTag from './TechTag'
 
 export default function ProjectCard({ project }) {
@@ -37,7 +37,10 @@ export default function ProjectCard({ project }) {
             {project.name}
           </h3>
         </div>
-        <StatusBadge status={project.status} />
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <StatusBadge status={project.status} />
+          {project.in_production && <LiveBadge />}
+        </div>
       </div>
 
       {project.description && (
