@@ -52,21 +52,24 @@ export function useProject(id) {
   const [tasks, setTasks] = useState([])
   const [timeEntries, setTimeEntries] = useState([])
   const [notes, setNotes] = useState([])
+  const [timer, setTimer] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const refetch = useCallback(async () => {
     if (!id) return
     setLoading(true)
-    const [{ data: p }, { data: t }, { data: te }, { data: n }] = await Promise.all([
+    const [{ data: p }, { data: t }, { data: te }, { data: n }, { data: tm }] = await Promise.all([
       supabase.from('projects').select('*').eq('id', id).single(),
       supabase.from('tasks').select('*').eq('project_id', id).order('position'),
       supabase.from('time_entries').select('*').eq('project_id', id).order('logged_on', { ascending: false }),
       supabase.from('notes').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+      supabase.from('timers').select('*').eq('project_id', id).maybeSingle(),
     ])
     setProject(p)
     setTasks(t || [])
     setTimeEntries(te || [])
     setNotes(n || [])
+    setTimer(tm || null)
     setLoading(false)
   }, [id])
 
@@ -76,6 +79,13 @@ export function useProject(id) {
       .from('notes').select('*').eq('project_id', id)
       .order('created_at', { ascending: false })
     setNotes(data || [])
+  }, [id])
+
+  const refetchTimer = useCallback(async () => {
+    if (!id) return
+    const { data } = await supabase
+      .from('timers').select('*').eq('project_id', id).maybeSingle()
+    setTimer(data || null)
   }, [id])
 
   useEffect(() => {
@@ -97,5 +107,5 @@ export function useProject(id) {
     return () => { supabase.removeChannel(channel) }
   }, [id, refetchNotes])
 
-  return { project, tasks, timeEntries, notes, loading, refetch }
+  return { project, tasks, timeEntries, notes, timer, loading, refetch, refetchTimer }
 }
