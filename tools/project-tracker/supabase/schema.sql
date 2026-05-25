@@ -53,6 +53,14 @@ create table if not exists notes (
   created_at timestamptz not null default now()
 );
 
+-- Per-project work timer (at most one row per project)
+create table if not exists timers (
+  project_id uuid primary key references projects(id) on delete cascade,
+  started_at timestamptz,                       -- set while running; null while paused
+  accumulated_seconds int not null default 0,   -- banked from previous segments
+  created_at timestamptz not null default now()
+);
+
 -- Indexes
 create index if not exists idx_tasks_project on tasks(project_id, position);
 create index if not exists idx_time_project on time_entries(project_id, logged_on desc);
@@ -107,6 +115,7 @@ alter table projects enable row level security;
 alter table tasks enable row level security;
 alter table time_entries enable row level security;
 alter table notes enable row level security;
+alter table timers enable row level security;
 
 drop policy if exists "anon all projects" on projects;
 create policy "anon all projects" on projects for all using (true) with check (true);
@@ -119,6 +128,9 @@ create policy "anon all time" on time_entries for all using (true) with check (t
 
 drop policy if exists "anon all notes" on notes;
 create policy "anon all notes" on notes for all using (true) with check (true);
+
+drop policy if exists "anon all timers" on timers;
+create policy "anon all timers" on timers for all using (true) with check (true);
 
 -- Storage policies — allow anon upload/read on project-images bucket
 drop policy if exists "anon read project images" on storage.objects;
