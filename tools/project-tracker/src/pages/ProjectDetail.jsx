@@ -7,7 +7,8 @@ import {
 } from 'lucide-react'
 import { useProject } from '../hooks/useProjects'
 import { supabase } from '../lib/supabase'
-import StatusBadge, { CategoryBadge } from '../components/StatusBadge'
+import { groupNotesByMonth } from '../lib/changelog'
+import StatusBadge, { CategoryBadge, LiveBadge } from '../components/StatusBadge'
 import TechTag from '../components/TechTag'
 
 export default function ProjectDetail() {
@@ -48,6 +49,7 @@ export default function ProjectDetail() {
               <div className="flex items-center gap-2 mb-2">
                 <CategoryBadge category={project.category} />
                 <StatusBadge status={project.status} />
+                {project.in_production && <LiveBadge />}
                 {project.client_name && (
                   <span className="text-sm text-muted font-mono">· {project.client_name}</span>
                 )}
@@ -391,6 +393,8 @@ function NoteItem({ n, onRemove }) {
 function NotesTimeline({ projectId, notes, onChange }) {
   const [body, setBody] = useState('')
   const [kind, setKind] = useState('note')
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [openMonths, setOpenMonths] = useState(() => new Set())
 
   const add = async (e) => {
     e.preventDefault()
@@ -410,6 +414,23 @@ function NotesTimeline({ projectId, notes, onChange }) {
     await supabase.from('notes').delete().eq('id', id)
     onChange()
   }
+
+  // Current calendar month stays up top; everything older tucks into a
+  // collapsed Year › Month archive. The split is derived from each note's date,
+  // so notes move on their own when the month flips — see lib/changelog.js.
+  const { current, archived } = groupNotesByMonth(notes)
+  const archivedCount = archived.reduce(
+    (sum, y) => sum + y.months.reduce((s, m) => s + m.notes.length, 0),
+    0
+  )
+
+  const toggleMonth = (key) =>
+    setOpenMonths(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
 
   return (
     <div className="surface p-6">
@@ -438,11 +459,78 @@ function NotesTimeline({ projectId, notes, onChange }) {
       {notes.length === 0 ? (
         <p className="text-sm text-muted font-mono text-center py-3">No notes yet.</p>
       ) : (
-        <ul className="space-y-3 max-h-80 overflow-y-auto pr-1">
-          {notes.map(n => (
-            <NoteItem key={n.id} n={n} onRemove={remove} />
-          ))}
-        </ul>
+        <>
+          {/* Current month — always open */}
+          <div className="mb-4">
+            <h3 className="text-[11px] font-mono uppercase tracking-wider text-muted mb-2">
+              {current.label}
+            </h3>
+            {current.notes.length === 0 ? (
+              <p className="text-sm text-muted font-mono py-1">No notes this month yet.</p>
+            ) : (
+              <ul className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {current.notes.map(n => (
+                  <NoteItem key={n.id} n={n} onRemove={remove} />
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Archive — collapsed by default, grouped Year › Month */}
+          {archivedCount > 0 && (
+            <div className="border-t border-ink-700 pt-3">
+              <button
+                onClick={() => setArchiveOpen(o => !o)}
+                className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-muted hover:text-bone transition-colors"
+              >
+                <ChevronRight
+                  size={14}
+                  className={`transition-transform ${archiveOpen ? 'rotate-90' : ''}`}
+                />
+                Archived ({archivedCount})
+              </button>
+
+              {archiveOpen && (
+                <div className="mt-3 space-y-4 max-h-80 overflow-y-auto pr-1">
+                  {archived.map(yearGroup => (
+                    <div key={yearGroup.year}>
+                      <h4 className="text-[11px] font-mono tracking-wider text-muted/70 mb-1.5">
+                        {yearGroup.label}
+                      </h4>
+                      <div className="space-y-1.5 pl-1">
+                        {yearGroup.months.map(m => {
+                          const open = openMonths.has(m.key)
+                          return (
+                            <div key={m.key}>
+                              <button
+                                onClick={() => toggleMonth(m.key)}
+                                className="flex items-center gap-1.5 w-full text-left text-sm text-bone hover:text-accent transition-colors"
+                              >
+                                <ChevronRight
+                                  size={13}
+                                  className={`text-muted transition-transform ${open ? 'rotate-90' : ''}`}
+                                />
+                                <span>{m.label}</span>
+                                <span className="text-[10px] font-mono text-muted">({m.notes.length})</span>
+                              </button>
+                              {open && (
+                                <ul className="space-y-3 mt-2 mb-2 pl-3">
+                                  {m.notes.map(n => (
+                                    <NoteItem key={n.id} n={n} onRemove={remove} />
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
