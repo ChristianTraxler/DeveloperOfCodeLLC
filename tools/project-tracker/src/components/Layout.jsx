@@ -4,6 +4,7 @@ import { LayoutDashboard, FolderKanban, Plus, LayoutGrid, LogOut } from 'lucide-
 import { supabase } from '../lib/supabase'
 import { useRunningTimer } from '../hooks/useRunningTimer'
 import { elapsedSeconds, formatHMS } from '../lib/timer'
+import ScrollToTop from './ScrollToTop'
 
 export default function Layout({ children }) {
   const { pathname } = useLocation()
@@ -82,6 +83,8 @@ export default function Layout({ children }) {
       {/* Mobile/tablet only: floating pill so the running timer stays visible
           when the navbar version is hidden. */}
       <RunningTimerFloating running={running} />
+
+      <ScrollToTop />
 
       <footer className="border-t border-ink-700/40 mt-20 py-8 text-center text-xs text-muted font-mono">
         <p>
