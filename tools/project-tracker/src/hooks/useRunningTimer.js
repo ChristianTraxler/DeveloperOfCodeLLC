@@ -7,11 +7,17 @@ import { supabase } from '../lib/supabase'
 // from the project page. Paused timers are intentionally ignored — only an
 // actively-running clock surfaces here.
 //
-// Source of truth lives in Supabase. The hook fetches on mount and listens on
-// the `timers` channel via Realtime; on any change it refetches. Project name
-// is joined client-side from a separate lookup keyed by `project_id`.
+// Source of truth lives in Supabase. We refresh on three signals so the pill
+// stays in sync even when Realtime is unavailable (e.g. the timers table has
+// not yet been added to the supabase_realtime publication):
+//   1. Realtime postgres_changes on the timers table — primary, instant.
+//   2. A periodic poll every 15s — fallback when Realtime is off.
+//   3. visibilitychange — refresh the moment the user returns to the tab.
+// Project name is joined client-side from a separate lookup.
+const POLL_INTERVAL_MS = 15_000
+
 export function useRunningTimer() {
-  const [data, setData] = useState(null) // { projectId, name, startedAt }
+  const [data, setData] = useState(null) // { projectId, name, startedAt, accumulatedSeconds }
 
   const refetch = useCallback(async () => {
     const { data: rows } = await supabase
@@ -37,6 +43,8 @@ export function useRunningTimer() {
 
   useEffect(() => { refetch() }, [refetch])
 
+  // Realtime subscription — fires immediately when the timers row is
+  // inserted/updated/deleted, including from another tab.
   useEffect(() => {
     const channel = supabase
       .channel('running-timer')
@@ -47,6 +55,25 @@ export function useRunningTimer() {
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
+  }, [refetch])
+
+  // Polling fallback — covers the case where the timers table is not yet
+  // included in the supabase_realtime publication. 15s is a low enough
+  // interval that the pill never feels stale and a low enough query rate
+  // that it's effectively free.
+  useEffect(() => {
+    const id = setInterval(() => { refetch() }, POLL_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [refetch])
+
+  // Refresh as soon as the tab/app comes back into focus — most useful on
+  // mobile where iOS pauses background timers and sockets.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refetch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [refetch])
 
   return data
