@@ -274,9 +274,14 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
   const stopTimer = async () => {
     const totalSeconds = elapsedSeconds(timer)
     await supabase.from('timers').delete().eq('project_id', projectId)
+    // secondsToHours rounds to 2 dp, so very short sessions (< ~18s) round to
+    // 0 and would block save. Floor any positive session at the smallest
+    // representable amount so the user can always log what they tracked.
+    const rounded = secondsToHours(totalSeconds)
+    const hours = totalSeconds > 0 && rounded === 0 ? 0.01 : rounded
     setPending({
       totalSeconds,
-      hours: secondsToHours(totalSeconds),
+      hours,
       date: new Date().toISOString().slice(0, 10),
       note: '',
     })
@@ -386,7 +391,7 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
           the pending card already collects hours/date/note. */}
       {!pending && (
         <form onSubmit={add} className="space-y-2 mb-4">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="number"
               step="0.25"
@@ -471,7 +476,7 @@ function PendingSessionCard({ pending, setPending, onSave, onDiscard }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <input
           type="number"
           step="0.25"
