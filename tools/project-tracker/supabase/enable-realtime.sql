@@ -1,16 +1,24 @@
 -- =========================================================
--- Enable Supabase Realtime for the notes table, so the Tracker's
--- changelog updates live (no page refresh) when entries are added —
--- including from a git commit. Idempotent; safe to run repeatedly.
+-- Enable Supabase Realtime for tables the Tracker subscribes to:
+--   - notes:  changelog updates live when entries are added (incl. from a
+--             git commit).
+--   - timers: navbar/floating "currently tracking" pill stays in sync when
+--             the timer is started, paused, resumed, or stopped — even from
+--             another tab or device.
+-- Idempotent; safe to run repeatedly.
 -- =========================================================
 do $$
+declare
+  t text;
 begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime'
-      and schemaname = 'public'
-      and tablename = 'notes'
-  ) then
-    alter publication supabase_realtime add table notes;
-  end if;
+  foreach t in array array['notes', 'timers'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table %I', t);
+    end if;
+  end loop;
 end $$;
