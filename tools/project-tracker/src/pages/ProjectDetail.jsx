@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, Github, ExternalLink, Edit2, Trash2, Plus,
   Clock, Calendar, MessageSquare, CheckSquare, AlertTriangle,
-  Rocket, FileText, ChevronRight, Play, Pause, Square
+  Rocket, FileText, ChevronRight, Play, Pause, Square, Save, X
 } from 'lucide-react'
 import { useProject } from '../hooks/useProjects'
 import { supabase } from '../lib/supabase'
@@ -231,6 +231,10 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
   const [note, setNote] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [now, setNow] = useState(() => Date.now())
+  // Holds the elapsed seconds of a just-stopped timer until the user logs or
+  // discards it. Local-only — nothing in the DB carries this "ready to log"
+  // state, since the row was already deleted by Stop.
+  const [pending, setPending] = useState(null)
 
   const state = timerState(timer)
 
@@ -268,10 +272,39 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
   }
 
   const stopTimer = async () => {
-    const total = elapsedSeconds(timer)
+    const totalSeconds = elapsedSeconds(timer)
     await supabase.from('timers').delete().eq('project_id', projectId)
-    setHours(String(secondsToHours(total)))
+    setPending({
+      totalSeconds,
+      hours: secondsToHours(totalSeconds),
+      date: new Date().toISOString().slice(0, 10),
+      note: '',
+    })
     onTimerChange()
+  }
+
+  const savePending = async (e) => {
+    e.preventDefault()
+    if (!pending) return
+    const h = pending.hours
+    if (!h || h <= 0) {
+      // Nothing meaningful to save; just clear the pending card.
+      setPending(null)
+      return
+    }
+    await supabase.from('time_entries').insert({
+      project_id: projectId,
+      hours: h,
+      note: pending.note || null,
+      logged_on: pending.date,
+    })
+    setPending(null)
+    onChange()
+  }
+
+  const discardPending = () => {
+    if (!confirm('Discard this timed session without logging it?')) return
+    setPending(null)
   }
 
   const add = async (e) => {
@@ -302,8 +335,16 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
         <h2 className="font-display font-bold text-bone">Time Log</h2>
       </div>
 
-      {/* Work timer */}
-      {state === 'none' ? (
+      {/* Pending save: shown after Stop. Takes over the timer area until the
+          user logs or discards the session. */}
+      {pending ? (
+        <PendingSessionCard
+          pending={pending}
+          setPending={setPending}
+          onSave={savePending}
+          onDiscard={discardPending}
+        />
+      ) : state === 'none' ? (
         <button
           onClick={startTimer}
           className="btn-secondary w-full flex items-center justify-center gap-2 mb-4"
@@ -311,7 +352,7 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
           <Play size={14} /> Start timer
         </button>
       ) : (
-        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-ink-800/60 border border-ink-700">
+        <div className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3 rounded-lg bg-ink-800/60 border border-ink-700">
           <span className="font-mono text-xl font-bold text-bone tabular-nums">
             {formatHMS(elapsedSeconds(timer, now))}
           </span>
@@ -324,7 +365,7 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
               <Pause size={11} /> paused
             </span>
           )}
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
             {state === 'running' ? (
               <button onClick={pauseTimer} className="btn-secondary !py-1.5 !px-3 flex items-center gap-1.5">
                 <Pause size={13} /> Pause
@@ -341,27 +382,31 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
         </div>
       )}
 
-      <form onSubmit={add} className="space-y-2 mb-4">
-        <div className="grid grid-cols-2 gap-2">
+      {/* Manual time-entry form. Hidden while a pending session is showing —
+          the pending card already collects hours/date/note. */}
+      {!pending && (
+        <form onSubmit={add} className="space-y-2 mb-4">
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              step="0.25"
+              min="0"
+              value={hours}
+              onChange={e => setHours(e.target.value)}
+              placeholder="Hours"
+            />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          </div>
           <input
-            type="number"
-            step="0.25"
-            min="0"
-            value={hours}
-            onChange={e => setHours(e.target.value)}
-            placeholder="Hours"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="What did you work on? (optional)"
           />
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-        </div>
-        <input
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="What did you work on? (optional)"
-        />
-        <button type="submit" className="btn-primary w-full" disabled={!hours}>
-          Log time
-        </button>
-      </form>
+          <button type="submit" className="btn-primary w-full" disabled={!hours}>
+            Log time
+          </button>
+        </form>
+      )}
 
       {entries.length === 0 ? (
         <p className="text-sm text-muted font-mono text-center py-3">No time logged yet.</p>
@@ -387,6 +432,84 @@ function TimeLog({ projectId, entries, timer, onChange, onTimerChange }) {
         </ul>
       )}
     </div>
+  )
+}
+
+// Shown right after Stop. Keeps the elapsed time visible while the user fills
+// in an optional note and confirms the date, so logging never feels like the
+// timer "vanished". Log time -> writes a time_entries row; Discard -> drops it.
+function PendingSessionCard({ pending, setPending, onSave, onDiscard }) {
+  const noteRef = useRef(null)
+  // Focus the note input as soon as the card appears — the obvious next thing
+  // to do is describe what was worked on.
+  useEffect(() => {
+    if (noteRef.current) noteRef.current.focus()
+  }, [])
+
+  const update = (patch) => setPending(p => ({ ...p, ...patch }))
+
+  return (
+    <form
+      onSubmit={onSave}
+      className="mb-4 rounded-lg bg-ink-800/60 border border-accent/40 p-4 space-y-3"
+    >
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-accent" />
+          <span className="text-[10px] font-mono uppercase tracking-wider text-accent">
+            Session ready to log
+          </span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-lg font-bold text-bone tabular-nums">
+            {formatHMS(pending.totalSeconds)}
+          </span>
+          <span className="text-xs font-mono text-muted">→</span>
+          <span className="font-mono text-sm text-accent">
+            {pending.hours.toFixed(2)}h
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          type="number"
+          step="0.25"
+          min="0"
+          value={pending.hours}
+          onChange={e => update({ hours: parseFloat(e.target.value) || 0 })}
+          aria-label="Hours"
+        />
+        <input
+          type="date"
+          value={pending.date}
+          onChange={e => update({ date: e.target.value })}
+          aria-label="Date"
+        />
+      </div>
+      <input
+        ref={noteRef}
+        value={pending.note}
+        onChange={e => update({ note: e.target.value })}
+        placeholder="What did you work on? (optional)"
+      />
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={!pending.hours || pending.hours <= 0}
+          className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Save size={14} /> Log time
+        </button>
+        <button
+          type="button"
+          onClick={onDiscard}
+          className="btn-secondary flex items-center gap-2"
+        >
+          <X size={14} /> Discard
+        </button>
+      </div>
+    </form>
   )
 }
 
