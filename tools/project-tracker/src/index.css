@@ -94,6 +94,39 @@ input:focus, textarea:focus, select:focus {
   color: var(--text-muted);
 }
 
+/* iOS Safari renders <input type="date"> with centered text, hides the
+   calendar icon in dark mode, and gives no visual cue that the field is
+   tappable. Force a normal input look: left-aligned, fixed line height so
+   the box matches sibling inputs, and a visible picker indicator. */
+input[type="date"] {
+  text-align: left;
+  min-height: 44px;
+  line-height: 1.2;
+  -webkit-appearance: none;
+  appearance: none;
+  /* Calendar glyph at the right edge so it reads as a picker, not a label. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 38px;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+/* Hide the native indicator since we draw our own glyph; keep it tappable
+   by leaving the bare button covering the field with zero opacity. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* Checkbox styling */
 input[type="checkbox"] {
   appearance: none;
