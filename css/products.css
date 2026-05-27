@@ -394,6 +394,42 @@
     pointer-events: none;
 }
 
+/* Paired CTAs (More Info + Buy Now) */
+.product-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.product-cta-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+.product-cta-ghost:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+    color: var(--accent);
+}
+@container (max-width: 360px) {
+    .product-footer { flex-direction: column; align-items: stretch; gap: 14px; }
+    .product-actions { justify-content: space-between; }
+    .product-cta-ghost, .product-actions .product-cta { flex: 1; justify-content: center; }
+}
+
 /* ───────── CLOSING CTA ───────── */
 .products-cta-section {
     margin: 0 clamp(24px, 6vw, 80px) clamp(60px, 8vw, 120px);
