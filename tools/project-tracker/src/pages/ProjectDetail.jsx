@@ -40,8 +40,8 @@ export default function ProjectDetail() {
       {/* Header */}
       <div className="surface overflow-hidden">
         {project.hero_image_url && (
-          <div className="w-full h-56 overflow-hidden border-b border-ink-700">
-            <img src={project.hero_image_url} alt="" className="w-full h-full object-cover" />
+          <div className="w-full aspect-[2848/1144] overflow-hidden border-b border-ink-700 bg-ink-950">
+            <img src={project.hero_image_url} alt="" className="block w-full h-full object-cover object-top" />
           </div>
         )}
         <div className="p-6">

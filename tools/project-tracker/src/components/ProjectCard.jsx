@@ -16,11 +16,11 @@ export default function ProjectCard({ project }) {
       className="surface surface-hover p-5 block transition-all hover:shadow-glow group"
     >
       {project.hero_image_url && (
-        <div className="aspect-video -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-xl border-b border-ink-700">
+        <div className="aspect-video -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-xl border-b border-ink-700 bg-ink-950">
           <img
             src={project.hero_image_url}
             alt={project.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
           />
         </div>
       )}
