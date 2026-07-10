@@ -9,5 +9,8 @@
       "source": "/admin.webmanifest",
       "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }]
     }
+  ],
+  "crons": [
+    { "path": "/api/keep-alive", "schedule": "0 6 * * *" }
   ]
 }
