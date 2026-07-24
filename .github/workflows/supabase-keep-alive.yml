@@ -1,0 +1,68 @@
+name: Supabase keep-alive
+
+# Supabase pauses free-tier projects after 7 days of no activity. This workflow
+# pings the Supabase REST API directly, once a day, so the project never hits
+# that window. It runs on GitHub's infrastructure and does NOT depend on Vercel
+# deploys or the GitHub<->Vercel connection, which is why it's more reliable than
+# the Vercel Cron in vercel.json (kept in place as a redundant second pinger).
+#
+# Anon key / URL are PUBLIC by design (they already ship in api/keep-alive.mjs and
+# admin/supabase.js), so this works out of the box. To override without editing the
+# file, add repo secrets SUPABASE_URL / SUPABASE_ANON_KEY (Settings -> Secrets and
+# variables -> Actions).
+#
+# NOTE: GitHub disables scheduled workflows after 60 days of NO repo activity. This
+# repo commits well within that window, but if it ever goes quiet, re-enable it from
+# the Actions tab (or just push a commit).
+
+on:
+  schedule:
+    # 06:00 UTC daily. GitHub may delay scheduled runs under load; fine for a 7-day window.
+    - cron: "0 6 * * *"
+  # Lets you run it on demand from the Actions tab to test.
+  workflow_dispatch:
+
+# Avoid overlapping runs if a manual trigger lands near the scheduled one.
+concurrency:
+  group: supabase-keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Ping Supabase REST (keeps the project awake)
+        run: |
+          set -euo pipefail
+
+          # Public defaults (same as api/keep-alive.mjs); repo secrets override them.
+          URL="${SUPABASE_URL:-https://puidodfmebwqzbbtqjiu.supabase.co}"
+          KEY="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1aWRvZGZtZWJ3cXpiYnRxaml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Mjc5NDEsImV4cCI6MjA5NTIwMzk0MX0.5kl_QQ2r1zAOfQ1bjBAJ-HpfQbRYRTl7o40NljnDE_c}"
+
+          # A tiny real read against a real table = genuine database activity.
+          ENDPOINT="${URL}/rest/v1/projects?select=id&limit=1"
+
+          echo "Pinging ${URL} at $(date -u +%FT%TZ) ..."
+
+          # Capture just the HTTP status. --retry rides out transient network blips.
+          STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --retry 3 --retry-delay 5 --max-time 30 \
+            -H "apikey: ${KEY}" \
+            -H "Authorization: Bearer ${KEY}" \
+            "${ENDPOINT}")
+
+          echo "Supabase responded with HTTP ${STATUS}"
+
+          # Any HTTP response (even a 4xx from RLS) means Postgres was reached, which
+          # is all we need to reset the inactivity timer. Only a 5xx or a network
+          # failure (curl exits non-zero, caught by 'set -e') should fail the run.
+          if [ "${STATUS}" -ge 500 ]; then
+            echo "::error::Supabase returned a server error (${STATUS}); keep-alive may not have counted."
+            exit 1
+          fi
+
+          echo "Keep-alive succeeded."
