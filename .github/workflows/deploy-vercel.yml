@@ -1,0 +1,114 @@
+name: Deploy to Vercel
+
+# Fallback deploy path for when the native GitHub <-> Vercel Git integration is
+# not firing (pushes land on main but no deployment is ever created). This runs
+# the same three steps the Vercel Git integration would, but from GitHub's
+# infrastructure using a repo secret:
+#
+#   vercel pull   -> fetch project settings + production env
+#   vercel build  -> run `npm run build` (builds tools/project-tracker into admin/tracker)
+#   vercel deploy --prebuilt --prod
+#
+# SETUP (one time):
+#   1. Create a TEAM-scoped token at https://vercel.com/account/settings/tokens
+#      Scope must be the "Developer Of Code LLC's projects" team / All Projects.
+#      A PROJECT-scoped token resolves no user and fails with "User not found".
+#   2. Store it: gh secret set VERCEL_TOKEN --repo ChristianTraxler/DeveloperOfCodeLLC
+#
+# NOTE: if the native Git integration is ever reconnected in the Vercel dashboard,
+# disable this workflow (or delete it) so a single push doesn't deploy twice.
+
+on:
+  push:
+    branches: [main]
+  # Lets you redeploy on demand from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+# One production deploy at a time; queue rather than cancel so no push is skipped.
+concurrency:
+  group: vercel-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Not secrets — these identify the project, same values as .vercel/project.json
+      # (which is gitignored, so `vercel pull` needs them from the environment).
+      VERCEL_ORG_ID: team_ZHrqgA7Yqy4Sytp7oFx7qgqx
+      VERCEL_PROJECT_ID: prj_PMnFzx19S17fTGw2YHYv5fIs6hoV
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Fail early if the token is missing or not team-scoped
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "::error::VERCEL_TOKEN secret is not set. See the SETUP notes at the top of this file."
+            exit 1
+          fi
+          # A project-scoped token resolves no user here; a team-scoped one prints the username.
+          vercel whoami --token="$VERCEL_TOKEN"
+
+      - name: Pull production project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy prebuilt output
+        id: deploy
+        run: |
+          set -euo pipefail
+          # Deploy from a copy of the build output, NOT the checkout. A deployment
+          # made from a directory carrying git commit metadata is rejected with
+          # "commit email could not be matched to a GitHub account" whenever the
+          # Vercel project has no live Git connection — which is exactly the case
+          # this workflow exists to work around.
+          DEPLOY_DIR="$RUNNER_TEMP/vercel-deploy"
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+          cp -R .vercel "$DEPLOY_DIR/.vercel"
+
+          cd "$DEPLOY_DIR"
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "Deployed to: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the deployment is READY
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          # A green workflow with a BLOCKED deployment is still a failed deploy,
+          # so assert the real state rather than trusting the exit code above.
+          url="$DEPLOY_URL"
+          state=$(vercel inspect "$url" --token="$VERCEL_TOKEN" 2>&1 \
+                  | grep -oE 'status[[:space:]]+● [A-Za-z]+' | awk '{print $NF}')
+          echo "Deployment state: ${state:-unknown}"
+          if [ "$state" != "Ready" ]; then
+            echo "::error::Deployment did not reach READY (state: ${state:-unknown}) — $url"
+            exit 1
+          fi
+          echo "✅ $url is READY"
+
+      - name: Summary
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          {
+            echo "### Vercel production deploy"
+            echo ""
+            echo "- Deployment: $DEPLOY_URL"
+            echo "- Live: https://developerofcode.com"
+          } >> "$GITHUB_STEP_SUMMARY"
