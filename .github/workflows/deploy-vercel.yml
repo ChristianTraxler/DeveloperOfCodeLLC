@@ -14,6 +14,16 @@ name: Deploy to Vercel
 #      Scope must be the "Developer Of Code LLC's projects" team / All Projects.
 #      A PROJECT-scoped token resolves no user and fails with "User not found".
 #   2. Store it: gh secret set VERCEL_TOKEN --repo ChristianTraxler/DeveloperOfCodeLLC
+#   3. Store the tracker's Supabase values as repo secrets as well:
+#        gh secret set VITE_SUPABASE_URL      --repo ChristianTraxler/DeveloperOfCodeLLC
+#        gh secret set VITE_SUPABASE_ANON_KEY --repo ChristianTraxler/DeveloperOfCodeLLC
+#      Vite inlines VITE_* into the bundle at build time. On Vercel these two are
+#      Sensitive (the team policy forces every env var to be), and Sensitive values
+#      only decrypt inside Vercel's own build infra — on this runner `vercel pull`
+#      writes them as the literal "[SENSITIVE]", which gets baked into the tracker
+#      bundle and crashes it on load (blank page at /admin/tracker/). `vercel build`
+#      loads the pulled file with dotenv, which never overrides a key already in the
+#      environment, so the job-level env below takes precedence.
 #
 # NOTE: if the native Git integration is ever reconnected in the Vercel dashboard,
 # disable this workflow (or delete it) so a single push doesn't deploy twice.
@@ -35,6 +45,10 @@ jobs:
     timeout-minutes: 20
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Baked into the tracker bundle by Vite — see SETUP step 3 for why these
+      # can't come from `vercel pull` on this runner.
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       # Not secrets — these identify the project, same values as .vercel/project.json
       # (which is gitignored, so `vercel pull` needs them from the environment).
       VERCEL_ORG_ID: team_ZHrqgA7Yqy4Sytp7oFx7qgqx
@@ -50,13 +64,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Fail early if the token is missing or not team-scoped
+      - name: Fail early if a secret is missing or the token is not team-scoped
         run: |
           set -euo pipefail
-          if [ -z "${VERCEL_TOKEN:-}" ]; then
-            echo "::error::VERCEL_TOKEN secret is not set. See the SETUP notes at the top of this file."
-            exit 1
-          fi
+          for name in VERCEL_TOKEN VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::$name secret is not set. See the SETUP notes at the top of this file."
+              exit 1
+            fi
+          done
           # A project-scoped token resolves no user here; a team-scoped one prints the username.
           vercel whoami --token="$VERCEL_TOKEN"
 
