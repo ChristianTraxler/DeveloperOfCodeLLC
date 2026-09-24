@@ -1264,6 +1264,74 @@ a.service-card * {
 }
 
 /* ═══════════════════════════════════════════
+   STATUS BADGE (footer)
+   Injected by js/status-badge.js; state comes from /api/status.
+   ═══════════════════════════════════════════ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    margin-left: 8px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.status-badge:hover,
+.status-badge:focus-visible {
+    color: var(--text-primary);
+    border-color: var(--status-color, var(--text-secondary));
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.status-badge:focus-visible {
+    box-shadow: 0 0 0 2px var(--accent-glow-strong);
+}
+
+.status-badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--status-color, var(--text-muted));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color, var(--text-muted)) 22%, transparent);
+}
+
+/* The dot's colour is the only thing that changes per state; the accessible
+   name on the link carries the same information in words. */
+.status-badge[data-state="operational"] { --status-color: #3fb950; }
+.status-badge[data-state="degraded"]    { --status-color: #d29922; }
+.status-badge[data-state="downtime"]    { --status-color: #f85149; }
+.status-badge[data-state="maintenance"] { --status-color: #58a6ff; }
+.status-badge[data-state="unknown"]     { --status-color: var(--text-muted); }
+
+/* Only a live problem pulses — a steady green dot shouldn't nag. */
+.status-badge[data-state="degraded"] .status-badge-dot,
+.status-badge[data-state="downtime"] .status-badge-dot {
+    animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color) 22%, transparent); }
+    50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-color) 8%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-badge { transition: none; }
+    .status-badge:hover,
+    .status-badge:focus-visible { transform: none; }
+    .status-badge-dot { animation: none; }
+}
+
+/* ═══════════════════════════════════════════
    SCROLL REVEAL ANIMATIONS
    ═══════════════════════════════════════════ */
 .reveal {
