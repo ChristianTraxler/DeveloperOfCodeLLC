@@ -1264,15 +1264,17 @@ a.service-card * {
 }
 
 /* ═══════════════════════════════════════════
-   STATUS BADGE (footer)
+   STATUS BADGE (sidebar)
    Injected by js/status-badge.js; state comes from /api/status.
    ═══════════════════════════════════════════ */
 .status-badge {
-    display: inline-flex;
+    /* Last thing in the sidebar, centered on its own row. The auto side
+       margins centre the pill without stretching it to the full width. */
+    display: flex;
+    width: fit-content;
+    margin: 14px auto 0;
     align-items: center;
     gap: 7px;
-    margin-top: 12px;
-    margin-left: 8px;
     padding: 5px 12px;
     border: 1px solid var(--border);
     border-radius: 999px;
