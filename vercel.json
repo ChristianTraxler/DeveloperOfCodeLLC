@@ -1,8 +1,19 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
   "buildCommand": "npm run build",
-  "outputDirectory": ".",
+  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" }
+  ],
+  "redirects": [
+    { "source": "/relay-solo.html", "destination": "/notify.html?product=Relay%20Solo", "permanent": true },
+    { "source": "/habit-tracker.html", "destination": "/products.html", "permanent": true },
+    { "source": "/wedding-planner.html", "destination": "/products.html", "permanent": true },
+    { "source": "/quiet-journal.html", "destination": "/products.html", "permanent": true },
+    { "source": "/products-preview.html", "destination": "/products.html", "permanent": true },
+    { "source": "/index-dark.html", "destination": "/", "permanent": true },
+    { "source": "/v10-terminal-branded.html", "destination": "/", "permanent": true }
   ],
   "headers": [
     {

@@ -1,0 +1,8 @@
+{
+  "name": "developerofcode-site",
+  "private": true,
+  "description": "Developer Of Code, LLC — static site plus the admin tools hub.",
+  "scripts": {
+    "build": "cd tools/project-tracker && npm install --include=dev && npm run build && rm -rf node_modules"
+  }
+}

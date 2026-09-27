@@ -88,7 +88,7 @@ One origin → one Supabase session → sign in once, everything unlocks.
 ## Local preview of the whole thing
 
 ```bash
-npm run build            # builds the Tracker into admin/tracker/
-npx serve .              # or any static server at the repo root
-# visit http://localhost:3000/admin/login.html
+npm run build            # builds the Tracker into public/admin/tracker/, then the site into dist/
+npm run preview          # serves dist/ (the site plus /admin) locally
+# visit http://localhost:4173/admin/login.html
 ```

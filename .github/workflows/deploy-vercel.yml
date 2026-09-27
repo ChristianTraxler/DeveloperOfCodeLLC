@@ -6,7 +6,7 @@ name: Deploy to Vercel
 # infrastructure using a repo secret:
 #
 #   vercel pull   -> fetch project settings + production env
-#   vercel build  -> run `npm run build` (builds tools/project-tracker into admin/tracker)
+#   vercel build  -> run `npm run build` (builds the Tracker into public/admin/tracker, then the Vite site into dist/)
 #   vercel deploy --prebuilt --prod
 #
 # SETUP (one time):

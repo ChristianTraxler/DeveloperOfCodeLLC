@@ -5,8 +5,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// Repo root — the main static site lives here (admin/login.html, js/, img/, …).
-const siteRoot = path.resolve(__dirname, '../..')
+// The main site's static files (admin/login.html, js/, img/, …) live in the repo's public/ folder.
+const siteRoot = path.resolve(__dirname, '../../public')
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -64,13 +64,13 @@ function serveStaticSite() {
 }
 
 // Served under /admin/tracker on the main site. `base` makes asset URLs
-// resolve there; `outDir` writes the build into the main site's admin/tracker
-// folder so Vercel serves it alongside the static pages.
+// resolve there; `outDir` writes the build into the main site's public/admin/tracker
+// folder, which the site's Vite build copies into dist/ untouched.
 export default defineConfig({
   base: '/admin/tracker/',
   plugins: [react(), serveStaticSite()],
   build: {
-    outDir: '../../admin/tracker',
+    outDir: '../../public/admin/tracker',
     emptyOutDir: true,
   },
 })
