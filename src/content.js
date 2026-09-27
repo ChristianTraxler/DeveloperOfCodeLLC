@@ -19,9 +19,9 @@ import { pages } from './site.js'
 export const images = { heroDesk, heroMob, lake, door, logo, signature }
 
 export const pricing = {
-  base: '$1,250',
+  base: '$600',
   premium: '$2,500',
-  note: 'Projects start around $1,250, with premium custom builds from $2,500.',
+  note: 'Projects start around $600, with most landing between $1,200 and $2,200, and premium custom builds from $2,500.',
 }
 
 export const links = {
