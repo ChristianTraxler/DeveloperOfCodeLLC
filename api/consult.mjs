@@ -60,7 +60,16 @@ async function sendEmail(apiKey, payload) {
 }
 
 function ownerHtml(request) {
-  const when = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+  // Eastern time; the zone name switches between EDT and EST with daylight saving.
+  const when = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
   const rows = FIELDS
     .filter(([key]) => request[key])
     .map(([key, label]) => `<tr><td style="color:#666666;vertical-align:top;white-space:nowrap;">${label}</td><td style="font-weight:600;white-space:pre-wrap;">${escapeHtml(request[key])}</td></tr>`)
