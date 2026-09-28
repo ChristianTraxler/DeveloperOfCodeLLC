@@ -26,7 +26,7 @@ export const pricing = {
 
 export const links = {
   intake: pages.intake,
-  booking: 'https://squareup.com/appointments/book/qc33nk6zsmcyob/LPPR26E8Q19RH/start',
+  booking: pages.consult,
   shop: pages.products,
   support: 'https://support.developerofcode.com',
   status: 'https://status.developerofcode.com',

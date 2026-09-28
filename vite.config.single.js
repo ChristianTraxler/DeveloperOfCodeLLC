@@ -17,7 +17,7 @@ const inlineIcons = () => ({
 })
 
 // One self-contained HTML file per page, with every script, style, font, and image inlined.
-// scripts/build-single.mjs runs this once per page with the mode single-index, single-intake, single-products, or single-notify.
+// scripts/build-single.mjs runs this once per page with the mode single-index, single-intake, single-products, single-notify, or single-consult.
 export default defineConfig(({ mode }) => {
   const name = mode.replace(/^single-/, '') || 'index'
   return {

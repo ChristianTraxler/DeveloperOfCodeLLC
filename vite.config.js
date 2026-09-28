@@ -22,6 +22,7 @@ export default defineConfig({
         intake: page('./intake.html'),
         products: page('./products.html'),
         notify: page('./notify.html'),
+        consult: page('./consult.html'),
       },
     },
   },

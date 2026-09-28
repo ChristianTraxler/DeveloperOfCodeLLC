@@ -1,4 +1,4 @@
-// Builds dist-single/index.html, intake.html, products.html, and notify.html, each fully self-contained.
+// Builds dist-single/index.html, intake.html, products.html, notify.html, and consult.html, each fully self-contained.
 import { build } from 'vite'
 import { rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -8,7 +8,7 @@ const configFile = fileURLToPath(new URL('../vite.config.single.js', import.meta
 
 rmSync(new URL('../dist-single', import.meta.url), { recursive: true, force: true })
 
-for (const name of ['index', 'intake', 'products', 'notify']) {
+for (const name of ['index', 'intake', 'products', 'notify', 'consult']) {
   await build({ root, configFile, mode: `single-${name}`, logLevel: 'warn' })
   console.log(`built dist-single/${name}.html`)
 }

@@ -8,9 +8,10 @@ const previewUrls = {
   intake: 'https://claude.ai/artifact/4Va1gTXTLCtHJypsKVxdkF',
   products: 'https://claude.ai/artifact/Vsg7YabMwTcjNDhnG1jRdv',
   notify: 'https://claude.ai/artifact/MNkcrANZC9SVa8TWKwHoHu',
+  consult: '/consult.html',
 }
 
-const siteUrls = { home: '/', intake: '/intake.html', products: '/products.html', notify: '/notify.html' }
+const siteUrls = { home: '/', intake: '/intake.html', products: '/products.html', notify: '/notify.html', consult: '/consult.html' }
 
 export const pages = PREVIEW ? previewUrls : siteUrls
 
