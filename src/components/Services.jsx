@@ -24,8 +24,7 @@ export default function Services() {
           ))}
         </ul>
         <p className="t-small mt-9 max-w-[44rem] text-muted">
-          Need photos, a logo, or help with the words? Logo design, copywriting, and video production are available
-          too, and photography comes from my sister studio,{' '}
+          Need photos? Photography comes from my sister studio,{' '}
           <ExtLink href={links.photoscapes} className="u-link text-fg">
             Photoscapes Photography
           </ExtLink>

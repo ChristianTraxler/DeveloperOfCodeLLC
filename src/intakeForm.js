@@ -136,7 +136,7 @@ export const sections = [
       },
       {
         kind: 'chips', name: 'Services Needed', label: 'Where would you like help?', hint: 'Choose all that apply.',
-        options: opts(['Logo design', 'Copywriting', 'Professional photography', 'Stock images', 'Video production', 'Content strategy']),
+        options: opts(['Professional photography', 'Stock images', 'Content strategy']),
       },
     ],
   },
