@@ -221,8 +221,21 @@ export function withSpaFallback(files) {
   return out;
 }
 
+// Every VITE_* value the source reads via import.meta.env. Vite's built-ins (BASE_URL,
+// MODE, DEV, PROD) are not VITE_-prefixed, so they are never reported.
+const ENV_SCAN_PATH = /^(src\/.*\.(jsx?|tsx?|vue|svelte)|[^/]+\.html|vite\.config\.[cm]?[jt]s)$/;
+export function findEnvUsage(files) {
+  const used = new Set();
+  for (const [path, data] of files) {
+    if (!ENV_SCAN_PATH.test(path)) continue;
+    for (const match of text(data).matchAll(/import\.meta\.env\.(VITE_[A-Z0-9_]+)/g)) used.add(match[1]);
+  }
+  return [...used].sort();
+}
+
 // Full pipeline: zip bytes in, deployable files plus build settings out.
-export function prepareDemo(bytes, slug) {
+// providedEnv: values typed in the upload form, used only to decide what is still missing.
+export function prepareDemo(bytes, slug, { providedEnv = {} } = {}) {
   const slugError = validateSlug(slug);
   if (slugError) throw new DemoError(slugError);
 
@@ -241,6 +254,11 @@ export function prepareDemo(bytes, slug) {
     if (!deps.vite) throw new DemoError('This does not look like a Vite project (no "vite" in package.json). Only Vite projects are supported.');
 
     const env = collectEnv(files);
+    const usedEnv = findEnvUsage(files);
+    const missingEnv = usedEnv.filter((key) => !(key in env) && !(key in providedEnv));
+    if (missingEnv.length) {
+      warnings.push(`The code uses ${missingEnv.join(', ')} but no value was provided, so parts of the demo may not work. Add ${missingEnv.length === 1 ? 'it' : 'them'} under Env vars and rebuild.`);
+    }
     for (const name of ENV_FILES) files.delete(name);
     const { command, warning } = buildCommandFor(pkg, slug);
     if (warning) warnings.push(warning);
@@ -249,6 +267,8 @@ export function prepareDemo(bytes, slug) {
       kind,
       files: withSpaFallback(files),
       env,
+      usedEnv,
+      missingEnv,
       warnings,
       settings: { framework: 'vite', installCommand: 'npm install', buildCommand: command, outputDirectory: 'dist' },
     };

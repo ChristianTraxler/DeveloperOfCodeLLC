@@ -136,7 +136,8 @@
   details.env summary::after { content: '+'; font-family: var(--font-display); color: var(--accent); font-size: 1.1rem; }
   details.env[open] summary::after { content: '\2212'; }
   .env-body { padding: 0 0.9rem 0.9rem; }
-  .env-row { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .env-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 0.4rem 0.5rem; margin-bottom: 0.75rem; }
+  .env-row input:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
   .env-row input { font-size: 0.9rem; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
   .icon-btn { width: 44px; min-height: 46px; display: grid; place-items: center; border-radius: 9px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
   .icon-btn:hover { color: var(--danger); border-color: rgba(255, 92, 92, 0.4); }
@@ -172,6 +173,8 @@
   .notice.error { color: #ffb4b4; background: rgba(255, 92, 92, 0.07); border: 1px solid rgba(255, 92, 92, 0.3); }
   .notice.ok { color: #b6f0c0; background: rgba(63, 185, 80, 0.07); border: 1px solid rgba(63, 185, 80, 0.3); }
   .notice ul { padding-left: 1.1rem; margin-top: 0.35rem; }
+  #envCheck .notice { margin-top: 0.6rem; }
+  .notice code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.8rem; }
   .notice li + li { margin-top: 0.35rem; }
   .notice strong { font-family: var(--font-display); font-weight: 600; }
   .notice a { color: inherit; }
@@ -222,6 +225,8 @@
     main { padding: 2.5rem 1.5rem 5rem; }
     .page-title { font-size: 2.1rem; }
     .panel { padding: 1.6rem; }
+    .env-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; margin-bottom: 0.5rem; }
+    .env-row input:nth-child(2) { grid-column: auto; grid-row: auto; }
     .demo-top { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
     .badges { order: 0; justify-content: flex-end; flex: none; max-width: 45%; }
     #scrollTop { right: 1.5rem; bottom: 1.5rem; }
@@ -276,6 +281,7 @@
               </div>
               <p class="hint" id="zipHint">The project folder (without <code>node_modules</code>) or its built <code>dist</code> folder. Up to 50 MB.</p>
               <p class="field-error" id="zipError" role="alert"></p>
+              <div id="envCheck" aria-live="polite" hidden></div>
             </div>
 
             <div class="field">

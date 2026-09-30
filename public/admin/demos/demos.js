@@ -119,13 +119,15 @@ function setFile(next) {
   $('dropTitle').textContent = 'Choose a zip';
   $('dropSub').textContent = 'or drop it here';
   setFieldError($('zip'), $('zipError'), '');
-  if (!next) return;
+  if (!next) { checkEnv(null); return; }
 
-  if (!/\.zip$/i.test(next.name)) return setFieldError($('zip'), $('zipError'), 'That is not a .zip file.');
+  if (!/\.zip$/i.test(next.name)) { checkEnv(null); return setFieldError($('zip'), $('zipError'), 'That is not a .zip file.'); }
   if (next.size > MAX_ZIP_BYTES) {
+    checkEnv(null);
     return setFieldError($('zip'), $('zipError'), `That zip is ${formatBytes(next.size)}. The limit is 50 MB, so leave node_modules out.`);
   }
   file = next;
+  checkEnv(next);
   drop.classList.add('has-file');
   $('dropTitle').textContent = next.name;
   $('dropSub').textContent = `${formatBytes(next.size)} · tap to change`;
@@ -143,6 +145,103 @@ const drop = $('drop');
 ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('dragging'); }));
 ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, () => drop.classList.remove('dragging')));
 drop.addEventListener('drop', (e) => { e.preventDefault(); setFile(e.dataTransfer.files[0]); });
+
+// ── Env check (runs on the phone before anything uploads) ──────────────────
+// Mirrors findEnvUsage in api/_lib/demos-core.mjs; the server runs the same check as a backstop.
+
+const ENV_SCAN = /(^|\/)(package\.json|\.env(\.local|\.production|\.production\.local)?|[^/]+\.html|vite\.config\.[cm]?[jt]s)$|(^|\/)src\/.+\.(jsx?|tsx?|vue|svelte)$/;
+let envNeeds = { used: [], fromZip: [] };
+let scanToken = 0;
+
+function parseEnvKeys(source) {
+  const keys = [];
+  for (const line of source.split(/\r?\n/)) {
+    const m = /^\s*(?:export\s+)?(VITE_[A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
+    if (m && m[2].trim()) keys.push(m[1]);
+  }
+  return keys;
+}
+
+async function scanZip(blob) {
+  const { unzipSync, strFromU8 } = await import('https://esm.sh/fflate@0.8.3');
+  const entries = unzipSync(new Uint8Array(await blob.arrayBuffer()), {
+    filter: (f) => !/(^|\/)(node_modules|dist|\.git|__MACOSX)\//.test(f.name) && ENV_SCAN.test(f.name),
+  });
+  const names = Object.keys(entries);
+  // The project root is wherever the shallowest package.json sits (zips often add a wrapper folder).
+  const pkg = names.filter((n) => /(^|\/)package\.json$/.test(n)).sort((a, b) => a.split('/').length - b.split('/').length)[0];
+  if (!pkg) return { kind: 'built', used: [], fromZip: [] };
+
+  const root = pkg.slice(0, -'package.json'.length);
+  const used = new Set();
+  const fromZip = new Set();
+  for (const name of names) {
+    if (!name.startsWith(root)) continue;
+    const rel = name.slice(root.length);
+    const body = strFromU8(entries[name]);
+    if (/^\.env/.test(rel)) parseEnvKeys(body).forEach((k) => fromZip.add(k));
+    else if (!rel.includes('/') || rel.startsWith('src/')) {
+      for (const m of body.matchAll(/import\.meta\.env\.(VITE_[A-Z0-9_]+)/g)) used.add(m[1]);
+    }
+  }
+  return { kind: 'source', used: [...used].sort(), fromZip: [...fromZip] };
+}
+
+const typedKeys = () => Object.entries(readEnv()).filter(([, v]) => v.trim()).map(([k]) => k);
+const stillMissing = () => envNeeds.used.filter((k) => !envNeeds.fromZip.includes(k) && !typedKeys().includes(k));
+
+function renderEnvCheck() {
+  const box = $('envCheck');
+  const { used, fromZip, kind } = envNeeds;
+  if (!kind || kind === 'built') {
+    box.hidden = kind !== 'built';
+    box.replaceChildren(kind === 'built' ? el('div', { class: 'notice ok' }, 'Built site. Env values are already baked in, so none are needed.') : '');
+    return;
+  }
+  const missing = stillMissing();
+  const covered = used.filter((k) => !missing.includes(k));
+  const code = (keys) => keys.flatMap((k, i) => [i ? ', ' : '', el('code', {}, k)]);
+  box.hidden = false;
+  if (!used.length) {
+    box.replaceChildren(el('div', { class: 'notice ok' }, 'This project does not read any VITE_ env values. Nothing to add.'));
+  } else if (!missing.length) {
+    box.replaceChildren(el('div', { class: 'notice ok' }, 'All env values are covered: ', ...code(covered), '.'));
+  } else {
+    box.replaceChildren(el('div', { class: 'notice warn' },
+      el('strong', {}, missing.length === 1 ? 'Needs 1 env value' : `Needs ${missing.length} env values`),
+      el('div', {}, 'Add a value for ', ...code(missing), ' under Env vars below, or those parts of the demo will not work.'),
+      covered.length ? el('div', { style: 'margin-top:0.35rem' }, 'Already covered: ', ...code(covered), '.') : null));
+  }
+}
+
+async function checkEnv(blob) {
+  const token = ++scanToken;
+  envNeeds = { used: [], fromZip: [] };
+  // Drop empty rows added for a previous zip; keep anything typed by hand.
+  [...$('envRows').children].forEach((row) => {
+    if (row.dataset.auto && !row.querySelectorAll('input')[1].value.trim()) row.remove();
+  });
+  if (!blob) { renderEnvCheck(); updateEnvSummary(); return; }
+
+  $('envCheck').hidden = false;
+  $('envCheck').replaceChildren(el('p', { class: 'hint' }, 'Checking which env values this project needs…'));
+  try {
+    const result = await scanZip(blob);
+    if (token !== scanToken) return;
+    envNeeds = result;
+    const missing = stillMissing();
+    const present = Object.keys(readEnv());
+    missing.filter((k) => !present.includes(k)).forEach((k) => { addEnvRow(k).dataset.auto = '1'; });
+    if (missing.length) $('envDetails').open = true;
+  } catch {
+    if (token !== scanToken) return;
+    envNeeds = { used: [], fromZip: [] };
+    $('envCheck').replaceChildren(el('p', { class: 'hint' }, 'Could not read the zip here. The server will still check it after upload.'));
+    return;
+  }
+  renderEnvCheck();
+  updateEnvSummary();
+}
 
 // Env var rows
 function addEnvRow(key = '', value = '') {
@@ -164,8 +263,10 @@ function readEnv() {
   return env;
 }
 function updateEnvSummary() {
-  const n = Object.keys(readEnv()).length;
-  $('envSummary').textContent = n ? `(${n} set)` : '(optional)';
+  const filled = typedKeys().length;
+  const needed = envNeeds.kind === 'source' ? stillMissing().length : 0;
+  $('envSummary').textContent = needed ? `(${needed} needed)` : filled ? `(${filled} set)` : '(optional)';
+  if (envNeeds.kind === 'source') renderEnvCheck();
 }
 $('addEnv').addEventListener('click', () => addEnvRow().querySelector('input').focus());
 
@@ -193,6 +294,8 @@ function resetForm() {
   setFile(null);
   slugTouched = false;
   $('envRows').replaceChildren();
+  envNeeds = { used: [], fromZip: [] };
+  $('envCheck').hidden = true;
   updateEnvSummary();
   $('nameCount').textContent = '0/80';
   $('descCount').textContent = '0/160';
@@ -274,6 +377,13 @@ $('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('formMsg').textContent = '';
   if (!validate()) return;
+
+  const missing = stillMissing();
+  if (missing.length && !confirm(`${missing.join(', ')} ${missing.length === 1 ? 'has' : 'have'} no value, so parts of the demo may not work. Publish anyway?`)) {
+    $('envDetails').open = true;
+    $('envRows').querySelector('[data-auto] input:last-of-type')?.focus();
+    return;
+  }
 
   const slug = slugEl.value;
   const payload = { slug, name: nameEl.value.trim(), description: descEl.value.trim(), concept: $('concept').checked, env: readEnv() };

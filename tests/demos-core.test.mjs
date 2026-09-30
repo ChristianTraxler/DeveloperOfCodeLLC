@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { zipSync, strToU8 } from 'fflate';
 import {
-  DemoError, LIMITS, collectEnv, buildCommandFor, detectKind, parseEnv, prepareDemo,
+  DemoError, LIMITS, collectEnv, findEnvUsage, buildCommandFor, detectKind, parseEnv, prepareDemo,
   readZip, rewriteBuiltBase, stripWrappers, toVercelFiles, validateSlug, withSpaFallback,
 } from '../api/_lib/demos-core.mjs';
 
@@ -143,4 +143,31 @@ test('toVercelFiles hashes each file with sha1', () => {
   const { manifest, blobs } = toVercelFiles(files({ 'a.txt': 'hello' }));
   assert.deepEqual(manifest, [{ file: 'a.txt', sha: 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d', size: 5 }]);
   assert.equal(blobs.size, 1);
+});
+
+test('findEnvUsage lists VITE_ keys the source reads, ignoring built-ins and non-source files', () => {
+  const used = findEnvUsage(files({
+    'src/lib/supabase.js': 'createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY)',
+    'src/App.tsx': 'const base = import.meta.env.BASE_URL; const k = import.meta.env.VITE_SUPABASE_URL;',
+    'vite.config.ts': 'import.meta.env.VITE_ANALYTICS_ID',
+    'README.md': 'import.meta.env.VITE_DOCS_ONLY',
+    'scripts/seed.js': 'import.meta.env.VITE_NOT_SCANNED',
+  }));
+  assert.deepEqual(used, ['VITE_ANALYTICS_ID', 'VITE_SUPABASE_ANON_KEY', 'VITE_SUPABASE_URL']);
+});
+
+test('prepareDemo warns only about env values that are still missing', () => {
+  const source = {
+    'package.json': PKG,
+    'src/main.js': 'import.meta.env.VITE_A; import.meta.env.VITE_B; import.meta.env.VITE_C;',
+    '.env': 'VITE_A=from-zip',
+  };
+  const out = prepareDemo(zip(source), 'app', { providedEnv: { VITE_B: 'typed' } });
+  assert.deepEqual(out.usedEnv, ['VITE_A', 'VITE_B', 'VITE_C']);
+  assert.deepEqual(out.missingEnv, ['VITE_C']);
+  assert.ok(out.warnings.some((w) => /VITE_C/.test(w) && !/VITE_A|VITE_B/.test(w)));
+
+  const complete = prepareDemo(zip(source), 'app', { providedEnv: { VITE_B: 'x', VITE_C: 'y' } });
+  assert.deepEqual(complete.missingEnv, []);
+  assert.ok(!complete.warnings.some((w) => /no value was provided/.test(w)));
 });

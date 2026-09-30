@@ -174,6 +174,18 @@ async function upsertEnv(projectId, env) {
   });
 }
 
+// Keys already set on the demo's Vercel project (from an earlier upload) count as provided,
+// so a Rebuild or Replace does not warn about values that are already there.
+async function existingEnvKeys(projectId, formEnv) {
+  const keys = { ...formEnv };
+  if (!projectId) return keys;
+  const res = await vercel(`/v10/projects/${projectId}/env`, {}, { allow404: true });
+  for (const entry of res?.envs || []) {
+    if (entry.target?.includes('production') && !(entry.key in keys)) keys[entry.key] = '';
+  }
+  return keys;
+}
+
 async function uploadBlobs(blobs) {
   const queue = [...blobs.entries()];
   const worker = async () => {
@@ -248,7 +260,7 @@ async function build(body) {
 
   let prepared;
   try {
-    prepared = prepareDemo(zip, slug);
+    prepared = prepareDemo(zip, slug, { providedEnv: await existingEnvKeys(existing.vercel_project_id, formEnv) });
   } catch (error) {
     if (!(error instanceof DemoError)) throw error;
     // A bad zip never takes a live demo down: only the latest attempt is marked failed.
@@ -282,7 +294,7 @@ async function build(body) {
   const zips = await listZips(slug);
   await removeZips(zips.filter((p) => p !== zipPath).slice(ZIPS_KEPT - 1));
 
-  return { demo: pick(row), envFromZip: Object.keys(prepared.env) };
+  return { demo: pick(row), envFromZip: Object.keys(prepared.env), missingEnv: prepared.missingEnv || [] };
 }
 
 async function status(slug) {
