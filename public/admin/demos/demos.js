@@ -354,12 +354,17 @@ function showProgress() {
   $('uploadBar').style.width = '0';
   $('uploadMeta').textContent = '';
   $('buildMeta').textContent = '';
-  document.querySelectorAll('.step').forEach((s) => { s.className = 'step'; s.querySelector('.dot').textContent = ''; });
+  document.querySelectorAll('.step').forEach((s) => { s.className = 'step'; s.querySelector('.dot').innerHTML = ''; });
 }
+// SVG rather than text glyphs: iOS draws ✓ with its own metrics, so it sat off-center.
+const STEP_ICONS = {
+  done: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+  fail: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="13"/><line x1="12" y1="19" x2="12" y2="19.01"/></svg>',
+};
 function step(name, state) {
   const s = document.querySelector(`.step[data-step="${name}"]`);
   s.className = `step ${state}`;
-  s.querySelector('.dot').textContent = state === 'done' ? '✓' : state === 'fail' ? '!' : '';
+  s.querySelector('.dot').innerHTML = STEP_ICONS[state] || '';
 }
 function notice(kind, ...content) {
   const n = el('div', { class: `notice ${kind}` }, ...content);
@@ -398,6 +403,7 @@ $('uploadForm').addEventListener('submit', async (e) => {
       $('uploadMeta').textContent = `${Math.round(p * 100)}%`;
     });
     step('upload', 'done');
+    $('uploadBar').style.width = '100%';
     $('uploadMeta').textContent = formatBytes(file.size);
 
     step('check', 'active');
