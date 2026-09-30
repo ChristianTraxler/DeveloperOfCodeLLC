@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Demos | &lt;/DOC&gt; Admin</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="#0a0e17" />
+<meta name="apple-mobile-web-app-title" content="&lt;/DOC&gt;" />
+<meta name="theme-color" content="#060a13" />
+<link rel="manifest" href="/admin.webmanifest" />
+<link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/img/favicons/apple-touch-icon.png" sizes="180x180" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg-deep: #060a13;
+    --bg-surface: #111827;
+    --bg-card: #1a2236;
+    --bg-card-hover: #1f2a42;
+    --accent: #ff4500;
+    --accent-hover: #ff6a33;
+    --accent-glow: rgba(255, 69, 0, 0.15);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --border: rgba(139, 148, 158, 0.14);
+    --border-accent: rgba(255, 69, 0, 0.28);
+    --danger: #ff5c5c;
+    --ok: #3fb950;
+    --warn: #ffce8a;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-deep); color: var(--text-primary);
+    font-family: var(--font-body); min-height: 100vh; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--accent-glow), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 69, 0, 0.06), transparent 50%);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 69, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 69, 0, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .loading { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; color: var(--text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
+  .root { position: relative; z-index: 1; }
+
+  /* ── Header (matches the hub) ── */
+  header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border); background: rgba(6, 10, 19, 0.85); backdrop-filter: blur(12px); }
+  .nav-inner { max-width: 1000px; margin: 0 auto; padding: 0 1rem; height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .brand { display: flex; align-items: center; gap: 0.8rem; text-decoration: none; }
+  .code-tag { font-family: var(--font-display); color: var(--accent); font-weight: 700; letter-spacing: -0.02em; font-size: 1.25rem; }
+  .brand-divider { width: 1px; height: 20px; background: var(--border); display: none; }
+  .brand-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.22em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; display: none; }
+  .nav-right { display: flex; align-items: center; gap: 0.5rem; }
+  .ghost {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 44px; padding: 0.5rem 0.85rem; border-radius: 9px;
+    font-family: var(--font-display); font-weight: 500; font-size: 0.8rem; color: var(--text-secondary); text-decoration: none;
+    background: transparent; border: 1px solid var(--border); cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .ghost:hover:not(:disabled) { color: var(--accent); border-color: var(--border-accent); }
+  .ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+  .ghost.danger:hover:not(:disabled) { color: var(--danger); border-color: rgba(255, 92, 92, 0.4); }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 1.75rem 1rem 5rem; }
+  .page-title { font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; letter-spacing: -0.02em; line-height: 1.15; }
+  .page-sub { color: var(--text-secondary); margin-top: 0.4rem; font-size: 0.95rem; }
+  .page-sub a { color: var(--accent); text-decoration: none; }
+  .page-sub a:hover { text-decoration: underline; }
+  .section-title { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; }
+
+  .layout { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+  .panel { background: rgba(17, 24, 39, 0.72); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+
+  /* ── Form ── */
+  label, .label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500; margin-bottom: 0.4rem; }
+  .field { margin-bottom: 1.05rem; }
+  .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem; }
+  .hint code, .url-preview code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.8rem; }
+  input[type=text], input[type=search] {
+    width: 100%; min-height: 46px; padding: 0.7rem 0.85rem; font-size: 1rem; font-family: var(--font-body);
+    color: var(--text-primary); background: var(--bg-deep); border: 1px solid var(--border); border-radius: 9px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--border-accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  input::placeholder { color: var(--text-muted); }
+  input[aria-invalid=true] { border-color: rgba(255, 92, 92, 0.55); }
+  .field-error { color: var(--danger); font-size: 0.8rem; margin-top: 0.35rem; min-height: 0; }
+
+  .drop {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; text-align: center;
+    min-height: 132px; padding: 1.25rem 1rem; border: 1.5px dashed rgba(139, 148, 158, 0.32); border-radius: 12px; cursor: pointer;
+    background: rgba(6, 10, 19, 0.55); transition: border-color 0.2s, background 0.2s;
+  }
+  .drop:hover, .drop.dragging { border-color: var(--accent); background: rgba(255, 69, 0, 0.05); }
+  .drop.has-file { border-style: solid; border-color: var(--border-accent); }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-icon { color: var(--accent); }
+  .drop-title { font-family: var(--font-display); font-weight: 600; font-size: 0.98rem; }
+  .drop-sub { font-size: 0.82rem; color: var(--text-secondary); }
+  .drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .url-preview { margin-top: 0.45rem; font-size: 0.82rem; color: var(--text-secondary); word-break: break-all; }
+  .url-preview code { color: var(--text-primary); }
+  .counter { float: right; font-family: var(--font-body); letter-spacing: 0; text-transform: none; color: var(--text-muted); }
+
+  .check { display: flex; align-items: flex-start; gap: 0.7rem; min-height: 44px; padding: 0.55rem 0; margin: 0 0 0.6rem; cursor: pointer; text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-size: 0.92rem; font-weight: 400; color: var(--text-primary); }
+  .check input { width: 20px; height: 20px; margin-top: 0.15rem; accent-color: var(--accent); flex: none; }
+  .check-text { font-size: 0.92rem; }
+  .check-text small { display: block; color: var(--text-muted); font-size: 0.8rem; }
+
+  details.env { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.1rem; }
+  details.env summary { cursor: pointer; list-style: none; min-height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 0.9rem; font-size: 0.9rem; color: var(--text-secondary); }
+  details.env summary::-webkit-details-marker { display: none; }
+  details.env summary::after { content: '+'; font-family: var(--font-display); color: var(--accent); font-size: 1.1rem; }
+  details.env[open] summary::after { content: '\2212'; }
+  .env-body { padding: 0 0.9rem 0.9rem; }
+  .env-row { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .env-row input { font-size: 0.9rem; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .icon-btn { width: 44px; min-height: 46px; display: grid; place-items: center; border-radius: 9px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+  .icon-btn:hover { color: var(--danger); border-color: rgba(255, 92, 92, 0.4); }
+
+  .primary {
+    width: 100%; min-height: 50px; padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: var(--bg-deep);
+    font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase;
+    border: none; border-radius: 10px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  }
+  .primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+  .primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  .form-msg { margin-top: 0.8rem; font-size: 0.86rem; min-height: 1.2em; }
+  .form-msg.error { color: var(--danger); }
+
+  /* ── Progress ── */
+  .steps { list-style: none; display: grid; gap: 0.2rem; }
+  .step { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 0.6rem; min-height: 44px; color: var(--text-muted); }
+  .step .dot { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); display: grid; place-items: center; }
+  .step.active { color: var(--text-primary); }
+  .step.active .dot { border-color: var(--accent); border-top-color: transparent; animation: spin 0.9s linear infinite; }
+  .step.done { color: var(--text-secondary); }
+  .step.done .dot { background: var(--ok); border-color: var(--ok); color: var(--bg-deep); }
+  .step.fail { color: var(--danger); }
+  .step.fail .dot { background: var(--danger); border-color: var(--danger); color: var(--bg-deep); }
+  .step-meta { font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 4px; border-radius: 4px; background: var(--border); overflow: hidden; margin: 0 0 0.4rem 34px; }
+  .bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .notice { margin-top: 1rem; padding: 0.8rem 0.9rem; border-radius: 10px; font-size: 0.86rem; line-height: 1.5; }
+  .notice.warn { color: var(--warn); background: rgba(255, 170, 60, 0.07); border: 1px solid rgba(255, 170, 60, 0.25); }
+  .notice.error { color: #ffb4b4; background: rgba(255, 92, 92, 0.07); border: 1px solid rgba(255, 92, 92, 0.3); }
+  .notice.ok { color: #b6f0c0; background: rgba(63, 185, 80, 0.07); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .notice ul { padding-left: 1.1rem; margin-top: 0.35rem; }
+  .notice li + li { margin-top: 0.35rem; }
+  .notice strong { font-family: var(--font-display); font-weight: 600; }
+  .notice a { color: inherit; }
+  .result-url { display: block; margin: 0.5rem 0 0.8rem; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; word-break: break-all; color: var(--text-primary); }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  /* ── Demo list ── */
+  .demos { list-style: none; display: grid; gap: 0.75rem; }
+  .demo { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; }
+  .demo.is-hidden { opacity: 0.6; }
+  .demo-top { display: flex; flex-direction: column; gap: 0.5rem; }
+  .demo-name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
+  .demo-desc { color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.2rem; }
+  .demo-url { display: inline-block; margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; text-decoration: none; }
+  .demo-url:hover { color: var(--accent); }
+  .badges { display: flex; flex-wrap: wrap; gap: 0.35rem; order: -1; }
+  .badge { font-family: var(--font-display); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; }
+  .badge.live { color: var(--ok); border-color: rgba(63, 185, 80, 0.4); }
+  .badge.building { color: var(--accent); border-color: var(--border-accent); }
+  .badge.failed { color: var(--danger); border-color: rgba(255, 92, 92, 0.4); }
+  .demo-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.9rem; }
+  .demo-actions .ghost { padding: 0.45rem 0.7rem; font-size: 0.76rem; }
+  .demo .notice { margin-top: 0.75rem; }
+  .edit-form { margin-top: 0.9rem; display: grid; gap: 0.6rem; }
+  .empty { text-align: center; padding: 2rem 1rem; color: var(--text-secondary); font-size: 0.92rem; border: 1px dashed var(--border); border-radius: 14px; }
+  .skeleton { height: 118px; border-radius: 14px; background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-card-hover) 50%, var(--bg-card) 100%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .toast { position: fixed; left: 50%; bottom: calc(1.25rem + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; z-index: 60; padding: 0.65rem 1rem; border-radius: 10px; background: var(--bg-card-hover); border: 1px solid var(--border-accent); font-size: 0.86rem; transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  #scrollTop {
+    position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 40;
+    width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: var(--bg-deep);
+    border: none; cursor: pointer; box-shadow: 0 8px 24px var(--accent-glow);
+    opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+  }
+  #scrollTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  #scrollTop:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+  @media (min-width: 640px) {
+    .nav-inner { padding: 0 1.5rem; height: 66px; }
+    .brand-divider, .brand-label { display: block; }
+    main { padding: 2.5rem 1.5rem 5rem; }
+    .page-title { font-size: 2.1rem; }
+    .panel { padding: 1.6rem; }
+    .demo-top { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+    .badges { order: 0; justify-content: flex-end; flex: none; max-width: 45%; }
+    #scrollTop { right: 1.5rem; bottom: 1.5rem; }
+  }
+  @media (min-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; }
+    .upload-col { position: sticky; top: 86px; }
+  }
+</style>
+</head>
+<body>
+  <div class="loading" id="loading">Checking access&hellip;</div>
+
+  <div class="root" id="app" hidden>
+    <header>
+      <div class="nav-inner">
+        <a class="brand" href="/admin/" aria-label="Back to the admin hub">
+          <span class="code-tag">&lt;/DOC&gt;</span>
+          <span class="brand-divider"></span>
+          <span class="brand-label">Admin</span>
+        </a>
+        <div class="nav-right">
+          <a class="ghost" href="/admin/">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            Hub
+          </a>
+          <button class="ghost" id="signoutBtn" type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="page-title">Demos</h1>
+      <p class="page-sub">Upload a zip and it goes live on <a href="https://demos.developerofcode.com" target="_blank" rel="noopener">demos.developerofcode.com</a>.</p>
+
+      <div class="layout">
+        <!-- ── Upload ── -->
+        <section class="upload-col" aria-labelledby="uploadTitle">
+          <form class="panel" id="uploadForm" novalidate>
+            <div class="panel-head">
+              <h2 class="section-title" id="uploadTitle">New demo</h2>
+              <button class="ghost" type="button" id="resetBtn" hidden>Start over</button>
+            </div>
+
+            <div class="field">
+              <span class="label" id="zipLabel">Project zip</span>
+              <div class="drop" id="drop">
+                <input type="file" id="zip" accept=".zip,application/zip,application/x-zip-compressed" aria-labelledby="zipLabel" aria-describedby="zipHint" />
+                <svg class="drop-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span class="drop-title" id="dropTitle">Choose a zip</span>
+                <span class="drop-sub" id="dropSub">or drop it here</span>
+              </div>
+              <p class="hint" id="zipHint">The project folder (without <code>node_modules</code>) or its built <code>dist</code> folder. Up to 50 MB.</p>
+              <p class="field-error" id="zipError" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label for="name">Name <span class="counter" id="nameCount">0/80</span></label>
+              <input type="text" id="name" maxlength="80" autocomplete="off" placeholder="Halyard House" required />
+              <p class="field-error" id="nameError" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label for="slug">URL slug</label>
+              <input type="text" id="slug" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url" placeholder="halyard-house" required />
+              <p class="url-preview">Live at <code id="urlPreview">demos.developerofcode.com/&hellip;/</code></p>
+              <p class="field-error" id="slugError" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label for="description">One-line description <span class="counter" id="descCount">0/160</span></label>
+              <input type="text" id="description" maxlength="160" autocomplete="off" placeholder="Book-direct site for an oceanfront beach rental" />
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="concept" checked />
+              <span class="check-text">Concept demo<small>Adds a "Concept" tag to its card, for mockups of real businesses.</small></span>
+            </label>
+
+            <details class="env" id="envDetails">
+              <summary>Env vars <span class="hint" style="margin:0" id="envSummary">(optional)</span></summary>
+              <div class="env-body">
+                <p class="hint" style="margin:0 0 0.6rem">Only for source zips. <code>VITE_*</code> values in a <code>.env</code> file inside the zip are picked up automatically; anything here wins.</p>
+                <div id="envRows"></div>
+                <button class="ghost" type="button" id="addEnv">+ Add variable</button>
+              </div>
+            </details>
+
+            <button class="primary" type="submit" id="submitBtn">Upload and publish</button>
+            <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
+          </form>
+
+          <!-- Progress (replaces the form while a build runs) -->
+          <div class="panel" id="progress" hidden aria-live="polite">
+            <div class="panel-head">
+              <h2 class="section-title" id="progressTitle">Publishing</h2>
+            </div>
+            <ol class="steps">
+              <li class="step" data-step="upload"><span class="dot"></span><span>Uploading zip</span><span class="step-meta" id="uploadMeta"></span></li>
+              <li aria-hidden="true"><div class="bar"><span id="uploadBar"></span></div></li>
+              <li class="step" data-step="check"><span class="dot"></span><span>Checking files</span><span class="step-meta"></span></li>
+              <li class="step" data-step="build"><span class="dot"></span><span id="buildLabel">Building on Vercel</span><span class="step-meta" id="buildMeta"></span></li>
+              <li class="step" data-step="live"><span class="dot"></span><span>Live</span><span class="step-meta"></span></li>
+            </ol>
+            <div id="progressNotices"></div>
+            <div class="btn-row" style="margin-top:1rem" id="progressDone" hidden>
+              <button class="ghost" type="button" id="anotherBtn">Upload another</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── List ── -->
+        <section aria-labelledby="listTitle">
+          <div class="panel">
+            <div class="panel-head">
+              <h2 class="section-title" id="listTitle">Your demos</h2>
+              <span class="hint" style="margin:0" id="listCount"></span>
+            </div>
+            <div id="listState"><div class="skeleton"></div></div>
+            <ul class="demos" id="demoList"></ul>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <button id="scrollTop" type="button" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <script type="module" src="/admin/demos/demos.js"></script>
+  <script src="/js/pwa.js" defer></script>
+</body>
+</html>

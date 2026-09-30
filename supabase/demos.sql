@@ -1,0 +1,81 @@
+-- =========================================================
+-- Demos: table, access rules, and upload bucket
+-- ---------------------------------------------------------
+-- Backs /admin/demos/ (uploads) and demos.developerofcode.com (landing page
+-- and routing). Run once in Supabase -> SQL Editor. Safe to re-run.
+--
+-- Who can do what:
+--   anon           read live, visible demos only (landing page + routing)
+--   authenticated  read every demo (admin page list)
+--   service_role   everything (api/demos.mjs does all writes)
+-- =========================================================
+
+create table if not exists demos (
+  id                uuid primary key default gen_random_uuid(),
+  slug              text not null unique check (slug ~ '^[a-z0-9][a-z0-9-]{0,39}$'),
+  name              text not null default '',
+  description       text not null default '',
+  concept           boolean not null default true,   -- shows a "Concept" tag on the card
+  kind              text check (kind in ('source', 'built')),
+  -- status: is it public? build_state: how did the latest upload go? Kept apart so
+  -- replacing a live demo leaves the old version up until the new build is READY.
+  status            text not null default 'draft' check (status in ('draft', 'live')),
+  build_state       text not null default 'idle'
+                    check (build_state in ('idle', 'building', 'ready', 'failed')),
+  hidden            boolean not null default false,
+  sort_order        integer not null default 0,
+  zip_path          text,                           -- latest upload, reused by Rebuild
+  vercel_project_id text,
+  deployment_id     text,
+  production_url    text,                           -- what the demos site rewrites to
+  inspector_url     text,                           -- Vercel build log for the latest attempt
+  error             text,
+  warnings          jsonb not null default '[]'::jsonb,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create or replace function demos_touch_updated_at() returns trigger
+language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists demos_updated_at on demos;
+create trigger demos_updated_at before update on demos
+  for each row execute function demos_touch_updated_at();
+
+-- ── Row Level Security ──────────────────────────────────────────────────────
+alter table demos enable row level security;
+
+drop policy if exists "public reads live demos" on demos;
+create policy "public reads live demos" on demos
+  for select to anon
+  using (status = 'live' and hidden = false);
+
+drop policy if exists "admin reads all demos" on demos;
+create policy "admin reads all demos" on demos
+  for select to authenticated
+  using (true);
+
+-- No insert/update/delete policies: browser roles cannot write. The API uses
+-- service_role, which bypasses RLS.
+
+-- ── Table privileges ────────────────────────────────────────────────────────
+-- This project does not auto-grant to anon, so the landing page needs an
+-- explicit read grant. Writes are revoked from browser roles as a second lock.
+grant select on demos to anon, authenticated;
+revoke insert, update, delete on demos from anon, authenticated;
+grant select, insert, update, delete on demos to service_role;
+
+-- ── Storage: private bucket for uploaded zips ───────────────────────────────
+-- Uploads only happen through signed upload URLs issued by api/demos.mjs, so
+-- no storage.objects policies are added for browser roles.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('demo-uploads', 'demo-uploads', false, 52428800,
+        array['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])
+on conflict (id) do update
+  set public = false,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
