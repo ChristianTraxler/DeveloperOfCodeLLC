@@ -110,7 +110,7 @@ slugEl.addEventListener('input', () => {
   setFieldError(slugEl, $('slugError'), '');
   updatePreview();
 });
-descEl.addEventListener('input', () => { $('descCount').textContent = `${descEl.value.length}/160`; });
+descEl.addEventListener('input', () => { $('descCount').textContent = `${descEl.value.length}/1000`; });
 
 const syncPrivateHint = () => { $('privateHint').hidden = !$('private').checked; };
 $('private').addEventListener('change', syncPrivateHint);
@@ -315,7 +315,7 @@ function resetForm() {
   $('envCheck').hidden = true;
   updateEnvSummary();
   $('nameCount').textContent = '0/80';
-  $('descCount').textContent = '0/160';
+  $('descCount').textContent = '0/1000';
   $('formMsg').textContent = '';
   $('resetBtn').hidden = true;
   syncPrivateHint();
@@ -534,7 +534,8 @@ async function move(index, delta) {
 
 function editForm(d, item) {
   const name = el('input', { type: 'text', value: d.name, maxlength: '80', 'aria-label': 'Name' });
-  const desc = el('input', { type: 'text', value: d.description || '', maxlength: '160', 'aria-label': 'Description' });
+  const desc = el('textarea', { maxlength: '1000', rows: '5', 'aria-label': 'Description' });
+  desc.value = d.description || '';
   const concept = el('input', { type: 'checkbox' });
   concept.checked = d.concept;
   const form = el('form', { class: 'edit-form' },

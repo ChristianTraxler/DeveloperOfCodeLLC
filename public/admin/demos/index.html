@@ -98,12 +98,13 @@
   .field { margin-bottom: 1.05rem; }
   .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem; }
   .hint code, .url-preview code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.8rem; }
-  input[type=text], input[type=search] {
+  input[type=text], input[type=search], textarea {
     width: 100%; min-height: 46px; padding: 0.7rem 0.85rem; font-size: 1rem; font-family: var(--font-body);
     color: var(--text-primary); background: var(--bg-deep); border: 1px solid var(--border); border-radius: 9px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  input[type=text]:focus { outline: none; border-color: var(--border-accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  textarea { resize: vertical; line-height: 1.5; }
+  input[type=text]:focus, textarea:focus { outline: none; border-color: var(--border-accent); box-shadow: 0 0 0 3px var(--accent-glow); }
   input::placeholder { color: var(--text-muted); }
   input[aria-invalid=true] { border-color: rgba(255, 92, 92, 0.55); }
   .field-error { color: var(--danger); font-size: 0.8rem; margin-top: 0.35rem; min-height: 0; }
@@ -301,8 +302,8 @@
             </div>
 
             <div class="field">
-              <label for="description">One-line description <span class="counter" id="descCount">0/160</span></label>
-              <input type="text" id="description" maxlength="160" autocomplete="off" placeholder="Book-direct site for an oceanfront beach rental" />
+              <label for="description">Description <span class="counter" id="descCount">0/1000</span></label>
+              <textarea id="description" maxlength="1000" rows="4" autocomplete="off" placeholder="Book-direct site for an oceanfront beach rental"></textarea>
             </div>
 
             <label class="check">

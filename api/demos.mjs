@@ -252,7 +252,7 @@ async function build(body) {
 
   const fields = { zip_path: zipPath };
   if (body.name !== undefined) fields.name = cleanText(body.name, 80, 'Name', { required: true });
-  if (body.description !== undefined) fields.description = cleanText(body.description, 160, 'Description');
+  if (body.description !== undefined) fields.description = cleanText(body.description, 1000, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
   if (body.private !== undefined) fields.private = Boolean(body.private);
   const formEnv = cleanEnv(body.env);
@@ -322,7 +322,7 @@ async function update(body) {
   const slug = requireSlug(body.slug);
   const fields = {};
   if (body.name !== undefined) fields.name = cleanText(body.name, 80, 'Name', { required: true });
-  if (body.description !== undefined) fields.description = cleanText(body.description, 160, 'Description');
+  if (body.description !== undefined) fields.description = cleanText(body.description, 1000, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
   if (body.hidden !== undefined) fields.hidden = Boolean(body.hidden);
   if (body.private !== undefined) fields.private = Boolean(body.private);
