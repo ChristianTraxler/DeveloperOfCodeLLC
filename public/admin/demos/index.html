@@ -189,7 +189,21 @@
   .demo.is-hidden { opacity: 0.6; }
   .demo-top { display: flex; flex-direction: column; gap: 0.5rem; }
   .demo-name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
-  .demo-desc { color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.2rem; }
+  .demo-desc { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; margin-top: 0.2rem; }
+  /* Long descriptions: clipped to about 4 lines, fading out, until "Show more". */
+  .desc-clip { overflow: hidden; transition: max-height 0.35s var(--ease, ease); }
+  .desc-clip.is-collapsed {
+    -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent);
+    mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  }
+  .desc-toggle {
+    display: inline-flex; align-items: center; gap: 0.3rem; min-height: 44px; padding: 0; margin-top: -0.3rem;
+    background: none; border: 0; color: var(--accent); font: 600 0.82rem var(--font-body); cursor: pointer;
+  }
+  .desc-toggle svg { transition: transform 0.35s var(--ease, ease); }
+  .desc-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .desc-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { .desc-clip, .desc-toggle svg { transition: none; } }
   .demo-url { display: inline-block; margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; text-decoration: none; }
   .demo-url:hover { color: var(--accent); }
   .badges { display: flex; flex-wrap: wrap; gap: 0.35rem; order: -1; }

@@ -31,6 +31,7 @@ let session = null;
 let demos = [];
 let slugTouched = false;
 let file = null;
+const expandedDescs = new Set(); // slugs whose description is open, kept across re-renders
 
 // ── Session ─────────────────────────────────────────────────────────────────
 
@@ -556,6 +557,52 @@ function editForm(d, item) {
   name.focus();
 }
 
+// ── Collapsible description ─────────────────────────────────────────────────
+
+const DESC_COLLAPSED_PX = 92; // about 4 lines at the list's font size
+
+function descBlock(d) {
+  const text = el('div', { class: 'demo-desc' }, d.description);
+  const clip = el('div', { class: 'desc-clip', id: `desc-${d.slug}` }, text);
+  const label = el('span', {}, 'Show more');
+  const toggle = el('button', { class: 'desc-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': clip.id, hidden: true },
+    label,
+    el('span', { 'aria-hidden': 'true', style: 'display:inline-flex' }));
+  toggle.lastChild.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+  const setOpen = (open, animate) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    label.textContent = open ? 'Show less' : 'Show more';
+    if (open) expandedDescs.add(d.slug); else expandedDescs.delete(d.slug);
+    if (!animate) {
+      clip.style.maxHeight = open ? 'none' : `${DESC_COLLAPSED_PX}px`;
+      clip.classList.toggle('is-collapsed', !open);
+      return;
+    }
+    // Animate between fixed pixel heights, then release to "none" when open so the
+    // text can still reflow if the window is resized.
+    clip.style.maxHeight = `${open ? DESC_COLLAPSED_PX : clip.scrollHeight}px`;
+    clip.offsetHeight; // commit the start height before changing it
+    clip.classList.toggle('is-collapsed', !open);
+    clip.style.maxHeight = `${open ? clip.scrollHeight : DESC_COLLAPSED_PX}px`;
+    const done = () => {
+      clip.removeEventListener('transitionend', done);
+      if (open) clip.style.maxHeight = 'none';
+    };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+    else clip.addEventListener('transitionend', done);
+  };
+  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true', true));
+
+  // Measure once the card is in the page; short descriptions get no toggle at all.
+  requestAnimationFrame(() => {
+    if (text.scrollHeight <= DESC_COLLAPSED_PX + 8) return;
+    toggle.hidden = false;
+    setOpen(expandedDescs.has(d.slug), false);
+  });
+  return el('div', {}, clip, toggle);
+}
+
 function renderList() {
   const list = $('demoList');
   $('listState').replaceChildren();
@@ -574,7 +621,7 @@ function renderList() {
       el('div', { class: 'demo-top' },
         el('div', {},
           el('div', { class: 'demo-name' }, d.name || d.slug),
-          d.description ? el('div', { class: 'demo-desc' }, d.description) : null,
+          d.description ? descBlock(d) : null,
           live ? el('a', { class: 'demo-url', href: demoUrl(d.slug), target: '_blank', rel: 'noopener' }, `/${d.slug}/`) : el('span', { class: 'demo-url' }, `/${d.slug}/`)),
         badges(d)),
       d.build_state === 'failed' && d.error
