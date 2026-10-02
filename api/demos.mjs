@@ -33,7 +33,7 @@ const UPLOAD_CONCURRENCY = 8;
 const ZIP_PATH_RE = /^[a-z0-9][a-z0-9-]{0,39}\/\d{10,16}\.zip$/;
 const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]{0,63}$/;
 // Returned to the admin page. Never includes tokens or anything from Vercel beyond these.
-const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at';
+const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,private,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at';
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -254,6 +254,7 @@ async function build(body) {
   if (body.name !== undefined) fields.name = cleanText(body.name, 80, 'Name', { required: true });
   if (body.description !== undefined) fields.description = cleanText(body.description, 160, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
+  if (body.private !== undefined) fields.private = Boolean(body.private);
   const formEnv = cleanEnv(body.env);
 
   const zip = new Uint8Array(await (await sb(`/storage/v1/object/${BUCKET}/${zipPath}`)).arrayBuffer());
@@ -324,6 +325,7 @@ async function update(body) {
   if (body.description !== undefined) fields.description = cleanText(body.description, 160, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
   if (body.hidden !== undefined) fields.hidden = Boolean(body.hidden);
+  if (body.private !== undefined) fields.private = Boolean(body.private);
   if (body.sort_order !== undefined) {
     if (!Number.isInteger(body.sort_order)) throw new HttpError(400, 'sort_order must be a whole number.');
     fields.sort_order = body.sort_order;

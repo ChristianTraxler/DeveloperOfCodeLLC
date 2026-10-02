@@ -5,7 +5,8 @@
 -- and routing). Run once in Supabase -> SQL Editor. Safe to re-run.
 --
 -- Who can do what:
---   anon           read live, visible demos only (landing page + routing)
+--   anon           read live, visible, non-private demos only (landing page);
+--                  look up one slug at a time via demo_route() (routing, includes private)
 --   authenticated  read every demo (admin page list)
 --   service_role   everything (api/demos.mjs does all writes)
 -- =========================================================
@@ -22,7 +23,8 @@ create table if not exists demos (
   status            text not null default 'draft' check (status in ('draft', 'live')),
   build_state       text not null default 'idle'
                     check (build_state in ('idle', 'building', 'ready', 'failed')),
-  hidden            boolean not null default false,
+  hidden            boolean not null default false,  -- offline: no card, link 404s
+  private           boolean not null default false,  -- unlisted: no card, link still works
   sort_order        integer not null default 0,
   zip_path          text,                           -- latest upload, reused by Rebuild
   vercel_project_id text,
@@ -34,6 +36,9 @@ create table if not exists demos (
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
+
+-- Added after the first release; a no-op on fresh installs.
+alter table demos add column if not exists private boolean not null default false;
 
 create or replace function demos_touch_updated_at() returns trigger
 language plpgsql as $$
@@ -52,12 +57,22 @@ alter table demos enable row level security;
 drop policy if exists "public reads live demos" on demos;
 create policy "public reads live demos" on demos
   for select to anon
-  using (status = 'live' and hidden = false);
+  using (status = 'live' and hidden = false and private = false);
 
 drop policy if exists "admin reads all demos" on demos;
 create policy "admin reads all demos" on demos
   for select to authenticated
   using (true);
+
+-- Routing for one slug, private demos included. Security definer so anon can resolve a
+-- link it already has without being able to list private demos through the table.
+create or replace function demo_route(p_slug text) returns text
+language sql stable security definer set search_path = public as $$
+  select production_url from demos
+  where slug = p_slug and status = 'live' and hidden = false
+$$;
+revoke all on function demo_route(text) from public;
+grant execute on function demo_route(text) to anon, authenticated, service_role;
 
 -- No insert/update/delete policies: browser roles cannot write. The API uses
 -- service_role, which bypasses RLS.

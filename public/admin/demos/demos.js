@@ -112,6 +112,23 @@ slugEl.addEventListener('input', () => {
 });
 descEl.addEventListener('input', () => { $('descCount').textContent = `${descEl.value.length}/160`; });
 
+const syncPrivateHint = () => { $('privateHint').hidden = !$('private').checked; };
+$('private').addEventListener('change', syncPrivateHint);
+// Private links are unlisted, not password protected, so a guessable slug is the weak spot.
+let randomSuffix = '';
+$('randomSlugBtn').addEventListener('click', () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  const current = slugEl.value || slugify(nameEl.value) || 'demo';
+  // Pressing it again swaps the ending instead of stacking a second one.
+  const base = (randomSuffix && current.endsWith(`-${randomSuffix}`) ? current.slice(0, -randomSuffix.length - 1) : current)
+    .slice(0, 33).replace(/-+$/, '');
+  randomSuffix = Array.from(bytes, (b) => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+  slugEl.value = `${base}-${randomSuffix}`;
+  slugTouched = true;
+  setFieldError(slugEl, $('slugError'), '');
+  updatePreview();
+});
+
 function setFile(next) {
   file = null;
   const drop = $('drop');
@@ -301,6 +318,7 @@ function resetForm() {
   $('descCount').textContent = '0/160';
   $('formMsg').textContent = '';
   $('resetBtn').hidden = true;
+  syncPrivateHint();
   updatePreview();
 }
 $('resetBtn').addEventListener('click', resetForm);
@@ -313,6 +331,8 @@ function startReplace(demo) {
   slugTouched = true;
   descEl.value = demo.description || '';
   $('concept').checked = demo.concept;
+  $('private').checked = demo.private;
+  syncPrivateHint();
   nameEl.dispatchEvent(new Event('input'));
   descEl.dispatchEvent(new Event('input'));
   $('uploadTitle').textContent = `Replace ${demo.name}`;
@@ -391,7 +411,7 @@ $('uploadForm').addEventListener('submit', async (e) => {
   }
 
   const slug = slugEl.value;
-  const payload = { slug, name: nameEl.value.trim(), description: descEl.value.trim(), concept: $('concept').checked, env: readEnv() };
+  const payload = { slug, name: nameEl.value.trim(), description: descEl.value.trim(), concept: $('concept').checked, private: $('private').checked, env: readEnv() };
   $('progressTitle').textContent = `Publishing ${payload.name}`;
   showProgress();
 
@@ -423,7 +443,7 @@ $('uploadForm').addEventListener('submit', async (e) => {
       step('build', 'done');
       step('live', 'done');
       notice('ok',
-        el('strong', {}, `${final.name} is live`),
+        el('strong', {}, final.private ? `${final.name} is live (private link)` : `${final.name} is live`),
         el('a', { class: 'result-url', href: demoUrl(slug), target: '_blank', rel: 'noopener' }, demoUrl(slug)),
         el('div', { class: 'btn-row' },
           el('a', { class: 'ghost', href: demoUrl(slug), target: '_blank', rel: 'noopener' }, 'Open'),
@@ -486,7 +506,8 @@ function badges(d) {
   else if (d.build_state === 'failed') list.push(['failed', 'Failed']);
   if (d.status === 'live') list.push(['live', 'Live']);
   else if (d.build_state !== 'building' && d.build_state !== 'failed') list.push(['', 'Draft']);
-  if (d.hidden) list.push(['', 'Hidden']);
+  if (d.hidden) list.push(['', 'Offline']);
+  if (d.private) list.push(['private', 'Private']);
   if (d.concept) list.push(['', 'Concept']);
   return el('div', { class: 'badges' }, list.map(([cls, label]) => el('span', { class: `badge ${cls}` }, label)));
 }
@@ -537,7 +558,7 @@ function editForm(d, item) {
 function renderList() {
   const list = $('demoList');
   $('listState').replaceChildren();
-  $('listCount').textContent = demos.length ? `${demos.filter((d) => d.status === 'live' && !d.hidden).length} of ${demos.length} public` : '';
+  $('listCount').textContent = demos.length ? `${demos.filter((d) => d.status === 'live' && !d.hidden && !d.private).length} of ${demos.length} public` : '';
   updatePreview();
 
   if (!demos.length) {
@@ -576,8 +597,15 @@ function renderList() {
           onclick: (e) => act(e.currentTarget, async () => {
             const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, hidden: !d.hidden } });
             upsertLocal(demo);
-          }, d.hidden ? 'Visible on the demos page' : 'Hidden from the demos page'),
-        }, d.hidden ? 'Show' : 'Hide'),
+          }, d.hidden ? 'Back online' : 'Offline: the link no longer works'),
+        }, d.hidden ? 'Put online' : 'Take offline'),
+        el('button', {
+          class: 'ghost', type: 'button',
+          onclick: (e) => act(e.currentTarget, async () => {
+            const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, private: !d.private } });
+            upsertLocal(demo);
+          }, d.private ? 'Now listed on the demos page' : 'Private: link only'),
+        }, d.private ? 'Make public' : 'Make private'),
         el('button', { class: 'ghost', type: 'button', onclick: () => editForm(d, item) }, 'Edit'),
         el('button', { class: 'ghost', type: 'button', 'aria-label': `Move ${d.name} up`, disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
         el('button', { class: 'ghost', type: 'button', 'aria-label': `Move ${d.name} down`, disabled: i === demos.length - 1, onclick: () => move(i, 1) }, '↓'),
