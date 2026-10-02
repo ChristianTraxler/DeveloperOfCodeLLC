@@ -22,7 +22,8 @@ const el = (tag, attrs = {}, ...children) => {
   node.append(...children.flat().filter((c) => c != null && c !== false));
   return node;
 };
-const demoUrl = (slug) => `${DEMOS_ORIGIN}/${slug}/`;
+// Private demos only open with their key; the demos site then remembers the browser for 30 days.
+const demoUrl = (d) => `${DEMOS_ORIGIN}/${d.slug}/${d.private && d.access_key ? `?key=${d.access_key}` : ''}`;
 const slugify = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
 const formatBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
@@ -113,22 +114,6 @@ slugEl.addEventListener('input', () => {
 });
 descEl.addEventListener('input', () => { $('descCount').textContent = `${descEl.value.length}/1000`; });
 
-const syncPrivateHint = () => { $('privateHint').hidden = !$('private').checked; };
-$('private').addEventListener('change', syncPrivateHint);
-// Private links are unlisted, not password protected, so a guessable slug is the weak spot.
-let randomSuffix = '';
-$('randomSlugBtn').addEventListener('click', () => {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  const current = slugEl.value || slugify(nameEl.value) || 'demo';
-  // Pressing it again swaps the ending instead of stacking a second one.
-  const base = (randomSuffix && current.endsWith(`-${randomSuffix}`) ? current.slice(0, -randomSuffix.length - 1) : current)
-    .slice(0, 33).replace(/-+$/, '');
-  randomSuffix = Array.from(bytes, (b) => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
-  slugEl.value = `${base}-${randomSuffix}`;
-  slugTouched = true;
-  setFieldError(slugEl, $('slugError'), '');
-  updatePreview();
-});
 
 function setFile(next) {
   file = null;
@@ -319,7 +304,6 @@ function resetForm() {
   $('descCount').textContent = '0/1000';
   $('formMsg').textContent = '';
   $('resetBtn').hidden = true;
-  syncPrivateHint();
   updatePreview();
 }
 $('resetBtn').addEventListener('click', resetForm);
@@ -333,7 +317,6 @@ function startReplace(demo) {
   descEl.value = demo.description || '';
   $('concept').checked = demo.concept;
   $('private').checked = demo.private;
-  syncPrivateHint();
   nameEl.dispatchEvent(new Event('input'));
   descEl.dispatchEvent(new Event('input'));
   $('uploadTitle').textContent = `Replace ${demo.name}`;
@@ -445,10 +428,10 @@ $('uploadForm').addEventListener('submit', async (e) => {
       step('live', 'done');
       notice('ok',
         el('strong', {}, final.private ? `${final.name} is live (private link)` : `${final.name} is live`),
-        el('a', { class: 'result-url', href: demoUrl(slug), target: '_blank', rel: 'noopener' }, demoUrl(slug)),
+        el('a', { class: 'result-url', href: demoUrl(final), target: '_blank', rel: 'noopener' }, demoUrl(final)),
         el('div', { class: 'btn-row' },
-          el('a', { class: 'ghost', href: demoUrl(slug), target: '_blank', rel: 'noopener' }, 'Open'),
-          el('button', { class: 'ghost', type: 'button', onclick: () => copy(demoUrl(slug)) }, 'Copy link')));
+          el('a', { class: 'ghost', href: demoUrl(final), target: '_blank', rel: 'noopener' }, 'Open'),
+          el('button', { class: 'ghost', type: 'button', onclick: () => copy(demoUrl(final)) }, 'Copy link')));
     } else {
       step('build', 'fail');
       notice('error',
@@ -622,15 +605,25 @@ function renderList() {
         el('div', {},
           el('div', { class: 'demo-name' }, d.name || d.slug),
           d.description ? descBlock(d) : null,
-          live ? el('a', { class: 'demo-url', href: demoUrl(d.slug), target: '_blank', rel: 'noopener' }, `/${d.slug}/`) : el('span', { class: 'demo-url' }, `/${d.slug}/`)),
+          live ? el('a', { class: 'demo-url', href: demoUrl(d), target: '_blank', rel: 'noopener' }, demoUrl(d).slice(DEMOS_ORIGIN.length)) : el('span', { class: 'demo-url' }, `/${d.slug}/`)),
         badges(d)),
       d.build_state === 'failed' && d.error
         ? el('div', { class: 'notice error' }, d.error, d.inspector_url ? el('span', {}, ' ', el('a', { href: d.inspector_url, target: '_blank', rel: 'noopener' }, 'Build log')) : null)
         : null,
       d.warnings?.length && d.build_state !== 'failed' ? warningsNotice(d.warnings) : null,
       el('div', { class: 'demo-actions' },
-        live ? el('a', { class: 'ghost', href: demoUrl(d.slug), target: '_blank', rel: 'noopener' }, 'Open') : null,
-        live ? el('button', { class: 'ghost', type: 'button', onclick: () => copy(demoUrl(d.slug)) }, 'Copy link') : null,
+        live ? el('a', { class: 'ghost', href: demoUrl(d), target: '_blank', rel: 'noopener' }, 'Open') : null,
+        live ? el('button', { class: 'ghost', type: 'button', onclick: () => copy(demoUrl(d)) }, 'Copy link') : null,
+        d.private ? el('button', {
+          class: 'ghost', type: 'button',
+          onclick: (e) => {
+            if (!confirm(`Give "${d.name}" a new key? Anyone with the current link will lose access, including people already viewing it. Only the new link will work.`)) return;
+            act(e.currentTarget, async () => {
+              const { demo } = await api('rotate-key', { method: 'POST', body: { slug: d.slug } });
+              upsertLocal(demo);
+            }, 'New key made. Copy the new link to share it.');
+          },
+        }, 'New key') : null,
         el('button', { class: 'ghost', type: 'button', onclick: () => startReplace(d) }, 'Replace'),
         el('button', {
           class: 'ghost', type: 'button', disabled: d.build_state === 'building' || !d.kind,
@@ -652,7 +645,7 @@ function renderList() {
           onclick: (e) => act(e.currentTarget, async () => {
             const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, private: !d.private } });
             upsertLocal(demo);
-          }, d.private ? 'Now listed on the demos page' : 'Private: link only'),
+          }, d.private ? 'Now listed on the demos page, no key needed' : 'Private: only the keyed link works'),
         }, d.private ? 'Make public' : 'Make private'),
         el('button', { class: 'ghost', type: 'button', onclick: () => editForm(d, item) }, 'Edit'),
         el('button', { class: 'ghost', type: 'button', 'aria-label': `Move ${d.name} up`, disabled: i === 0, onclick: () => move(i, -1) }, '↑'),

@@ -15,6 +15,7 @@
 //   VERCEL_TEAM_ID             the Developer Of Code team
 //   SUPABASE_URL / SUPABASE_ANON_KEY  optional; fall back to the VITE_* values
 
+import { randomBytes } from 'node:crypto';
 import { DemoError, prepareDemo, toVercelFiles, validateSlug } from './_lib/demos-core.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
@@ -33,7 +34,7 @@ const UPLOAD_CONCURRENCY = 8;
 const ZIP_PATH_RE = /^[a-z0-9][a-z0-9-]{0,39}\/\d{10,16}\.zip$/;
 const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]{0,63}$/;
 // Returned to the admin page. Never includes tokens or anything from Vercel beyond these.
-const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,private,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at';
+const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,private,access_key,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at';
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -99,6 +100,18 @@ async function patchDemo(slug, fields) {
     body: JSON.stringify(fields),
   });
   return (await res.json())[0];
+}
+
+// Private demos open only with ?key=<access_key>. 10 chars from a 32-letter alphabet
+// (no 0/o/1/l) is about 50 bits: not guessable, still short enough to text.
+const KEY_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+const newAccessKey = () => Array.from(randomBytes(10), (b) => KEY_ALPHABET[b % 32]).join('');
+
+// Going private gives the demo a key if it has none. Making it public keeps the key, so
+// an accidental Make public / Make private does not break links already shared.
+function withAccessKey(fields, existing) {
+  if (fields.private && !existing?.access_key) fields.access_key = newAccessKey();
+  return fields;
 }
 
 const pick = (row) => Object.fromEntries(PUBLIC_FIELDS.split(',').map((k) => [k, row?.[k] ?? null]));
@@ -254,7 +267,7 @@ async function build(body) {
   if (body.name !== undefined) fields.name = cleanText(body.name, 80, 'Name', { required: true });
   if (body.description !== undefined) fields.description = cleanText(body.description, 1000, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
-  if (body.private !== undefined) fields.private = Boolean(body.private);
+  if (body.private !== undefined) withAccessKey(Object.assign(fields, { private: Boolean(body.private) }), existing);
   const formEnv = cleanEnv(body.env);
 
   const zip = new Uint8Array(await (await sb(`/storage/v1/object/${BUCKET}/${zipPath}`)).arrayBuffer());
@@ -325,7 +338,10 @@ async function update(body) {
   if (body.description !== undefined) fields.description = cleanText(body.description, 1000, 'Description');
   if (body.concept !== undefined) fields.concept = Boolean(body.concept);
   if (body.hidden !== undefined) fields.hidden = Boolean(body.hidden);
-  if (body.private !== undefined) fields.private = Boolean(body.private);
+  if (body.private !== undefined) {
+    fields.private = Boolean(body.private);
+    if (fields.private) withAccessKey(fields, await getDemo(slug));
+  }
   if (body.sort_order !== undefined) {
     if (!Number.isInteger(body.sort_order)) throw new HttpError(400, 'sort_order must be a whole number.');
     fields.sort_order = body.sort_order;
@@ -334,6 +350,16 @@ async function update(body) {
   const row = await patchDemo(slug, fields);
   if (!row) throw new HttpError(404, 'No demo with that slug.');
   return { demo: pick(row) };
+}
+
+// New key: the old link and every visitor's 30-day pass stop working (the demos site
+// caches lookups for up to 60 seconds).
+async function rotateKey(body) {
+  const slug = requireSlug(body.slug);
+  const row = await getDemo(slug);
+  if (!row) throw new HttpError(404, 'No demo with that slug.');
+  if (!row.private) throw new HttpError(400, 'Only private demos have a key.');
+  return { demo: pick(await patchDemo(slug, { access_key: newAccessKey() })) };
 }
 
 async function remove(body) {
@@ -376,6 +402,7 @@ export default {
       if (action === 'build') return json(await build(body));
       if (action === 'update') return json(await update(body));
       if (action === 'delete') return json(await remove(body));
+      if (action === 'rotate-key') return json(await rotateKey(body));
       throw new HttpError(400, 'Unknown action.');
     } catch (error) {
       if (error instanceof HttpError) return json({ error: error.message }, error.status);

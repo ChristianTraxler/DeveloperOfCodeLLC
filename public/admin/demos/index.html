@@ -211,7 +211,6 @@
   .badge.live { color: var(--ok); border-color: rgba(63, 185, 80, 0.4); }
   .badge.building { color: var(--accent); border-color: var(--border-accent); }
   .badge.private { color: var(--accent); border-color: var(--border-accent); }
-  .private-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: -0.35rem 0 0.9rem; }
   .badge.failed { color: var(--danger); border-color: rgba(255, 92, 92, 0.4); }
   .demo-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.9rem; }
   .demo-actions .ghost { padding: 0.45rem 0.7rem; font-size: 0.76rem; }
@@ -327,12 +326,8 @@
 
             <label class="check">
               <input type="checkbox" id="private" />
-              <span class="check-text">Private<small>Left off the demos page. Only people you send the link to can open it.</small></span>
+              <span class="check-text">Private<small>Left off the demos page. The link gets a secret key, so only people you send it to can open it.</small></span>
             </label>
-            <div class="private-hint" id="privateHint" hidden>
-              <p class="hint" style="margin:0">The link is only as private as the slug. A random ending makes it impossible to guess.</p>
-              <button class="ghost" type="button" id="randomSlugBtn">Add a random ending</button>
-            </div>
 
             <details class="env" id="envDetails">
               <summary>Env vars <span class="hint" style="margin:0" id="envSummary">(optional)</span></summary>
