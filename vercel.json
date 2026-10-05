@@ -23,5 +23,8 @@
   ],
   "crons": [
     { "path": "/api/keep-alive", "schedule": "0 6 * * *" }
-  ]
+  ],
+  "functions": {
+    "api/demos.mjs": { "maxDuration": 60 }
+  }
 }

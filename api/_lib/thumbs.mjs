@@ -8,6 +8,8 @@ export async function captureWebp(url) {
     import('@sparticuz/chromium'),
     import('puppeteer-core'),
   ]);
+  // Skips WebGL setup: faster cold start, and a demo screenshot does not need it.
+  chromium.setGraphicsMode = false;
   const browser = await puppeteer.launch({
     args: chromium.args,
     executablePath: await chromium.executablePath(),
@@ -16,10 +18,11 @@ export async function captureWebp(url) {
   try {
     const page = await browser.newPage();
     await page.setViewport({ ...THUMB_SIZE, deviceScaleFactor: 1 });
-    const response = await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 });
+    const response = await page.goto(url, { waitUntil: 'load', timeout: 20000 });
     if (!response || response.status() >= 400) throw new Error(`The demo answered ${response?.status() ?? 'nothing'}.`);
-    // Let entrance animations settle before the shot.
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    // 'load' instead of waiting for the network to go quiet (slow to finish on some demos),
+    // then a short pause so entrance animations and lazy images can settle.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     return Buffer.from(await page.screenshot({ type: 'webp', quality: 80 }));
   } finally {
     await browser.close();
