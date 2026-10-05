@@ -392,7 +392,8 @@ async function thumb(body) {
   try {
     image = await captureWebp(url);
   } catch (error) {
-    console.error('[api/demos] thumbnail failed', slug, error);
+    // Puppeteer errors quote the page URL, which carries a private demo's ?key=. Redact it before logging.
+    console.error('[api/demos] thumbnail failed', slug, String(error?.message || error).replace(/key=[^\s&'"]+/g, 'key=[redacted]').slice(0, 300));
     throw new HttpError(502, 'Could not take a screenshot of the demo. Try again in a minute.');
   }
   const path = `${slug}/thumb-${Date.now()}.webp`;
