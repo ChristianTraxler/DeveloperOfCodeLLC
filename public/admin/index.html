@@ -119,25 +119,51 @@
   }
   .signout:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(236, 232, 223, 0.3); }
   main.hub { max-width: 1120px; margin: 0 auto; padding: 2.5rem 1rem 6rem; }
-  .page-title { font-family: var(--font-display); font-weight: 300; font-size: clamp(56px, 15vw, 112px); letter-spacing: -0.035em; line-height: 0.9; font-variation-settings: 'opsz' 72; }
+  .page-title { animation: titleIn 0.8s var(--ease) both; font-family: var(--font-display); font-weight: 300; font-size: clamp(52px, 14.5vw, 112px); letter-spacing: -0.035em; line-height: 0.88; font-variation-settings: 'opsz' 72; }
+  @keyframes titleIn { from { opacity: 0; transform: translateY(18px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
   .page-sub { color: var(--mute); margin-top: 1.25rem; font-size: 1.05rem; line-height: 1.6; max-width: 44ch; }
-  .grid { margin-top: 2.5rem; display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .grid { margin-top: 3rem; display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
   .tool-card {
-    display: flex; flex-direction: column; min-height: 200px; padding: 1.5rem;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
-    border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
-    text-decoration: none; color: inherit; transition: transform 0.25s var(--ease), border-color 0.2s, background 0.2s;
+    position: relative; display: flex; flex-direction: column; padding: 0.65rem;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+    border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+    text-decoration: none; color: inherit; transition: border-color 0.3s, transform 0.3s var(--ease);
+    animation: rise 0.65s var(--ease) both;
   }
-  .tool-card:hover { transform: translateY(-3px); border-color: var(--line2); }
-  .tool-icon { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; margin-bottom: 1.25rem; background: rgba(255, 90, 31, 0.1); color: var(--ember); border: 1px solid rgba(255, 90, 31, 0.3); }
-  .tool-name { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; font-stretch: 108%; }
-  .tool-desc { color: var(--mute); font-size: 0.95rem; line-height: 1.55; margin-top: 0.4rem; flex: 1; max-width: 40ch; }
-  .tool-go { margin-top: 1.25rem; font-weight: 600; font-size: 0.9rem; color: var(--ember); display: inline-flex; align-items: center; gap: 0.4rem; transition: gap 0.2s var(--ease); }
-  .tool-card:hover .tool-go { gap: 0.65rem; }
-  .tool-card.placeholder { border-style: dashed; border-color: var(--line2); background: transparent; box-shadow: none; cursor: default; align-items: flex-start; justify-content: center; color: var(--faint); }
-  .tool-card.placeholder:hover { transform: none; }
-  .placeholder-title { font-family: var(--font-display); font-weight: 300; font-size: 1.6rem; letter-spacing: -0.03em; color: var(--mute); }
-  .placeholder-sub { font-size: 0.92rem; margin-top: 0.35rem; }
+  .tool-card:nth-child(1) { animation-delay: 0.3s; }
+  .tool-card:nth-child(2) { animation-delay: 0.4s; }
+  .tool-card:hover, .tool-card:focus-visible { border-color: rgba(255, 90, 31, 0.4); }
+  .tool-art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 20px; background: var(--raised); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+  .tool-art-inner { position: absolute; inset: 0; transition: transform 0.7s ease-out; }
+  .tool-card:hover .tool-art-inner { transform: scale(1.035); }
+  .tool-art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tool-art::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, rgba(0, 0, 0, 0.25), transparent 60%, rgba(255, 255, 255, 0.04)); }
+  /* Demos preview: three homepage thumbnails fanned out, as in the design. */
+  .fan { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(70% 80% at 50% 100%, rgba(255, 90, 31, 0.16), transparent 70%), linear-gradient(#111a30, #0a1020); }
+  .fan-stage { position: relative; height: 56%; width: 40%; min-width: 130px; }
+  .fan-card { position: absolute; inset: 0; overflow: hidden; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 24px 40px -14px rgba(0, 0, 0, 0.9); }
+  .tool-arrow {
+    position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(7, 10, 18, 0.65); border: 1px solid rgba(255, 255, 255, 0.15); color: var(--bone); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .tool-arrow svg { position: static; width: 19px; height: 19px; transition: transform 0.3s; }
+  .tool-card:hover .tool-arrow, .tool-card:focus-visible .tool-arrow { background: var(--ember); border-color: var(--ember); color: #1c0a02; }
+  .tool-card:hover .tool-arrow svg { transform: rotate(12deg); }
+  .tool-body { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem 0.65rem 0.75rem; }
+  .tool-icon { flex: none; width: 44px; height: 44px; border-radius: 16px; display: grid; place-items: center; background: rgba(255, 90, 31, 0.1); color: var(--ember); border: 1px solid rgba(255, 90, 31, 0.25); }
+  .tool-name { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; font-stretch: 108%; }
+  .tool-desc { color: var(--mute); font-size: 0.95rem; line-height: 1.6; margin-top: 0.4rem; max-width: 44ch; }
+  .tool-card.placeholder {
+    flex-direction: row; align-items: center; gap: 1rem; padding: 1.25rem; border-radius: 24px; border: 1px dashed var(--line2);
+    background: transparent; box-shadow: none; cursor: default; color: var(--bone); animation-delay: 0.65s;
+  }
+  .tool-card.placeholder:hover { border-color: rgba(255, 90, 31, 0.5); background: rgba(255, 90, 31, 0.04); transform: none; }
+  .placeholder-plus { flex: none; width: 44px; height: 44px; border-radius: 16px; display: grid; place-items: center; border: 1px solid var(--line2); color: var(--mute); transition: color 0.3s, border-color 0.3s; }
+  .tool-card.placeholder:hover .placeholder-plus { color: var(--ember); border-color: rgba(255, 90, 31, 0.4); }
+  .placeholder-title { font-size: 1.03rem; font-weight: 500; }
+  .placeholder-sub { font-size: 0.9rem; color: var(--mute); }
+  @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
 
   /* Scroll-to-top */
   #scrollTop {
@@ -158,10 +184,14 @@
     .brand-divider, .brand .brand-label, .user-email, .signout .lbl { display: none; }
     .signout { width: 44px; padding: 0; }
   }
+  @media (min-width: 768px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+    .tool-card.placeholder { grid-column: 1 / -1; }
+    .tool-art { aspect-ratio: 16 / 8.5; }
+  }
   @media (min-width: 640px) {
     .nav-inner { padding: 0 1.5rem; }
     main.hub { padding: 3.5rem 1.5rem 6rem; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
     #scrollTop { right: 1.5rem; bottom: 1.5rem; }
   }
 </style>
@@ -223,30 +253,43 @@
 
       <div class="grid">
         <a class="tool-card" href="/admin/tracker/">
-          <div class="tool-icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <div class="tool-art">
+            <div class="tool-art-inner"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="trkBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16203a"></stop><stop offset="1" stop-color="#0b1224"></stop></linearGradient></defs><rect width="320" height="200" fill="url(#trkBg)"></rect><g stroke="#ece8df" stroke-opacity="0.05"><path d="M0 0V200"></path><path d="M20 0V200"></path><path d="M40 0V200"></path><path d="M60 0V200"></path><path d="M80 0V200"></path><path d="M100 0V200"></path><path d="M120 0V200"></path><path d="M140 0V200"></path><path d="M160 0V200"></path><path d="M180 0V200"></path><path d="M200 0V200"></path><path d="M220 0V200"></path><path d="M240 0V200"></path><path d="M260 0V200"></path><path d="M280 0V200"></path><path d="M300 0V200"></path><path d="M320 0V200"></path><path d="M0 0H320"></path><path d="M0 20H320"></path><path d="M0 40H320"></path><path d="M0 60H320"></path><path d="M0 80H320"></path><path d="M0 100H320"></path><path d="M0 120H320"></path><path d="M0 140H320"></path><path d="M0 160H320"></path><path d="M0 180H320"></path><path d="M0 200H320"></path></g><g><rect x="18" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="30" cy="40" r="3.5" fill="#6c7a99"></circle><rect x="39" y="37.5" width="54" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="26" y="54" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="63" width="39.199999999999996" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="72" width="28" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="26" y="96" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="105" width="28" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="114" width="20" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="26" y="138" width="72" height="28" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="147" width="33.6" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="156" width="24" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g><rect x="112" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="124" cy="40" r="3.5" fill="#ff7a45"></circle><rect x="133" y="37.5" width="40" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="120" y="54" width="72" height="40" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="127" y="63" width="44.800000000000004" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="127" y="72" width="32" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect><rect x="127" y="85" width="46" height="3" rx="1.5" fill="#ff7a45"></rect></g><g><rect x="120" y="102" width="72" height="30" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="127" y="111" width="30.800000000000004" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="127" y="120" width="22" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g><rect x="206" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="218" cy="40" r="3.5" fill="#4fd18b"></circle><rect x="227" y="37.5" width="46" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="214" y="54" width="72" height="30" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="63" width="33.6" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="72" width="24" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="214" y="92" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="101" width="28" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="110" width="20" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="214" y="134" width="72" height="26" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="143" width="39.199999999999996" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="152" width="28" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g transform="translate(262 150)"><circle r="22" fill="#0b1224" stroke="#ff5a1f" stroke-width="2.5"></circle><path d="M0 -12 V0 L8 6" stroke="#ece8df" stroke-width="2.5" stroke-linecap="round" fill="none"></path></g></svg></div>
+            <span class="tool-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
           </div>
-          <div class="tool-name">Projects Tracker</div>
-          <div class="tool-desc">Track builds, tasks, time and notes across every project.</div>
-          <span class="tool-go">Open
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </span>
+          <div class="tool-body">
+            <span class="tool-icon" aria-hidden="true">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            </span>
+            <div>
+              <h2 class="tool-name">Projects Tracker</h2>
+              <p class="tool-desc">Track builds, tasks, time and notes across every project.</p>
+            </div>
+          </div>
         </a>
 
         <a class="tool-card" href="/admin/demos/">
-          <div class="tool-icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="18" x2="12" y2="21"/><polyline points="9 9 12 6 15 9"/><line x1="12" y1="6" x2="12" y2="14"/></svg>
+          <div class="tool-art">
+            <div class="tool-art-inner"><div class="fan"><div class="fan-stage"><div class="fan-card" style="transform:translate(-70%,12%) rotate(-9deg);z-index:1"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="200" fill="#f3e4cf"></rect><rect x="0" y="0" width="150" height="200" fill="#6b1f1f"></rect><g fill="#f3e4cf" opacity="0.55"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><text x="20" y="84" font-family="Literata Variable, serif" font-weight="300" font-size="25" fill="#f3e4cf" letter-spacing="-0.7">Carver</text><text x="20" y="110" font-family="Literata Variable, serif" font-weight="300" font-size="25" fill="#f3e4cf" letter-spacing="-0.7">Street</text><text x="21" y="128" font-family="Mona Sans Variable, sans-serif" font-size="8" fill="#f3e4cf" opacity="0.8">Bread from 5 a.m.</text><ellipse cx="206" cy="78" rx="38" ry="22" fill="#d29a4c"></ellipse><path d="M180 74 L192 64 M200 70 L212 60 M220 72 L232 62" stroke="#f3e4cf" stroke-width="3" stroke-linecap="round" opacity="0.7"></path><ellipse cx="270" cy="128" rx="30" ry="30" fill="#e3b46a"></ellipse><circle cx="270" cy="128" r="9" fill="#c28336" opacity="0.7"></circle><ellipse cx="204" cy="152" rx="26" ry="14" fill="#b87a30"></ellipse></svg></div><div class="fan-card" style="transform:translate(0%,-2%) rotate(0deg);z-index:3"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="estA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfdcd0"></stop><stop offset="0.5" stop-color="#a9c19a"></stop><stop offset="1" stop-color="#6f8c58"></stop></linearGradient></defs><rect width="320" height="200" fill="#f1ece1"></rect><g fill="#2d3a2b" opacity="0.7"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><rect x="18" y="34" width="196" height="112" rx="6" fill="url(#estA)"></rect><path d="M18 104 C70 92 120 108 214 96 V146 H18Z" fill="#587443" opacity="0.8"></path><rect x="120" y="80" width="38" height="24" fill="#f4efe4"></rect><path d="M114 82 L139 62 L164 82Z" fill="#7a3b2a"></path><rect x="132" y="90" width="9" height="14" fill="#7a3b2a" opacity="0.6"></rect><text x="228" y="70" font-family="Literata Variable, serif" font-weight="300" font-size="21" fill="#26331f" letter-spacing="-0.5">Land &amp;</text><text x="228" y="92" font-family="Literata Variable, serif" font-weight="300" font-size="21" fill="#26331f" letter-spacing="-0.5">Home</text><rect x="229" y="104" width="46" height="3" rx="1.5" fill="#26331f" opacity="0.35"></rect><rect x="229" y="112" width="34" height="3" rx="1.5" fill="#26331f" opacity="0.25"></rect><g stroke="#26331f" stroke-opacity="0.25" fill="#fbf8f1"><rect x="18" y="156" width="92" height="34" rx="5"></rect><rect x="114" y="156" width="92" height="34" rx="5"></rect><rect x="210" y="156" width="92" height="34" rx="5"></rect></g><g fill="#26331f" opacity="0.4"><rect x="26" y="166" width="40" height="3" rx="1.5"></rect><rect x="122" y="166" width="40" height="3" rx="1.5"></rect><rect x="218" y="166" width="40" height="3" rx="1.5"></rect></g></svg></div><div class="fan-card" style="transform:translate(70%,14%) rotate(8deg);z-index:2"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="artR4a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2cc"></stop><stop offset="0.62" stop-color="#f4e4c9"></stop></linearGradient></defs><rect width="320" height="200" fill="url(#artR4a)"></rect><circle cx="238" cy="82" r="24" fill="#fff4da" opacity="0.92"></circle><path d="M0 120 C60 110 120 126 180 116 S280 110 320 118 V200 H0Z" fill="#2f7189"></path><path d="M0 140 C70 131 130 149 200 139 S290 133 320 141 V200 H0Z" fill="#1d5268"></path><path d="M0 166 C60 158 140 174 220 164 S300 162 320 166 V200 H0Z" fill="#ead6b0"></path><g fill="#fffaf0" opacity="0.7"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><text x="20" y="66" font-family="Literata Variable, serif" font-weight="300" font-size="27" fill="#fffaf0" letter-spacing="-0.8">Halyard House</text><text x="21" y="82" font-family="Mona Sans Variable, sans-serif" font-size="8" fill="#fffaf0" opacity="0.85">Oceanfront. Four bedrooms. Book direct.</text><rect x="20" y="148" width="196" height="26" rx="13" fill="#fffaf0" opacity="0.94"></rect><rect x="86" y="154" width="1" height="14" fill="#1d5268" opacity="0.25"></rect><rect x="150" y="154" width="1" height="14" fill="#1d5268" opacity="0.25"></rect><rect x="34" y="158" width="34" height="3" rx="1.5" fill="#1d5268" opacity="0.5"></rect><rect x="100" y="158" width="34" height="3" rx="1.5" fill="#1d5268" opacity="0.5"></rect><circle cx="198" cy="161" r="9" fill="#c8553a"></circle></svg></div></div></div></div>
+            <span class="tool-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
           </div>
-          <div class="tool-name">Demos</div>
-          <div class="tool-desc">Upload a project zip and publish it to demos.developerofcode.com.</div>
-          <span class="tool-go">Open
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </span>
+          <div class="tool-body">
+            <span class="tool-icon" aria-hidden="true">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="18" x2="12" y2="21"/><polyline points="9 9 12 6 15 9"/><line x1="12" y1="6" x2="12" y2="14"/></svg>
+            </span>
+            <div>
+              <h2 class="tool-name">Demos</h2>
+              <p class="tool-desc">Upload a project zip and publish it to demos.developerofcode.com.</p>
+            </div>
+          </div>
         </a>
 
         <div class="tool-card placeholder">
-          <div class="placeholder-title">+ Add a tool</div>
-          <div class="placeholder-sub">More tools land here as you build them.</div>
+          <span class="placeholder-plus" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+          <div>
+            <div class="placeholder-title">Add a tool</div>
+            <div class="placeholder-sub">More tools land here as you build them.</div>
+          </div>
         </div>
       </div>
     </main>
