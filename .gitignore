@@ -19,3 +19,7 @@ public/admin/tracker/
 
 # DOC Tracker project mapping (harmless, but no need to ship it)
 .doc-tracker.json
+
+# Dependencies excluded from iCloud (node_modules links to node_modules.nosync)
+node_modules
+node_modules.nosync
