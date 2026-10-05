@@ -32,6 +32,10 @@ let session = null;
 let demos = [];
 let slugTouched = false;
 let file = null;
+let filter = 'all';
+let query = '';
+let openMenu = null;
+let sheetReturnFocus = null;
 const expandedDescs = new Set(); // slugs whose description is open, kept across re-renders
 
 // ── Session ─────────────────────────────────────────────────────────────────
@@ -322,9 +326,39 @@ function startReplace(demo) {
   $('uploadTitle').textContent = `Replace ${demo.name}`;
   $('resetBtn').hidden = false;
   showForm();
-  $('uploadForm').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  openSheet();
   $('zip').focus();
 }
+
+// ── Upload sheet (bottom sheet on phones, side drawer on desktop) ───────────
+
+function openSheet() {
+  sheetReturnFocus = document.activeElement;
+  $('sheet').hidden = false;
+  $('sheetBackdrop').hidden = false;
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('sheet-open');
+}
+function closeSheet() {
+  $('sheet').hidden = true;
+  $('sheetBackdrop').hidden = true;
+  document.body.style.overflow = '';
+  document.body.classList.remove('sheet-open');
+  sheetReturnFocus?.focus?.();
+}
+function newDemo() {
+  resetForm();
+  $('uploadTitle').textContent = 'New demo';
+  showForm();
+  openSheet();
+  nameEl.focus();
+}
+['newBtn', 'fab'].forEach((id) => $(id).addEventListener('click', newDemo));
+['sheetClose', 'progressClose', 'sheetBackdrop'].forEach((id) => $(id).addEventListener('click', closeSheet));
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (openMenu) closeMenu(); else if (!$('sheet').hidden) closeSheet();
+});
 
 // ── Upload + build ──────────────────────────────────────────────────────────
 
@@ -484,16 +518,78 @@ async function loadList() {
   }
 }
 
-function badges(d) {
-  const list = [];
-  if (d.build_state === 'building') list.push(['building', 'Building']);
-  else if (d.build_state === 'failed') list.push(['failed', 'Failed']);
-  if (d.status === 'live') list.push(['live', 'Live']);
-  else if (d.build_state !== 'building' && d.build_state !== 'failed') list.push(['', 'Draft']);
-  if (d.hidden) list.push(['', 'Offline']);
-  if (d.private) list.push(['private', 'Private']);
-  if (d.concept) list.push(['', 'Concept']);
-  return el('div', { class: 'badges' }, list.map(([cls, label]) => el('span', { class: `badge ${cls}` }, label)));
+const ICON_PATHS = {
+  external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  rebuild: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3"/>',
+  up: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+  down: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
+  power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+};
+function icon(name, size = 16) {
+  const holder = document.createElement('span');
+  holder.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
+  return holder.firstChild;
+}
+
+// Placeholder thumbnail: a gradient picked from the slug, with the name's first letter.
+function thumbArt(d) {
+  let h = 0;
+  for (const c of d.slug) h = (h * 31 + c.charCodeAt(0)) % 360;
+  const art = el('div', { class: 'thumb-art', style: `background:linear-gradient(135deg,hsl(${h} 42% 30%),hsl(${(h + 48) % 360} 52% 14%))` },
+    el('span', {}, (d.name || d.slug).trim().charAt(0).toUpperCase()));
+  return art;
+}
+
+function relDate(iso) {
+  if (!iso) return '';
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days <= 0) return 'Updated today';
+  if (days === 1) return 'Updated yesterday';
+  if (days < 30) return `Updated ${days} days ago`;
+  return `Updated ${new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
+// What the card shows for one demo: label, dot style, and whether its thumbnail is dimmed.
+function stateOf(d) {
+  if (d.build_state === 'building') return { label: 'Building', cls: 'building', pill: 'Building', spin: true, dim: true };
+  if (d.build_state === 'failed') return { label: 'Failed', cls: 'failed', pill: 'Build failed', fail: true, dim: true };
+  if (d.hidden) return { label: 'Offline', cls: '', pill: 'Offline', dim: true };
+  if (d.status === 'live') return { label: 'Live', cls: 'live' };
+  return { label: 'Draft', cls: '', pill: 'Draft', dim: true };
+}
+
+// ── Overflow menu ───────────────────────────────────────────────────────────
+
+function closeMenu() {
+  if (!openMenu) return;
+  openMenu.backdrop.remove();
+  openMenu.menu.remove();
+  openMenu.card.classList.remove('menu-open');
+  openMenu.trigger.setAttribute('aria-expanded', 'false');
+  openMenu.trigger.focus();
+  openMenu = null;
+}
+function showMenu(trigger, card, title, rows) {
+  closeMenu();
+  const menu = el('div', { class: 'menu', role: 'menu' }, el('div', { class: 'menu-title' }, title),
+    rows.filter(Boolean).map((r) => (r === 'sep' ? el('hr') : el('button', {
+      type: 'button', role: 'menuitem', class: r.danger ? 'danger' : '', disabled: r.disabled,
+      onclick: () => { closeMenu(); r.run(); },
+    }, icon(r.icon, 18), r.label))));
+  const backdrop = el('div', { class: 'menu-backdrop', onclick: closeMenu });
+  trigger.parentElement.append(backdrop, menu);
+  card.classList.add('menu-open');
+  trigger.setAttribute('aria-expanded', 'true');
+  openMenu = { menu, backdrop, card, trigger };
+  menu.querySelector('button:not(:disabled)')?.focus();
 }
 
 async function act(button, work, done) {
@@ -586,84 +682,150 @@ function descBlock(d) {
   return el('div', {}, clip, toggle);
 }
 
-function renderList() {
-  const list = $('demoList');
-  $('listState').replaceChildren();
-  $('listCount').textContent = demos.length ? `${demos.filter((d) => d.status === 'live' && !d.hidden && !d.private).length} of ${demos.length} public` : '';
-  updatePreview();
+function segButton(label, pressed, onclick, count, extra = {}) {
+  return el('button', { type: 'button', 'aria-pressed': String(pressed), onclick, ...extra },
+    label, count == null ? null : el('span', { class: 'n' }, String(count)));
+}
 
-  if (!demos.length) {
-    list.replaceChildren();
-    $('listState').append(el('div', { class: 'empty' }, 'No demos yet. Upload your first zip and it shows up here.'));
-    return;
-  }
+function renderFilter(all, pub, priv) {
+  $('filterSeg').replaceChildren(
+    segButton('All', filter === 'all', () => { filter = 'all'; renderList(); }, all),
+    segButton('Public', filter === 'public', () => { filter = 'public'; renderList(); }, pub),
+    segButton('Link only', filter === 'link', () => { filter = 'link'; renderList(); }, priv));
+}
 
-  list.replaceChildren(...demos.map((d, i) => {
-    const live = d.status === 'live';
-    const item = el('li', { class: `demo${d.hidden ? ' is-hidden' : ''}` },
+function matches(d) {
+  const q = query.trim().toLowerCase();
+  return !q || `${d.name} ${d.slug} ${d.description || ''}`.toLowerCase().includes(q);
+}
+
+function card(d) {
+  const st = stateOf(d);
+  const live = d.status === 'live';
+  const path = d.private ? `/${d.slug}/?key=${d.access_key || ''}` : `${DEMOS_ORIGIN.replace('https://', '')}/${d.slug}`;
+  const publicList = demos.filter((x) => !x.private);
+  const at = publicList.indexOf(d);
+  const canMove = !d.private && !query.trim();
+  const goMove = (neighbor) => move(demos.indexOf(d), demos.indexOf(neighbor) - demos.indexOf(d));
+  const item = el('li', { class: `demo${st.dim ? ' is-dim' : ''}` });
+  const moreBtn = el('button', { class: 'ghost more-btn', type: 'button', 'aria-label': `More actions for ${d.name}`, 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, icon('more', 18));
+  moreBtn.addEventListener('click', () => showMenu(moreBtn, item, d.name, [
+    { label: 'Edit details', icon: 'pencil', run: () => editForm(d, item) },
+    { label: 'Replace zip', icon: 'upload', run: () => startReplace(d) },
+    { label: 'Rebuild', icon: 'rebuild', disabled: d.build_state === 'building' || !d.kind,
+      run: () => act(moreBtn, async () => {
+        const { demo } = await api('build', { method: 'POST', body: { slug: d.slug } });
+        upsertLocal(demo);
+        upsertLocal(await pollUntilDone(d.slug));
+      }, 'Rebuild finished') },
+    d.private && { label: 'Generate new key', icon: 'key',
+      run: () => {
+        if (!confirm(`Give "${d.name}" a new key? Anyone with the current link will lose access, including people already viewing it. Only the new link will work.`)) return;
+        act(moreBtn, async () => {
+          const { demo } = await api('rotate-key', { method: 'POST', body: { slug: d.slug } });
+          upsertLocal(demo);
+        }, 'New key made. Copy the new link to share it.');
+      } },
+    canMove && at > 0 && { label: 'Move up', icon: 'up', run: () => goMove(publicList[at - 1]) },
+    canMove && at < publicList.length - 1 && { label: 'Move down', icon: 'down', run: () => goMove(publicList[at + 1]) },
+    { label: d.hidden ? 'Put online' : 'Take offline', icon: 'power',
+      run: () => act(moreBtn, async () => {
+        const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, hidden: !d.hidden } });
+        upsertLocal(demo);
+      }, d.hidden ? 'Back online' : 'Offline: the link no longer works') },
+    'sep',
+    { label: 'Delete demo', icon: 'trash', danger: true,
+      run: () => {
+        if (!confirm(`Delete "${d.name}"? This removes it from the demos page and deletes its Vercel project. This cannot be undone.`)) return;
+        act(moreBtn, async () => {
+          await api('delete', { method: 'POST', body: { slug: d.slug } });
+          demos = demos.filter((x) => x.slug !== d.slug);
+          renderList();
+        }, 'Deleted');
+      } },
+  ]));
+
+  const visibility = el('div', { class: 'seg fill', role: 'group', 'aria-label': `Visibility of ${d.name}` },
+    ['Public', 'Link only'].map((label, i) => {
+      const wantPrivate = i === 1;
+      return el('button', {
+        type: 'button', 'aria-pressed': String(d.private === wantPrivate),
+        onclick: (e) => {
+          if (d.private === wantPrivate) return;
+          act(e.currentTarget, async () => {
+            const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, private: wantPrivate } });
+            upsertLocal(demo);
+          }, wantPrivate ? 'Private: only the keyed link works' : 'Now listed on the demos page, no key needed');
+        },
+      }, label);
+    }));
+
+  item.append(
+    el('div', { class: 'thumb' }, thumbArt(d),
+      st.pill ? el('div', { class: 'thumb-pill' }, el('span', {}, el('i', { class: st.spin ? 'spin' : st.fail ? 'fail' : '' }), st.pill)) : null),
+    el('div', { class: 'demo-body' },
       el('div', { class: 'demo-top' },
-        el('div', {},
-          el('div', { class: 'demo-name' }, d.name || d.slug),
-          d.description ? descBlock(d) : null,
-          live ? el('a', { class: 'demo-url', href: demoUrl(d), target: '_blank', rel: 'noopener' }, demoUrl(d).slice(DEMOS_ORIGIN.length)) : el('span', { class: 'demo-url' }, `/${d.slug}/`)),
-        badges(d)),
+        el('div', { style: 'min-width:0' },
+          el('h3', { class: 'demo-name' }, d.name || d.slug),
+          live && !d.hidden
+            ? el('a', { class: 'demo-url', href: demoUrl(d), target: '_blank', rel: 'noopener' }, icon(d.private ? 'lock' : 'globe', 13), el('span', {}, path))
+            : el('span', { class: 'demo-url' }, icon(d.private ? 'lock' : 'globe', 13), el('span', {}, path))),
+        el('span', { class: `state ${st.cls}` }, el('i'), st.label)),
+      d.description ? descBlock(d) : null,
+      el('p', { class: 'demo-meta' }, d.concept ? el('span', { class: 'badge' }, 'Concept') : null, relDate(d.updated_at)),
       d.build_state === 'failed' && d.error
         ? el('div', { class: 'notice error' }, d.error, d.inspector_url ? el('span', {}, ' ', el('a', { href: d.inspector_url, target: '_blank', rel: 'noopener' }, 'Build log')) : null)
         : null,
       d.warnings?.length && d.build_state !== 'failed' ? warningsNotice(d.warnings) : null,
       el('div', { class: 'demo-actions' },
-        live ? el('a', { class: 'ghost', href: demoUrl(d), target: '_blank', rel: 'noopener' }, 'Open') : null,
-        live ? el('button', { class: 'ghost', type: 'button', onclick: () => copy(demoUrl(d)) }, 'Copy link') : null,
-        d.private ? el('button', {
-          class: 'ghost', type: 'button',
-          onclick: (e) => {
-            if (!confirm(`Give "${d.name}" a new key? Anyone with the current link will lose access, including people already viewing it. Only the new link will work.`)) return;
-            act(e.currentTarget, async () => {
-              const { demo } = await api('rotate-key', { method: 'POST', body: { slug: d.slug } });
-              upsertLocal(demo);
-            }, 'New key made. Copy the new link to share it.');
-          },
-        }, 'New key') : null,
-        el('button', { class: 'ghost', type: 'button', onclick: () => startReplace(d) }, 'Replace'),
-        el('button', {
-          class: 'ghost', type: 'button', disabled: d.build_state === 'building' || !d.kind,
-          onclick: (e) => act(e.currentTarget, async () => {
-            const { demo } = await api('build', { method: 'POST', body: { slug: d.slug } });
-            upsertLocal(demo);
-            upsertLocal(await pollUntilDone(d.slug));
-          }, 'Rebuild finished'),
-        }, 'Rebuild'),
-        el('button', {
-          class: 'ghost', type: 'button',
-          onclick: (e) => act(e.currentTarget, async () => {
-            const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, hidden: !d.hidden } });
-            upsertLocal(demo);
-          }, d.hidden ? 'Back online' : 'Offline: the link no longer works'),
-        }, d.hidden ? 'Put online' : 'Take offline'),
-        el('button', {
-          class: 'ghost', type: 'button',
-          onclick: (e) => act(e.currentTarget, async () => {
-            const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, private: !d.private } });
-            upsertLocal(demo);
-          }, d.private ? 'Now listed on the demos page, no key needed' : 'Private: only the keyed link works'),
-        }, d.private ? 'Make public' : 'Make private'),
-        el('button', { class: 'ghost', type: 'button', onclick: () => editForm(d, item) }, 'Edit'),
-        el('button', { class: 'ghost', type: 'button', 'aria-label': `Move ${d.name} up`, disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
-        el('button', { class: 'ghost', type: 'button', 'aria-label': `Move ${d.name} down`, disabled: i === demos.length - 1, onclick: () => move(i, 1) }, '↓'),
-        el('button', {
-          class: 'ghost danger', type: 'button',
-          onclick: (e) => {
-            if (!confirm(`Delete "${d.name}"? This removes it from the demos page and deletes its Vercel project. This cannot be undone.`)) return;
-            act(e.currentTarget, async () => {
-              await api('delete', { method: 'POST', body: { slug: d.slug } });
-              demos = demos.filter((x) => x.slug !== d.slug);
-              renderList();
-            }, 'Deleted');
-          },
-        }, 'Delete')));
-    return item;
-  }));
+        live ? el('a', { class: 'ghost solid', href: demoUrl(d), target: '_blank', rel: 'noopener' }, icon('external'), 'Open')
+          : el('button', { class: 'ghost solid', type: 'button', disabled: true }, icon('external'), 'Open'),
+        el('button', { class: 'ghost', type: 'button', disabled: !live, onclick: () => copy(demoUrl(d)) }, icon('copy'), 'Copy link'),
+        visibility,
+        el('div', { class: 'more-wrap' }, moreBtn))));
+  return item;
 }
+
+function renderList() {
+  closeMenu();
+  $('listState').replaceChildren();
+  const pubAll = demos.filter((d) => !d.private);
+  const privAll = demos.filter((d) => d.private);
+  const searching = query.trim().length > 0;
+  const pub = pubAll.filter(matches);
+  const priv = privAll.filter(matches);
+  const showPub = filter !== 'link';
+  const showPriv = filter !== 'public';
+  $('pageCount').textContent = demos.length ? `${demos.length} demos in total. ${pubAll.length} on the public page, ${privAll.length} link only.` : '';
+  renderFilter(demos.length, pubAll.length, privAll.length);
+  updatePreview();
+
+  $('secPublic').hidden = true;
+  $('secPrivate').hidden = true;
+  if (!demos.length) {
+    $('listState').append(el('div', { class: 'empty' }, 'No demos yet. Upload your first zip and it shows up here.'));
+    return;
+  }
+  const nothing = searching && (showPub ? pub.length : 0) + (showPriv ? priv.length : 0) === 0;
+  if (nothing) {
+    $('listState').append(el('div', { class: 'empty' }, `No demos match "${query.trim()}". Try a client name or part of a URL slug.`,
+      el('div', { style: 'margin-top:1rem' }, el('button', { class: 'ghost', type: 'button', onclick: () => { query = ''; $('search').value = ''; renderList(); } }, 'Clear search'))));
+    return;
+  }
+  const fill = (section, list, countEl, rows, emptyEl, total) => {
+    section.hidden = false;
+    countEl.textContent = rows.length;
+    list.replaceChildren(...rows.map(card));
+    emptyEl.hidden = total > 0;
+  };
+  if (showPub) {
+    fill($('secPublic'), $('demoList'), $('pubCount'), pub, $('pubEmpty'), pubAll.length);
+    $('pubHint').textContent = searching ? 'Clear the search to reorder.' : 'Visitors see these in this order. Use Move up and Move down in the menu to reorder.';
+  }
+  if (showPriv) fill($('secPrivate'), $('privateList'), $('privCount'), priv, $('privEmpty'), privAll.length);
+}
+
+$('search').addEventListener('input', (e) => { query = e.target.value; renderList(); });
 
 // ── Scroll-to-top ───────────────────────────────────────────────────────────
 
