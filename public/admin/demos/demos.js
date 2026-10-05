@@ -360,6 +360,22 @@ document.addEventListener('keydown', (e) => {
   if (openMenu) closeMenu(); else if (!$('sheet').hidden) closeSheet();
 });
 
+// ── Thumbnails ──────────────────────────────────────────────────────────────
+
+// Take a screenshot once a demo is live. Never blocks or fails a build: errors are only logged.
+// The demos site caches its slug lookups for up to a minute, so a demo that was already live
+// waits that long to avoid shooting the previous version.
+function scheduleThumb(slug, wasLive) {
+  setTimeout(async () => {
+    try {
+      const { demo } = await api('thumb', { method: 'POST', body: { slug } });
+      upsertLocal(demo);
+    } catch (error) {
+      console.warn('Thumbnail skipped:', error.message);
+    }
+  }, wasLive ? 65000 : 3000);
+}
+
 // ── Upload + build ──────────────────────────────────────────────────────────
 
 function uploadWithProgress(url, blob, onProgress) {
@@ -445,6 +461,7 @@ $('uploadForm').addEventListener('submit', async (e) => {
     $('uploadMeta').textContent = formatBytes(file.size);
 
     step('check', 'active');
+    const wasLive = demos.find((d) => d.slug === slug)?.status === 'live';
     const { demo, envFromZip } = await api('build', { method: 'POST', body: { ...payload, path } });
     step('check', 'done');
     $('buildLabel').textContent = demo.kind === 'built' ? 'Deploying built site' : 'Building on Vercel';
@@ -458,6 +475,7 @@ $('uploadForm').addEventListener('submit', async (e) => {
     upsertLocal(final);
 
     if (final.build_state === 'ready') {
+      scheduleThumb(slug, wasLive);
       step('build', 'done');
       step('live', 'done');
       notice('ok',
@@ -530,6 +548,7 @@ const ICON_PATHS = {
   down: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
   power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
   globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
 };
@@ -543,8 +562,15 @@ function icon(name, size = 16) {
 function thumbArt(d) {
   let h = 0;
   for (const c of d.slug) h = (h * 31 + c.charCodeAt(0)) % 360;
-  const art = el('div', { class: 'thumb-art', style: `background:linear-gradient(135deg,hsl(${h} 42% 30%),hsl(${(h + 48) % 360} 52% 14%))` },
+  const tile = () => el('div', { class: 'thumb-art', style: `background:linear-gradient(135deg,hsl(${h} 42% 30%),hsl(${(h + 48) % 360} 52% 14%))` },
     el('span', {}, (d.name || d.slug).trim().charAt(0).toUpperCase()));
+  const src = d.cover_url || d.thumb_url;
+  if (!src) return tile();
+  // A custom cover wins over the automatic screenshot; a broken image falls back to the tile.
+  const art = el('div', { class: 'thumb-art has-img' });
+  const img = el('img', { src, alt: '', loading: 'lazy', decoding: 'async' });
+  img.addEventListener('error', () => art.replaceWith(tile()));
+  art.append(img);
   return art;
 }
 
@@ -618,17 +644,40 @@ function editForm(d, item) {
   desc.value = d.description || '';
   const concept = el('input', { type: 'checkbox' });
   concept.checked = d.concept;
+  const cover = el('input', { type: 'file', accept: 'image/webp,image/png,image/jpeg', 'aria-label': 'Cover image' });
+  const coverError = el('p', { class: 'field-error', role: 'alert' });
+  cover.addEventListener('change', () => {
+    const f = cover.files[0];
+    coverError.textContent = f && f.size > 5 * 1024 * 1024 ? 'That image is over 5 MB.' : '';
+    if (coverError.textContent) cover.value = '';
+  });
   const form = el('form', { class: 'edit-form' },
     name, desc,
     el('label', { class: 'check' }, concept, el('span', { class: 'check-text' }, 'Concept demo')),
+    el('div', { class: 'field', style: 'margin:0' },
+      el('span', { class: 'label' }, 'Cover image'),
+      cover,
+      el('p', { class: 'hint' }, d.cover_url ? 'A custom cover is set. Choose a new image to replace it.' : 'Optional. Replaces the automatic screenshot. WebP, PNG or JPEG, up to 5 MB.'),
+      coverError,
+      d.cover_url ? el('button', { class: 'ghost', type: 'button', style: 'margin-top:0.4rem', onclick: (e) => act(e.currentTarget, async () => {
+        const { demo } = await api('clear-cover', { method: 'POST', body: { slug: d.slug } });
+        upsertLocal(demo);
+      }, 'Cover removed. The screenshot is back.') }, 'Remove cover') : null),
     el('div', { class: 'btn-row' },
       el('button', { class: 'ghost', type: 'submit' }, 'Save'),
       el('button', { class: 'ghost', type: 'button', onclick: () => renderList() }, 'Cancel')));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!name.value.trim()) { name.setAttribute('aria-invalid', 'true'); name.focus(); return; }
+    if (coverError.textContent) return;
     await act(form.querySelector('[type=submit]'), async () => {
-      const { demo } = await api('update', { method: 'POST', body: { slug: d.slug, name: name.value, description: desc.value, concept: concept.checked } });
+      let { demo } = await api('update', { method: 'POST', body: { slug: d.slug, name: name.value, description: desc.value, concept: concept.checked } });
+      const picked = cover.files[0];
+      if (picked) {
+        const { path, uploadUrl } = await api('cover-upload-url', { method: 'POST', body: { slug: d.slug, type: picked.type } });
+        await uploadWithProgress(uploadUrl, picked, () => {});
+        ({ demo } = await api('set-cover', { method: 'POST', body: { slug: d.slug, path } }));
+      }
       upsertLocal(demo);
     }, 'Saved');
   });
@@ -716,8 +765,15 @@ function card(d) {
       run: () => act(moreBtn, async () => {
         const { demo } = await api('build', { method: 'POST', body: { slug: d.slug } });
         upsertLocal(demo);
-        upsertLocal(await pollUntilDone(d.slug));
+        const done = await pollUntilDone(d.slug);
+        upsertLocal(done);
+        if (done.build_state === 'ready') scheduleThumb(d.slug, d.status === 'live');
       }, 'Rebuild finished') },
+    { label: 'Capture thumbnail', icon: 'camera', disabled: d.status !== 'live' || d.hidden || d.build_state === 'building',
+      run: () => act(moreBtn, async () => {
+        const { demo } = await api('thumb', { method: 'POST', body: { slug: d.slug } });
+        upsertLocal(demo);
+      }, 'Thumbnail updated') },
     d.private && { label: 'Generate new key', icon: 'key',
       run: () => {
         if (!confirm(`Give "${d.name}" a new key? Anyone with the current link will lose access, including people already viewing it. Only the new link will work.`)) return;

@@ -17,6 +17,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { DemoError, prepareDemo, toVercelFiles, validateSlug } from './_lib/demos-core.mjs';
+import { captureWebp } from './_lib/thumbs.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
@@ -29,12 +30,16 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .filter(Boolean);
 
 const BUCKET = 'demo-uploads';
+const THUMB_BUCKET = 'demo-thumbs';
+const DEMOS_ORIGIN = 'https://demos.developerofcode.com';
+const COVER_PATH_RE = /^[a-z0-9][a-z0-9-]{0,39}\/cover-\d{10,16}\.(webp|png|jpe?g)$/;
+const thumbPublicUrl = (path) => `${SUPABASE_URL}/storage/v1/object/public/${THUMB_BUCKET}/${path}`;
 const ZIPS_KEPT = 3;
 const UPLOAD_CONCURRENCY = 8;
 const ZIP_PATH_RE = /^[a-z0-9][a-z0-9-]{0,39}\/\d{10,16}\.zip$/;
 const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]{0,63}$/;
 // Returned to the admin page. Never includes tokens or anything from Vercel beyond these.
-const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,private,access_key,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at';
+const PUBLIC_FIELDS = 'slug,name,description,concept,kind,status,build_state,hidden,private,access_key,sort_order,production_url,inspector_url,error,warnings,created_at,updated_at,thumb_url,cover_url';
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -80,8 +85,9 @@ async function getDemo(slug) {
 }
 
 async function listDemos() {
-  const res = await sb(`/rest/v1/demos?select=${PUBLIC_FIELDS}&order=sort_order.asc,created_at.desc`);
-  return res.json();
+  // select=* then pick(): works before the thumbnails migration has added its columns.
+  const res = await sb('/rest/v1/demos?select=*&order=sort_order.asc,created_at.desc');
+  return (await res.json()).map(pick);
 }
 
 async function upsertDemo(fields) {
@@ -352,6 +358,85 @@ async function update(body) {
   return { demo: pick(row) };
 }
 
+// ── Thumbnails ──────────────────────────────────────────────────────────────
+
+async function listThumbFiles(slug, prefix) {
+  const res = await sb(`/storage/v1/object/list/${THUMB_BUCKET}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prefix: `${slug}/`, limit: 100 }),
+  });
+  return (await res.json()).map((o) => `${slug}/${o.name}`).filter((p) => p.startsWith(`${slug}/${prefix}`));
+}
+
+async function removeThumbFiles(paths) {
+  if (!paths.length) return;
+  await sb(`/storage/v1/object/${THUMB_BUCKET}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prefixes: paths }),
+  });
+}
+
+// Screenshot the live demo (private ones with their key) and save it as thumb_url.
+// Called by the admin page after a build goes live, and by "Capture thumbnail".
+async function thumb(body) {
+  const slug = requireSlug(body.slug);
+  const row = await getDemo(slug);
+  if (!row) throw new HttpError(404, 'No demo with that slug.');
+  if (row.status !== 'live' || row.hidden || row.build_state === 'building') {
+    throw new HttpError(400, 'The demo has to be live and online to take a thumbnail.');
+  }
+  const url = `${DEMOS_ORIGIN}/${slug}/${row.private && row.access_key ? `?key=${row.access_key}` : ''}`;
+  let image;
+  try {
+    image = await captureWebp(url);
+  } catch (error) {
+    console.error('[api/demos] thumbnail failed', slug, error);
+    throw new HttpError(502, 'Could not take a screenshot of the demo. Try again in a minute.');
+  }
+  const path = `${slug}/thumb-${Date.now()}.webp`;
+  await sb(`/storage/v1/object/${THUMB_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'image/webp', 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000' },
+    body: image,
+  });
+  const saved = await patchDemo(slug, { thumb_url: thumbPublicUrl(path) });
+  await removeThumbFiles((await listThumbFiles(slug, 'thumb-')).filter((p) => p !== path)).catch(() => {});
+  return { demo: pick(saved) };
+}
+
+// Custom cover: the browser uploads to a signed URL, then set-cover records it.
+async function coverUploadUrl(body) {
+  const slug = requireSlug(body.slug);
+  if (!(await getDemo(slug))) throw new HttpError(404, 'No demo with that slug.');
+  const ext = { 'image/webp': 'webp', 'image/png': 'png', 'image/jpeg': 'jpg' }[body.type];
+  if (!ext) throw new HttpError(400, 'Cover images must be WebP, PNG or JPEG.');
+  const path = `${slug}/cover-${Date.now()}.${ext}`;
+  const res = await sb(`/storage/v1/object/upload/sign/${THUMB_BUCKET}/${path}`, { method: 'POST' });
+  const { url } = await res.json();
+  return { path, uploadUrl: `${SUPABASE_URL}/storage/v1${url}` };
+}
+
+async function setCover(body) {
+  const slug = requireSlug(body.slug);
+  if (typeof body.path !== 'string' || !COVER_PATH_RE.test(body.path) || !body.path.startsWith(`${slug}/`)) {
+    throw new HttpError(400, 'Invalid cover path.');
+  }
+  const row = await patchDemo(slug, { cover_url: thumbPublicUrl(body.path) });
+  if (!row) throw new HttpError(404, 'No demo with that slug.');
+  await removeThumbFiles((await listThumbFiles(slug, 'cover-')).filter((p) => p !== body.path)).catch(() => {});
+  return { demo: pick(row) };
+}
+
+async function clearCover(body) {
+  const slug = requireSlug(body.slug);
+  const row = await patchDemo(slug, { cover_url: null });
+  if (!row) throw new HttpError(404, 'No demo with that slug.');
+  await removeThumbFiles(await listThumbFiles(slug, 'cover-')).catch(() => {});
+  return { demo: pick(row) };
+}
+
 // New key: the old link and every visitor's 30-day pass stop working (the demos site
 // caches lookups for up to 60 seconds).
 async function rotateKey(body) {
@@ -403,6 +488,10 @@ export default {
       if (action === 'update') return json(await update(body));
       if (action === 'delete') return json(await remove(body));
       if (action === 'rotate-key') return json(await rotateKey(body));
+      if (action === 'thumb') return json(await thumb(body));
+      if (action === 'cover-upload-url') return json(await coverUploadUrl(body));
+      if (action === 'set-cover') return json(await setCover(body));
+      if (action === 'clear-cover') return json(await clearCover(body));
       throw new HttpError(400, 'Unknown action.');
     } catch (error) {
       if (error instanceof HttpError) return json({ error: error.message }, error.status);

@@ -235,6 +235,8 @@
   .thumb { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 16px; background: var(--raised); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
   .thumb-art { position: absolute; inset: 0; display: grid; place-items: center; transition: filter 0.3s, opacity 0.3s; }
   .thumb-art span { font-family: var(--font-display); font-weight: 300; font-size: clamp(56px, 16vw, 96px); letter-spacing: -0.04em; color: rgba(255, 255, 255, 0.85); text-shadow: 0 6px 30px rgba(0, 0, 0, 0.35); }
+  .thumb-art img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .edit-form input[type=file] { width: 100%; min-height: 46px; padding: 0.6rem 0.85rem; font-size: 0.9rem; color: var(--mute); background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line2); border-radius: 12px; }
   .thumb::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent 60%, rgba(255, 255, 255, 0.05)); }
   .demo.is-dim .thumb-art { opacity: 0.5; filter: saturate(0); }
   .thumb-pill { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; pointer-events: none; }
