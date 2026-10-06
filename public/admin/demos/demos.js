@@ -752,9 +752,9 @@ function card(d) {
   const st = stateOf(d);
   const live = d.status === 'live';
   const path = d.private ? `/${d.slug}/?key=${d.access_key || ''}` : `${DEMOS_ORIGIN.replace('https://', '')}/${d.slug}`;
-  const publicList = demos.filter((x) => !x.private);
+  const publicList = demos.filter((x) => x.private === d.private);
   const at = publicList.indexOf(d);
-  const canMove = !d.private && !query.trim();
+  const canMove = !query.trim();
   const goMove = (neighbor) => move(demos.indexOf(d), demos.indexOf(neighbor) - demos.indexOf(d));
   const item = el('li', { class: `demo${st.dim ? ' is-dim' : ''}` });
   const moreBtn = el('button', { class: 'ghost more-btn', type: 'button', 'aria-label': `More actions for ${d.name}`, 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, icon('more', 18));
@@ -878,7 +878,10 @@ function renderList() {
     fill($('secPublic'), $('demoList'), $('pubCount'), pub, $('pubEmpty'), pubAll.length);
     $('pubHint').textContent = searching ? 'Clear the search to reorder.' : 'Visitors see these in this order. Use Move up and Move down in the menu to reorder.';
   }
-  if (showPriv) fill($('secPrivate'), $('privateList'), $('privCount'), priv, $('privEmpty'), privAll.length);
+  if (showPriv) {
+    fill($('secPrivate'), $('privateList'), $('privCount'), priv, $('privEmpty'), privAll.length);
+    $('privHint').textContent = searching ? 'Clear the search to reorder.' : 'Hidden from the page. Anyone with the key link can open them. Use Move up and Move down in the menu to reorder.';
+  }
 }
 
 $('search').addEventListener('input', (e) => { query = e.target.value; renderList(); });
