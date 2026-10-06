@@ -8,7 +8,7 @@
 // These two values must match the Vercel env vars VITE_SUPABASE_URL and
 // VITE_SUPABASE_ANON_KEY used by the Tracker build. See admin/SETUP.md.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2';
 
 // ─── FILL THESE IN ── Supabase dashboard → Project Settings → API ────────────
 export const SUPABASE_URL = 'https://puidodfmebwqzbbtqjiu.supabase.co';
@@ -18,7 +18,10 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const isConfigured =
   !SUPABASE_URL.includes('YOUR-PROJECT') && !SUPABASE_ANON_KEY.includes('YOUR-ANON');
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  // Passkeys are on by default in recent supabase-js; the flag is harmless.
+  auth: { experimental: { passkey: true } },
+});
 
 // Guard a protected page: bounce to login if there's no active session.
 // Returns the session, or null (after redirecting) if not signed in.

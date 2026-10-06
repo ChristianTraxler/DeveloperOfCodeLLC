@@ -89,6 +89,30 @@
   }
   button[type=submit]:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
   button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
+  .alt-btn {
+    width: 100%; margin-top: 0.7rem; padding: 0.75rem 1rem; min-height: 44px; background: transparent; color: var(--text-primary, inherit);
+    font-family: var(--font-display); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1px solid var(--border-accent); border-radius: 9px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+  }
+  .alt-btn:hover:not(:disabled) { background: var(--bg-card-hover); }
+  .alt-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .alt-btn:focus-visible, .pk-actions button:focus-visible, .pk-dialog button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .or { display: flex; align-items: center; gap: 0.75rem; margin: 1.1rem 0 0; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; }
+  .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .pk-dialog { width: min(480px, calc(100vw - 2rem)); padding: 1.4rem; border: 1px solid var(--border-accent); border-radius: 14px; background: var(--bg-card, #14161c); color: inherit; }
+  .pk-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+  .pk-dialog h2 { margin: 0 0 0.3rem; font-family: var(--font-display); font-size: 1.15rem; }
+  .pk-dialog p.hint { margin: 0 0 1rem; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+  .pk-list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
+  .pk-list li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--border); border-radius: 9px; }
+  .pk-name { font-size: 0.9rem; }
+  .pk-meta { display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; }
+  .pk-actions { display: flex; gap: 0.4rem; }
+  .pk-actions button { min-height: 36px; padding: 0.35rem 0.7rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 7px; font-size: 0.75rem; cursor: pointer; }
+  .pk-actions button:hover { color: var(--accent); border-color: var(--border-accent); }
+  .pk-actions button.danger:hover { color: var(--danger); border-color: var(--danger); }
+  .pk-foot { display: flex; gap: 0.6rem; justify-content: flex-end; }
+  .pk-foot .alt-btn { width: auto; margin: 0; }
   .msg { margin-top: 1rem; font-size: 0.85rem; text-align: center; min-height: 1.2em; }
   .msg.error { color: var(--danger); }
   .msg.info { color: var(--text-secondary); }
@@ -188,6 +212,8 @@
           <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
         </div>
         <button type="submit" id="submitBtn">Sign In</button>
+        <div class="or" id="passkeyOr" hidden>or</div>
+        <button type="button" class="alt-btn" id="passkeyBtn" hidden>Sign in with a passkey</button>
         <p class="msg" id="msg" role="status" aria-live="polite"></p>
       </form>
       <p class="footer-note">Developer of Code, LLC</p>
@@ -205,6 +231,7 @@
         </div>
         <div class="nav-right">
           <span class="user-email" id="userEmail"></span>
+          <button class="signout" id="passkeysBtn" type="button" hidden>Passkeys</button>
           <button class="signout" id="signoutBtn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Sign out
@@ -236,6 +263,17 @@
       </div>
     </main>
   </div>
+
+  <dialog class="pk-dialog" id="pkDialog" aria-labelledby="pkTitle">
+    <h2 id="pkTitle">Passkeys</h2>
+    <p class="hint">Sign in with Face ID, Touch ID or a security key. Your password still works as a fallback, so keep it.</p>
+    <ul class="pk-list" id="pkList"></ul>
+    <p class="msg" id="pkMsg" role="status" aria-live="polite"></p>
+    <div class="pk-foot">
+      <button type="button" class="alt-btn" id="pkClose">Close</button>
+      <button type="button" class="alt-btn" id="pkAdd">Add a passkey</button>
+    </div>
+  </dialog>
 
   <button id="scrollTop" type="button" aria-label="Scroll to top">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
@@ -294,6 +332,111 @@
       setMsg('');
       passwordEl.value = '';
       showHub(data.session);
+    });
+
+    // ─── Passkeys ───────────────────────────────────────────────────────────
+    const passkeysSupported = !!window.PublicKeyCredential && typeof supabase.auth.signInWithPasskey === 'function';
+    const passkeyBtn = document.getElementById('passkeyBtn');
+    const pkDialog = document.getElementById('pkDialog');
+    const pkList = document.getElementById('pkList');
+    const pkMsg = document.getElementById('pkMsg');
+    const pkAdd = document.getElementById('pkAdd');
+    const setPkMsg = (t, kind = 'error') => { pkMsg.textContent = t; pkMsg.className = 'msg ' + kind; };
+    // A cancelled browser prompt is not worth an error message.
+    const isCancel = (err) => /NotAllowed|abort|cancel/i.test((err?.name || '') + ' ' + (err?.message || ''));
+
+    if (passkeysSupported) {
+      passkeyBtn.hidden = false;
+      document.getElementById('passkeyOr').hidden = false;
+      document.getElementById('passkeysBtn').hidden = false;
+    }
+
+    passkeyBtn.addEventListener('click', async () => {
+      if (!isConfigured) { setMsg('Supabase isn’t configured yet.'); return; }
+      passkeyBtn.disabled = true;
+      setMsg('Waiting for your passkey…', 'info');
+      try {
+        const { data, error } = await supabase.auth.signInWithPasskey();
+        if (error) { setMsg(isCancel(error) ? '' : (error.message || 'Passkey sign-in failed.')); return; }
+        setMsg('');
+        showHub(data.session);
+      } catch (e) {
+        setMsg(isCancel(e) ? '' : (e?.message || 'Passkey sign-in failed.'));
+      } finally {
+        passkeyBtn.disabled = false;
+      }
+    });
+
+    const fmt = (d) => d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+
+    async function renderPasskeys() {
+      pkList.replaceChildren();
+      const { data, error } = await supabase.auth.passkey.list();
+      if (error) { setPkMsg(error.message || 'Could not load passkeys.'); return; }
+      if (!data.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No passkeys yet.';
+        pkList.append(li);
+        return;
+      }
+      for (const pk of data) {
+        const li = document.createElement('li');
+        const info = document.createElement('div');
+        const name = document.createElement('span');
+        name.className = 'pk-name';
+        name.textContent = pk.friendly_name || 'Passkey';
+        const meta = document.createElement('span');
+        meta.className = 'pk-meta';
+        meta.textContent = 'Added ' + fmt(pk.created_at) + (pk.last_used_at ? ' · Last used ' + fmt(pk.last_used_at) : '');
+        info.append(name, meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'pk-actions';
+        const rename = document.createElement('button');
+        rename.type = 'button'; rename.textContent = 'Rename';
+        rename.addEventListener('click', async () => {
+          const next = window.prompt('Name this passkey', pk.friendly_name || '');
+          if (!next || !next.trim()) return;
+          const { error: err } = await supabase.auth.passkey.update({ passkeyId: pk.id, friendlyName: next.trim().slice(0, 120) });
+          if (err) setPkMsg(err.message || 'Rename failed.'); else { setPkMsg(''); renderPasskeys(); }
+        });
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'danger'; del.textContent = 'Remove';
+        del.addEventListener('click', async () => {
+          if (!window.confirm('Remove this passkey? You can still sign in with your password.')) return;
+          const { error: err } = await supabase.auth.passkey.delete({ passkeyId: pk.id });
+          if (err) setPkMsg(err.message || 'Remove failed.'); else { setPkMsg(''); renderPasskeys(); }
+        });
+        actions.append(rename, del);
+        li.append(info, actions);
+        pkList.append(li);
+      }
+    }
+
+    document.getElementById('passkeysBtn').addEventListener('click', () => {
+      setPkMsg('');
+      pkDialog.showModal();
+      renderPasskeys();
+    });
+    document.getElementById('pkClose').addEventListener('click', () => pkDialog.close());
+
+    pkAdd.addEventListener('click', async () => {
+      pkAdd.disabled = true;
+      setPkMsg('Follow your device prompt…', 'info');
+      try {
+        const { data, error } = await supabase.auth.registerPasskey();
+        if (error) { setPkMsg(isCancel(error) ? '' : (error.message || 'Could not add passkey.')); return; }
+        const label = window.prompt('Name this passkey (e.g. "MacBook Touch ID")', data?.friendly_name || '');
+        if (label && label.trim() && data?.id) {
+          await supabase.auth.passkey.update({ passkeyId: data.id, friendlyName: label.trim().slice(0, 120) });
+        }
+        setPkMsg('Passkey added.', 'info');
+        renderPasskeys();
+      } catch (e) {
+        setPkMsg(isCancel(e) ? '' : (e?.message || 'Could not add passkey.'));
+      } finally {
+        pkAdd.disabled = false;
+      }
     });
 
     document.getElementById('signoutBtn').addEventListener('click', async () => {

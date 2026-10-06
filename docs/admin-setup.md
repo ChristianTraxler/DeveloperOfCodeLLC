@@ -74,6 +74,25 @@ That is your login. There is no public signup.
 
 One origin → one Supabase session → sign in once, everything unlocks.
 
+## Passkeys (beta)
+
+The admin login supports passkeys (Face ID, Touch ID, security keys) next to
+the password, which stays as the fallback. Supabase's passkey API is in beta.
+
+1. Supabase dashboard → **Authentication → Passkeys** → enable, then set:
+   - **Display Name**: Developer of Code
+   - **RP ID**: `developerofcode.com` (bare domain, no scheme or path).
+     Changing it later invalidates every enrolled passkey.
+   - **Origins**: `https://developerofcode.com` (add `https://www.developerofcode.com`
+     if you use it).
+2. Deploy, sign in with your password at `/admin/login.html`, click **Passkeys**
+   in the header, then **Add a passkey**.
+3. Sign out and use **Sign in with a passkey**.
+
+Passkeys bind to the exact domain, so they cannot be tested on localhost or a
+`.vercel.app` preview. Test on developerofcode.com. The admin pages load
+supabase-js 2.117.2 from esm.sh (see `public/admin/supabase.js`).
+
 ## Security notes
 
 - The lock is **Row Level Security**, not the redirects. After step 3, any
