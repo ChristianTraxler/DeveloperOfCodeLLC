@@ -630,9 +630,26 @@ async function move(index, delta) {
   const b = demos[index + delta];
   if (!a || !b) return;
   // Normalize to list positions first so equal sort_order values still swap.
+  // FLIP: note each card's position, re-render, then slide cards from old to new.
+  const before = new Map([...document.querySelectorAll('li.demo[data-slug]')].map((li) => [li.dataset.slug, li.getBoundingClientRect().top]));
   demos.splice(index, 1);
   demos.splice(index + delta, 0, a);
   renderList();
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('li.demo[data-slug]').forEach((li) => {
+      const dy = before.get(li.dataset.slug) - li.getBoundingClientRect().top;
+      if (!dy) return;
+      const moved = li.dataset.slug === a.slug;
+      li.style.position = 'relative';
+      li.style.zIndex = moved ? '2' : '1';
+      li.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' })
+        .finished.then(() => { li.style.position = ''; li.style.zIndex = ''; }, () => {});
+    });
+    // Keep the moved card in view if it slid off-screen.
+    const el2 = document.querySelector(`li.demo[data-slug="${a.slug}"]`);
+    const r = el2?.getBoundingClientRect();
+    if (r && (r.top < 0 || r.bottom > innerHeight)) el2.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
   try {
     await Promise.all(demos.map((d, i) => (d.sort_order === i ? null : api('update', { method: 'POST', body: { slug: d.slug, sort_order: i } }).then(() => { d.sort_order = i; }))));
   } catch (error) { toast(error.message); loadList(); }
@@ -756,7 +773,7 @@ function card(d) {
   const at = publicList.indexOf(d);
   const canMove = !query.trim();
   const goMove = (neighbor) => move(demos.indexOf(d), demos.indexOf(neighbor) - demos.indexOf(d));
-  const item = el('li', { class: `demo${st.dim ? ' is-dim' : ''}` });
+  const item = el('li', { class: `demo${st.dim ? ' is-dim' : ''}`, 'data-slug': d.slug });
   const moreBtn = el('button', { class: 'ghost more-btn', type: 'button', 'aria-label': `More actions for ${d.name}`, 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, icon('more', 18));
   moreBtn.addEventListener('click', () => showMenu(moreBtn, item, d.name, [
     { label: 'Edit details', icon: 'pencil', run: () => editForm(d, item) },
