@@ -272,6 +272,7 @@
           <button type="submit" id="submitBtn">Sign in
             <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
+          <button type="button" id="passkeyBtn" hidden style="width:100%;margin-top:0.7rem;min-height:48px;background:transparent;color:inherit;border:1px solid var(--line2);border-radius:10px;font:inherit;cursor:pointer">Sign in with a passkey</button>
         </form>
         <a class="back-link" href="/">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -355,6 +356,7 @@
 
   <script type="module">
     import { supabase, isConfigured } from '/admin/supabase.js';
+    import { initPasskeys } from '/admin/passkeys.js';
 
     const loading = document.getElementById('loading');
     const loginView = document.getElementById('loginView');
@@ -407,6 +409,26 @@
       passwordEl.value = '';
       showHub(data.session);
     });
+
+    initPasskeys(supabase);
+
+    const passkeyBtn = document.getElementById('passkeyBtn');
+    if (window.PublicKeyCredential && supabase.auth.signInWithPasskey) {
+      passkeyBtn.hidden = false;
+      passkeyBtn.addEventListener('click', async () => {
+        if (!isConfigured) { setMsg('Supabase isn’t configured yet.'); return; }
+        passkeyBtn.disabled = true;
+        setMsg('Waiting for your passkey…', 'info');
+        try {
+          const { data, error } = await supabase.auth.signInWithPasskey();
+          if (error) { setMsg(/NotAllowed|abort|cancel/i.test((error.name || '') + (error.message || '')) ? '' : (error.message || 'Passkey sign-in failed.')); return; }
+          setMsg('');
+          showHub(data.session);
+        } catch (e) {
+          setMsg(/NotAllowed|abort|cancel/i.test((e?.name || '') + (e?.message || '')) ? '' : (e?.message || 'Passkey sign-in failed.'));
+        } finally { passkeyBtn.disabled = false; }
+      });
+    }
 
     document.getElementById('signoutBtn').addEventListener('click', async () => {
       await supabase.auth.signOut();
