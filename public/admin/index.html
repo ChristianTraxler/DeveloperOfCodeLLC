@@ -36,6 +36,7 @@
     --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html, body {
     background: var(--ink); color: var(--bone);
     font-family: var(--font-body); min-height: 100vh; line-height: 1.5; font-size: 15px;
@@ -141,7 +142,7 @@
     position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line);
     background: rgba(7, 10, 18, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   }
-  .nav-inner { max-width: 1120px; margin: 0 auto; padding: 0 1rem; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .nav-inner { max-width: 1120px; margin: 0 auto; padding: 0 max(1.5rem, env(safe-area-inset-right)) 0 max(1.5rem, env(safe-area-inset-left)); height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
   .brand { display: flex; align-items: center; gap: 0.9rem; }
   .brand .code-tag { font-size: 1.4rem; }
   .brand-divider { width: 1px; height: 20px; background: var(--line2); }
@@ -153,7 +154,7 @@
     background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line2); cursor: pointer; transition: background 0.2s, border-color 0.2s;
   }
   .signout:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(236, 232, 223, 0.3); }
-  main.hub { max-width: 1120px; margin: 0 auto; padding: 2.5rem 1rem 6rem; }
+  main.hub { max-width: 1120px; margin: 0 auto; padding: 2.5rem max(1.5rem, env(safe-area-inset-right)) 6rem max(1.5rem, env(safe-area-inset-left)); }
   .page-title { animation: titleIn 0.8s var(--ease) both; font-family: var(--font-display); font-weight: 300; font-size: clamp(52px, 14.5vw, 112px); letter-spacing: -0.035em; line-height: 0.88; font-variation-settings: 'opsz' 72; }
   @keyframes titleIn { from { opacity: 0; transform: translateY(18px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
   .page-sub { color: var(--mute); margin-top: 1.25rem; font-size: 1.05rem; line-height: 1.6; max-width: 44ch; }
