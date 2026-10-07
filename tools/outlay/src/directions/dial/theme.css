@@ -81,6 +81,9 @@
 .d-header.is-solid { background: rgb(var(--porcelain) / .9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 rgb(var(--silver)); }
 .d-header-row { display: flex; align-items: center; gap: 26px; min-height: 72px; }
 .d-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: inherit; }
+.d-hub-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-inline: 4px; margin-right: -10px; font-size: .875rem; font-weight: 500; text-decoration: none; color: rgb(var(--muted)); transition: color .2s; }
+.d-hub-link:hover { color: rgb(var(--graphite)); }
+.d-hub-link:focus-visible { outline: 2px solid rgb(var(--orange)); outline-offset: 2px; border-radius: 6px; }
 .d-brand-mark { width: 30px; height: 30px; flex: none; }
 .d-brand-word { font-weight: 500; font-size: 1.25rem; letter-spacing: .06em; }
 .d-brand-sub { display: none; padding-left: 10px; border-left: 1px solid rgb(var(--silver)); font-size: .75rem; color: rgb(var(--muted)); }
