@@ -299,11 +299,9 @@
       loginView.style.display = 'grid';
       if (!isConfigured) document.getElementById('configWarn').style.display = 'block';
     }
-    function showHub(session) {
-      loading.style.display = 'none';
-      loginView.style.display = 'none';
-      app.hidden = false;
-      document.getElementById('userEmail').textContent = session?.user?.email || '';
+    // The real hub lives at /admin/ (every tool tile, passkeys, ordering). Signed in means go there.
+    function showHub() {
+      window.location.replace('/admin/');
     }
 
     // Decide which view to show — no page navigation involved.
