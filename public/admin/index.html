@@ -578,11 +578,14 @@
     (() => {
       const KEY = 'admin.hub.demoThumbs';
       const cards = [...document.querySelectorAll('.fan-card')]; // left, centre, right
-      if (cards.length !== 3) return;
-      const slots = [cards[1], cards[0], cards[2]]; // fill the centre card first
+      const tile = (c) => document.querySelector(`.tile-${c}`); // sign-in view: front tile is b
+      const slots = cards.length === 3 ? [cards[1], cards[0], cards[2]] : []; // fill the centre card first
+      const loginSlots = [tile('b'), tile('a'), tile('c')].filter(Boolean);
+      // The signed-out view cannot ask the API for the list, so it reuses the last list the hub saved.
       const paint = (urls) => {
         if (!urls.length) return;
-        slots.forEach((card, i) => {
+        [...slots, ...loginSlots].forEach((card, n) => {
+          const i = n % 3;
           if (!urls[i]) { card.style.display = 'none'; return; }
           const img = new Image();
           img.alt = '';
