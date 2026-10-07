@@ -473,8 +473,8 @@
       if (event === 'SIGNED_OUT' || !session) showLogin();
     });
 
-    // Arrange tools: reorder the cards with the arrow buttons or by dragging. The order is kept in
-    // this browser only; the "Add a tool" card always stays last.
+    // Arrange tools: reorder the cards with the arrow buttons or by dragging. The order is saved to
+    // your account; the "Add a tool" card always stays last.
     (() => {
       const KEY = 'admin.hub.order';
       const grid = document.querySelector('.grid');
@@ -483,16 +483,33 @@
       const end = grid.querySelector('.placeholder');
       const cards = () => [...grid.querySelectorAll('.tool-card[data-tool]')];
       const nameOf = (c) => c.querySelector('.tool-name').textContent;
-      const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cards().map((c) => c.dataset.tool))); } catch {} };
+      // The order is cached in this browser and saved to the signed-in account (user metadata),
+      // so it follows the account to every device. The account copy wins when it loads.
+      const order = () => cards().map((c) => c.dataset.tool);
+      let pending = 0;
+      const save = () => {
+        const list = order();
+        try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {}
+        const mine = ++pending;
+        supabase.auth.updateUser({ data: { hub_order: list } }).then(({ error }) => {
+          if (error && mine === pending) live.textContent = 'The new order is saved on this device only. Check your connection.';
+        }).catch(() => {});
+      };
+      const apply = (saved) => {
+        if (!Array.isArray(saved)) return;
+        const all = cards();
+        const known = saved.map((k) => all.find((c) => c.dataset.tool === k)).filter(Boolean);
+        [...known, ...all.filter((c) => !known.includes(c))].forEach((c) => grid.insertBefore(c, end));
+      };
 
-      try {
-        const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
-        if (Array.isArray(saved)) {
-          const all = cards();
-          const known = saved.map((k) => all.find((c) => c.dataset.tool === k)).filter(Boolean);
-          [...known, ...all.filter((c) => !known.includes(c))].forEach((c) => grid.insertBefore(c, end));
-        }
-      } catch {}
+      try { apply(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch {}
+      supabase.auth.getUser().then(({ data }) => {
+        const remote = data?.user?.user_metadata?.hub_order;
+        if (!Array.isArray(remote) || JSON.stringify(remote) === JSON.stringify(order())) return;
+        apply(remote);
+        try { localStorage.setItem(KEY, JSON.stringify(order())); } catch {}
+        refresh();
+      }).catch(() => {});
 
       const chevron = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
       const refresh = () => {
