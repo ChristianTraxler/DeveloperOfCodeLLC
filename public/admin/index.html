@@ -167,6 +167,21 @@
   }
   .tool-card:nth-child(1) { animation-delay: 0.3s; }
   .tool-card:nth-child(2) { animation-delay: 0.4s; }
+  .tool-card:nth-child(3) { animation-delay: 0.5s; }
+  /* Arrange mode: reorder the tool cards (order is remembered in this browser). */
+  .arrange-btn { margin-top: 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1.1rem; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .arrange-btn:hover, .arrange-btn:focus-visible { border-color: rgba(255, 90, 31, 0.5); }
+  .arrange-btn[aria-pressed="true"] { background: var(--ember); border-color: var(--ember); color: #1c0a02; font-weight: 600; }
+  .arrange-ctl { display: none; position: absolute; top: 1.15rem; left: 1.15rem; z-index: 3; gap: 0.4rem; }
+  .arranging .tool-card[data-tool] .arrange-ctl { display: flex; }
+  .arrange-ctl button { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(11, 18, 36, 0.82); color: #ece8df; cursor: pointer; backdrop-filter: blur(6px); }
+  .arrange-ctl button:hover:not(:disabled), .arrange-ctl button:focus-visible { background: var(--ember); border-color: var(--ember); color: #1c0a02; }
+  .arrange-ctl button:disabled { opacity: 0.35; cursor: default; }
+  .arranging .tool-card[data-tool] { cursor: grab; border-style: dashed; border-color: rgba(255, 90, 31, 0.45); }
+  .arranging .tool-card[data-tool] .tool-arrow { display: none; }
+  .tool-card.dragging { opacity: 0.45; }
+  .tool-card.drop-target { border-color: var(--ember); }
+  .sr-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tool-card:hover, .tool-card:focus-visible { border-color: rgba(255, 90, 31, 0.4); }
   .tool-art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 20px; background: var(--raised); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
   .tool-art-inner { position: absolute; inset: 0; transition: transform 0.7s ease-out; }
@@ -305,9 +320,11 @@
     <main class="hub">
       <h1 class="page-title">Admin Hub</h1>
       <p class="page-sub">Your internal tools, all behind one login.</p>
+      <button type="button" class="arrange-btn" id="arrangeBtn" aria-pressed="false">Arrange tools</button>
+      <p class="sr-live" id="arrangeLive" role="status" aria-live="polite"></p>
 
       <div class="grid">
-        <a class="tool-card" href="/admin/tracker/">
+        <a class="tool-card" href="/admin/tracker/" data-tool="tracker">
           <div class="tool-art">
             <div class="tool-art-inner"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="trkBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16203a"></stop><stop offset="1" stop-color="#0b1224"></stop></linearGradient></defs><rect width="320" height="200" fill="url(#trkBg)"></rect><g stroke="#ece8df" stroke-opacity="0.05"><path d="M0 0V200"></path><path d="M20 0V200"></path><path d="M40 0V200"></path><path d="M60 0V200"></path><path d="M80 0V200"></path><path d="M100 0V200"></path><path d="M120 0V200"></path><path d="M140 0V200"></path><path d="M160 0V200"></path><path d="M180 0V200"></path><path d="M200 0V200"></path><path d="M220 0V200"></path><path d="M240 0V200"></path><path d="M260 0V200"></path><path d="M280 0V200"></path><path d="M300 0V200"></path><path d="M320 0V200"></path><path d="M0 0H320"></path><path d="M0 20H320"></path><path d="M0 40H320"></path><path d="M0 60H320"></path><path d="M0 80H320"></path><path d="M0 100H320"></path><path d="M0 120H320"></path><path d="M0 140H320"></path><path d="M0 160H320"></path><path d="M0 180H320"></path><path d="M0 200H320"></path></g><g><rect x="18" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="30" cy="40" r="3.5" fill="#6c7a99"></circle><rect x="39" y="37.5" width="54" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="26" y="54" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="63" width="39.199999999999996" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="72" width="28" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="26" y="96" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="105" width="28" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="114" width="20" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="26" y="138" width="72" height="28" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="33" y="147" width="33.6" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="33" y="156" width="24" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g><rect x="112" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="124" cy="40" r="3.5" fill="#ff7a45"></circle><rect x="133" y="37.5" width="40" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="120" y="54" width="72" height="40" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="127" y="63" width="44.800000000000004" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="127" y="72" width="32" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect><rect x="127" y="85" width="46" height="3" rx="1.5" fill="#ff7a45"></rect></g><g><rect x="120" y="102" width="72" height="30" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="127" y="111" width="30.800000000000004" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="127" y="120" width="22" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g><rect x="206" y="26" width="88" height="152" rx="9" fill="#ece8df" fill-opacity="0.045" stroke="#ece8df" stroke-opacity="0.1"></rect><circle cx="218" cy="40" r="3.5" fill="#4fd18b"></circle><rect x="227" y="37.5" width="46" height="5" rx="2.5" fill="#ece8df" fill-opacity="0.55"></rect><g><rect x="214" y="54" width="72" height="30" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="63" width="33.6" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="72" width="24" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="214" y="92" width="72" height="34" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="101" width="28" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="110" width="20" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g><g><rect x="214" y="134" width="72" height="26" rx="6" fill="#1c2742" stroke="#ece8df" stroke-opacity="0.13"></rect><rect x="221" y="143" width="39.199999999999996" height="4" rx="2" fill="#ece8df" fill-opacity="0.6"></rect><rect x="221" y="152" width="28" height="3" rx="1.5" fill="#ece8df" fill-opacity="0.22"></rect></g></g><g transform="translate(262 150)"><circle r="22" fill="#0b1224" stroke="#ff5a1f" stroke-width="2.5"></circle><path d="M0 -12 V0 L8 6" stroke="#ece8df" stroke-width="2.5" stroke-linecap="round" fill="none"></path></g></svg></div>
             <span class="tool-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
@@ -323,7 +340,7 @@
           </div>
         </a>
 
-        <a class="tool-card" href="/admin/demos/">
+        <a class="tool-card" href="/admin/demos/" data-tool="demos">
           <div class="tool-art">
             <div class="tool-art-inner"><div class="fan"><div class="fan-stage"><div class="fan-card" style="transform:translate(-70%,12%) rotate(-9deg);z-index:1"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="200" fill="#f3e4cf"></rect><rect x="0" y="0" width="150" height="200" fill="#6b1f1f"></rect><g fill="#f3e4cf" opacity="0.55"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><text x="20" y="84" font-family="Literata Variable, serif" font-weight="300" font-size="25" fill="#f3e4cf" letter-spacing="-0.7">Carver</text><text x="20" y="110" font-family="Literata Variable, serif" font-weight="300" font-size="25" fill="#f3e4cf" letter-spacing="-0.7">Street</text><text x="21" y="128" font-family="Mona Sans Variable, sans-serif" font-size="8" fill="#f3e4cf" opacity="0.8">Bread from 5 a.m.</text><ellipse cx="206" cy="78" rx="38" ry="22" fill="#d29a4c"></ellipse><path d="M180 74 L192 64 M200 70 L212 60 M220 72 L232 62" stroke="#f3e4cf" stroke-width="3" stroke-linecap="round" opacity="0.7"></path><ellipse cx="270" cy="128" rx="30" ry="30" fill="#e3b46a"></ellipse><circle cx="270" cy="128" r="9" fill="#c28336" opacity="0.7"></circle><ellipse cx="204" cy="152" rx="26" ry="14" fill="#b87a30"></ellipse></svg></div><div class="fan-card" style="transform:translate(0%,-2%) rotate(0deg);z-index:3"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="estA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfdcd0"></stop><stop offset="0.5" stop-color="#a9c19a"></stop><stop offset="1" stop-color="#6f8c58"></stop></linearGradient></defs><rect width="320" height="200" fill="#f1ece1"></rect><g fill="#2d3a2b" opacity="0.7"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><rect x="18" y="34" width="196" height="112" rx="6" fill="url(#estA)"></rect><path d="M18 104 C70 92 120 108 214 96 V146 H18Z" fill="#587443" opacity="0.8"></path><rect x="120" y="80" width="38" height="24" fill="#f4efe4"></rect><path d="M114 82 L139 62 L164 82Z" fill="#7a3b2a"></path><rect x="132" y="90" width="9" height="14" fill="#7a3b2a" opacity="0.6"></rect><text x="228" y="70" font-family="Literata Variable, serif" font-weight="300" font-size="21" fill="#26331f" letter-spacing="-0.5">Land &amp;</text><text x="228" y="92" font-family="Literata Variable, serif" font-weight="300" font-size="21" fill="#26331f" letter-spacing="-0.5">Home</text><rect x="229" y="104" width="46" height="3" rx="1.5" fill="#26331f" opacity="0.35"></rect><rect x="229" y="112" width="34" height="3" rx="1.5" fill="#26331f" opacity="0.25"></rect><g stroke="#26331f" stroke-opacity="0.25" fill="#fbf8f1"><rect x="18" y="156" width="92" height="34" rx="5"></rect><rect x="114" y="156" width="92" height="34" rx="5"></rect><rect x="210" y="156" width="92" height="34" rx="5"></rect></g><g fill="#26331f" opacity="0.4"><rect x="26" y="166" width="40" height="3" rx="1.5"></rect><rect x="122" y="166" width="40" height="3" rx="1.5"></rect><rect x="218" y="166" width="40" height="3" rx="1.5"></rect></g></svg></div><div class="fan-card" style="transform:translate(70%,14%) rotate(8deg);z-index:2"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="artR4a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2cc"></stop><stop offset="0.62" stop-color="#f4e4c9"></stop></linearGradient></defs><rect width="320" height="200" fill="url(#artR4a)"></rect><circle cx="238" cy="82" r="24" fill="#fff4da" opacity="0.92"></circle><path d="M0 120 C60 110 120 126 180 116 S280 110 320 118 V200 H0Z" fill="#2f7189"></path><path d="M0 140 C70 131 130 149 200 139 S290 133 320 141 V200 H0Z" fill="#1d5268"></path><path d="M0 166 C60 158 140 174 220 164 S300 162 320 166 V200 H0Z" fill="#ead6b0"></path><g fill="#fffaf0" opacity="0.7"><rect x="18" y="15" width="30" height="5" rx="2.5"></rect><rect x="226" y="16" width="16" height="3" rx="1.5"></rect><rect x="250" y="16" width="16" height="3" rx="1.5"></rect><rect x="274" y="16" width="16" height="3" rx="1.5"></rect><rect x="298" y="13" width="4" height="9" rx="2" opacity="0"></rect></g><text x="20" y="66" font-family="Literata Variable, serif" font-weight="300" font-size="27" fill="#fffaf0" letter-spacing="-0.8">Halyard House</text><text x="21" y="82" font-family="Mona Sans Variable, sans-serif" font-size="8" fill="#fffaf0" opacity="0.85">Oceanfront. Four bedrooms. Book direct.</text><rect x="20" y="148" width="196" height="26" rx="13" fill="#fffaf0" opacity="0.94"></rect><rect x="86" y="154" width="1" height="14" fill="#1d5268" opacity="0.25"></rect><rect x="150" y="154" width="1" height="14" fill="#1d5268" opacity="0.25"></rect><rect x="34" y="158" width="34" height="3" rx="1.5" fill="#1d5268" opacity="0.5"></rect><rect x="100" y="158" width="34" height="3" rx="1.5" fill="#1d5268" opacity="0.5"></rect><circle cx="198" cy="161" r="9" fill="#c8553a"></circle></svg></div></div></div></div>
             <span class="tool-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
@@ -335,6 +352,22 @@
             <div>
               <h2 class="tool-name">Demos</h2>
               <p class="tool-desc">Upload a project zip and publish it to demos.developerofcode.com.</p>
+            </div>
+          </div>
+        </a>
+
+        <a class="tool-card" href="/admin/outlay/" data-tool="outlay">
+          <div class="tool-art">
+            <div class="tool-art-inner"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="outBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2c52"></stop><stop offset="1" stop-color="#0d1630"></stop></linearGradient></defs><rect width="320" height="200" fill="url(#outBg)"></rect><g transform="translate(88 100)"><circle r="62" fill="#ece8df" fill-opacity="0.05" stroke="#ece8df" stroke-opacity="0.18"></circle><circle r="46" fill="none" stroke="#ece8df" stroke-opacity="0.14" stroke-width="7"></circle><path d="M0 -46 A46 46 0 1 1 -40 23" fill="none" stroke="#9db6ea" stroke-width="7" stroke-linecap="round"></path><circle cx="-40" cy="23" r="6" fill="#ff5a1f"></circle><text y="9" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#ece8df">$</text></g><g fill="#ece8df"><rect x="176" y="46" width="104" height="10" rx="5" fill-opacity="0.55"></rect><rect x="176" y="68" width="76" height="6" rx="3" fill-opacity="0.2"></rect><rect x="176" y="92" width="104" height="10" rx="5" fill-opacity="0.4"></rect><rect x="176" y="114" width="58" height="6" rx="3" fill-opacity="0.2"></rect><rect x="176" y="138" width="104" height="10" rx="5" fill-opacity="0.3"></rect><rect x="176" y="160" width="84" height="6" rx="3" fill-opacity="0.2"></rect></g></svg></div>
+            <span class="tool-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+          </div>
+          <div class="tool-body">
+            <span class="tool-icon" aria-hidden="true">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8"/><path d="M8 13h8"/><path d="M8 17h4"/></svg>
+            </span>
+            <div>
+              <h2 class="tool-name">Outlay</h2>
+              <p class="tool-desc">Log expenses and receipts, track subscriptions, and keep tax year totals.</p>
             </div>
           </div>
         </a>
@@ -439,6 +472,88 @@
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) showLogin();
     });
+
+    // Arrange tools: reorder the cards with the arrow buttons or by dragging. The order is kept in
+    // this browser only; the "Add a tool" card always stays last.
+    (() => {
+      const KEY = 'admin.hub.order';
+      const grid = document.querySelector('.grid');
+      const btn = document.getElementById('arrangeBtn');
+      const live = document.getElementById('arrangeLive');
+      const end = grid.querySelector('.placeholder');
+      const cards = () => [...grid.querySelectorAll('.tool-card[data-tool]')];
+      const nameOf = (c) => c.querySelector('.tool-name').textContent;
+      const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cards().map((c) => c.dataset.tool))); } catch {} };
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+        if (Array.isArray(saved)) {
+          const all = cards();
+          const known = saved.map((k) => all.find((c) => c.dataset.tool === k)).filter(Boolean);
+          [...known, ...all.filter((c) => !known.includes(c))].forEach((c) => grid.insertBefore(c, end));
+        }
+      } catch {}
+
+      const chevron = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+      const refresh = () => {
+        const list = cards();
+        list.forEach((c, i) => {
+          c.querySelector('[data-dir="-1"]').disabled = i === 0;
+          c.querySelector('[data-dir="1"]').disabled = i === list.length - 1;
+        });
+      };
+      const move = (card, dir, focusDir) => {
+        const list = cards();
+        const target = list[list.indexOf(card) + dir];
+        if (!target) return;
+        if (dir < 0) grid.insertBefore(card, target); else grid.insertBefore(card, target.nextSibling);
+        save();
+        refresh();
+        live.textContent = `${nameOf(card)} moved to position ${cards().indexOf(card) + 1} of ${cards().length}.`;
+        const next = card.querySelector(`[data-dir="${focusDir}"]`);
+        (next && !next.disabled ? next : card.querySelector(`[data-dir="${-focusDir}"]`)).focus();
+      };
+
+      cards().forEach((card) => {
+        const ctl = document.createElement('div');
+        ctl.className = 'arrange-ctl';
+        ctl.innerHTML = `<button type="button" data-dir="-1" aria-label="Move ${nameOf(card)} up">${chevron('m18 15-6-6-6 6')}</button><button type="button" data-dir="1" aria-label="Move ${nameOf(card)} down">${chevron('m6 9 6 6 6-6')}</button>`;
+        ctl.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const b = e.target.closest('button');
+          if (b && !b.disabled) move(card, Number(b.dataset.dir), Number(b.dataset.dir));
+        });
+        card.querySelector('.tool-art').appendChild(ctl);
+        // While arranging, a tap on a card must not open the tool.
+        card.addEventListener('click', (e) => { if (grid.classList.contains('arranging')) e.preventDefault(); });
+        // Desktop: drag a card onto another to swap its place.
+        card.addEventListener('dragstart', (e) => { card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.dataset.tool); });
+        card.addEventListener('dragend', () => { card.classList.remove('dragging'); cards().forEach((c) => c.classList.remove('drop-target')); });
+        card.addEventListener('dragover', (e) => { if (grid.classList.contains('arranging') && document.querySelector('.dragging')) { e.preventDefault(); card.classList.add('drop-target'); } });
+        card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const from = document.querySelector('.dragging');
+          card.classList.remove('drop-target');
+          if (!from || from === card) return;
+          const list = cards();
+          if (list.indexOf(from) < list.indexOf(card)) grid.insertBefore(from, card.nextSibling); else grid.insertBefore(from, card);
+          save();
+          refresh();
+          live.textContent = `${nameOf(from)} moved to position ${cards().indexOf(from) + 1} of ${cards().length}.`;
+        });
+      });
+      refresh();
+
+      btn.addEventListener('click', () => {
+        const on = grid.classList.toggle('arranging');
+        btn.setAttribute('aria-pressed', String(on));
+        btn.textContent = on ? 'Done arranging' : 'Arrange tools';
+        cards().forEach((c) => c.setAttribute('draggable', on ? 'true' : 'false'));
+        live.textContent = on ? 'Arrange mode on. Use the arrow buttons on each tool, or drag.' : 'Arrange mode off.';
+      });
+    })();
 
     // Scroll-to-top.
     const scrollBtn = document.getElementById('scrollTop');

@@ -9,6 +9,8 @@ dist/
 dist-single/
 # Tracker build output (regenerated from tools/project-tracker on every deploy)
 public/admin/tracker/
+# Outlay build output (regenerated from tools/outlay on every deploy)
+public/admin/outlay/
 
 # Local env + cruft (.env.example is the committed template)
 .env
