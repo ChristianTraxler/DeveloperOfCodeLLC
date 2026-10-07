@@ -581,11 +581,9 @@
       const tile = (c) => document.querySelector(`.tile-${c}`); // sign-in view: front tile is b
       const slots = cards.length === 3 ? [cards[1], cards[0], cards[2]] : []; // fill the centre card first
       const loginSlots = [tile('b'), tile('a'), tile('c')].filter(Boolean);
-      // The signed-out view cannot ask the API for the list, so it reuses the last list the hub saved.
-      const paint = (urls) => {
+      const paint = (urls, targets) => {
         if (!urls.length) return;
-        [...slots, ...loginSlots].forEach((card, n) => {
-          const i = n % 3;
+        targets.forEach((card, i) => {
           if (!urls[i]) { card.style.display = 'none'; return; }
           const img = new Image();
           img.alt = '';
@@ -595,7 +593,13 @@
           img.src = urls[i];
         });
       };
-      try { paint(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch {}
+      // Sign-in view: public demos only, from an endpoint that needs no login. The hub's saved
+      // list gives it an instant first paint on return visits.
+      try { paint(JSON.parse(localStorage.getItem(KEY) || '[]'), loginSlots); } catch {}
+      fetch('/api/demos?action=public-thumbs').then((r) => (r.ok ? r.json() : null)).then((j) => {
+        if (j && j.thumbs && j.thumbs.length) paint(j.thumbs, loginSlots);
+      }).catch(() => {});
+      try { paint(JSON.parse(localStorage.getItem(KEY) || '[]'), slots); } catch {}
       (async () => {
         try {
           const { data } = await supabase.auth.getSession();
@@ -606,7 +610,7 @@
           const urls = (demos || []).filter((d) => !d.hidden && (d.cover_url || d.thumb_url)).map((d) => d.cover_url || d.thumb_url).slice(0, 3);
           if (!urls.length) return;
           try { localStorage.setItem(KEY, JSON.stringify(urls)); } catch {}
-          paint(urls);
+          paint(urls, slots);
         } catch {}
       })();
     })();

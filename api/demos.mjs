@@ -474,6 +474,16 @@ export default {
     const action = url.searchParams.get('action');
 
     try {
+      // The sign-in page shows real demo thumbnails before anyone is signed in. Only public,
+      // listed demos are included, and only their image URLs.
+      if (request.method === 'GET' && action === 'public-thumbs') {
+        const thumbs = (await listDemos())
+          .filter((d) => !d.hidden && !d.private && (d.cover_url || d.thumb_url))
+          .map((d) => d.cover_url || d.thumb_url)
+          .slice(0, 3);
+        return json({ thumbs });
+      }
+
       await requireAdmin(request);
 
       if (request.method === 'GET') {
