@@ -1,0 +1,51 @@
+/* Marketing feature styles. Every selector starts with .mk- so nothing leaks into the rest of the admin. */
+
+.mk-rich p { margin: 0 0 0.7em; }
+.mk-rich div { margin: 0 0 0.7em; }
+.mk-rich p:last-child, .mk-rich div:last-child { margin-bottom: 0; }
+.mk-rich ul, .mk-rich ol { margin: 0 0 0.7em; padding-left: 1.3em; }
+.mk-rich ul { list-style: disc; }
+.mk-rich ol { list-style: decimal; }
+.mk-rich li { margin: 0.15em 0; }
+.mk-rich a { color: #ff9a6e; text-decoration: underline; text-underline-offset: 2px; }
+.mk-rich strong, .mk-rich b { font-weight: 650; color: rgb(var(--bone-rgb)); }
+.mk-rich:empty::before { content: attr(data-placeholder); color: rgb(var(--faint-rgb)); pointer-events: none; }
+
+.mk-merge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 7px;
+  padding: 0 7px;
+  margin: 0 1px;
+  font-size: 0.86em;
+  font-weight: 600;
+  line-height: 1.55;
+  background: rgba(255, 90, 31, 0.14);
+  color: #ff9a6e;
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 31, 0.28);
+  user-select: all;
+}
+
+.mk-scroll { scrollbar-width: thin; scrollbar-color: rgba(236, 232, 223, 0.18) transparent; }
+.mk-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.mk-scroll::-webkit-scrollbar-thumb { background: rgba(236, 232, 223, 0.16); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+.mk-noscrollbar { scrollbar-width: none; }
+.mk-noscrollbar::-webkit-scrollbar { display: none; }
+
+.mk-desk {
+  background-color: rgb(var(--panel-rgb));
+  background-image:
+    radial-gradient(70% 60% at 50% 0%, rgba(255, 90, 31, 0.08), transparent 70%),
+    linear-gradient(rgba(236, 232, 223, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(236, 232, 223, 0.035) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+}
+
+.mk-studio-bg {
+  background-color: rgb(var(--ink-rgb));
+  background-image: radial-gradient(900px 420px at 50% -10%, rgba(255, 90, 31, 0.1), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+@keyframes mk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.mk-pulse { animation: mk-pulse 1.6s ease-in-out infinite; }

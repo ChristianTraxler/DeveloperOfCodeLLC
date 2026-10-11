@@ -11,6 +11,8 @@ dist-single/
 public/admin/tracker/
 # Outlay build output (regenerated from tools/outlay on every deploy)
 public/admin/outlay/
+# Marketing build output (regenerated from tools/marketing on every deploy)
+public/admin/marketing/
 
 # Local env + cruft (.env.example is the committed template)
 .env
