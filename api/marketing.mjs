@@ -139,6 +139,12 @@ async function markUnsubscribed(contactId) {
   const c = await getDoc('contact', contactId);
   if (!c) return null;
   if (!c.unsubscribed) await putDoc('contact', contactId, { ...c, unsubscribed: true, unsubscribedAt: stamp() });
+  // Emails Resend is holding for a later time must not go out to someone who just opted out
+  const held = await selectAll(`/rest/v1/marketing_sends?contact_id=eq.${enc(contactId)}&status=eq.sent&send_at=gt.${enc(stamp())}&select=id,resend_id`);
+  for (const h of held) {
+    if (h.resend_id) await resend(`/emails/${h.resend_id}/cancel`, {}).catch((err) => console.error('cancel held email failed:', err));
+    await patchRows('marketing_sends', `id=eq.${h.id}`, { status: 'failed', error: 'Unsubscribed before send' });
+  }
   return c;
 }
 
