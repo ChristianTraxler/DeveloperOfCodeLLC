@@ -49,6 +49,8 @@ function serveStaticAdmin() {
 export default defineConfig({
   base: '/admin/marketing/',
   plugins: [react(), serveStaticAdmin()],
+  // DEV ONLY: point /api at a local copy of api/marketing.mjs (or a deployed one) while designing.
+  server: { proxy: { '/api': process.env.MARKETING_API || 'http://localhost:3000' } },
   build: {
     outDir: '../../public/admin/marketing',
     emptyOutDir: true,

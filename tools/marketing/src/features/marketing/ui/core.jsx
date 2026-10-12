@@ -90,11 +90,3 @@ export function Empty({ children, action }) {
   )
 }
 
-export function ExampleTag({ className = '' }) {
-  return (
-    <span className={cx('inline-flex items-center gap-1.5 rounded-full border border-dashed border-line2 px-2.5 py-1 text-[12px] font-medium text-mute', className)}>
-      <span className="h-1.5 w-1.5 rounded-full bg-ember/80" aria-hidden="true" />
-      Example numbers
-    </span>
-  )
-}

@@ -6,7 +6,7 @@ import { useMarketing } from '../MarketingContext.jsx'
 import { TEMPLATES } from '../data/templates.js'
 import { fromTemplate } from '../data/templates.js'
 import { resolveAudience, audienceLabel } from '../data/segments.js'
-import { Button, Pill, STATUS, SectionHead, Empty, ExampleTag, cx } from '../ui/core.jsx'
+import { Button, Pill, STATUS, SectionHead, Empty, cx } from '../ui/core.jsx'
 import { Tabs } from '../ui/fields.jsx'
 import { Menu } from '../ui/Menu.jsx'
 import { EmailThumb } from '../ui/EmailFrame.jsx'
@@ -209,7 +209,6 @@ export function Home({ navigate, onOpenSettings, onPreview }) {
       <section aria-labelledby="mk-stats">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id="mk-stats" className="text-[13px] font-semibold uppercase tracking-[0.14em] text-mute">How it's going</h2>
-          <ExampleTag />
         </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           <Stat label="People you can email" value={derived.reachable.toLocaleString('en-US')} sub={`Said yes, out of ${derived.total} on your list`} delay={0.05} />
@@ -267,14 +266,23 @@ export function Home({ navigate, onOpenSettings, onPreview }) {
                 onPreview={() => onPreview(c.id)}
                 onDuplicate={() => duplicate(c)}
                 onDelete={() => remove(c)}
-                onUnschedule={() => {
-                  actions.unschedule(c.id)
-                  toast('Unscheduled. It is a draft again.')
+                onUnschedule={async () => {
+                  try {
+                    await actions.unschedule(c.id)
+                    toast('Unscheduled. It is a draft again.')
+                  } catch (err) {
+                    toast(err.message, { tone: 'warn' })
+                  }
                 }}
-                onSendNow={() => {
-                  actions.sendNow(c.id)
-                  toast('Sending now. Watch the results come in.')
-                  navigate(`report/${c.id}`)
+                onSendNow={async () => {
+                  try {
+                    toast('Sending...')
+                    await actions.sendNow(c.id)
+                    toast('Sent. Results come in as people open it.')
+                    navigate(`report/${c.id}`)
+                  } catch (err) {
+                    toast(err.message, { tone: 'warn' })
+                  }
                 }}
               />
             ))}

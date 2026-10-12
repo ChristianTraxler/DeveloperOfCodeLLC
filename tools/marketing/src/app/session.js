@@ -21,6 +21,12 @@ export async function getSession() {
   return data.session
 }
 
+export async function getToken() {
+  if (skipAuth) return null
+  const session = await getSession()
+  return session?.access_token || null
+}
+
 export async function onAuthChange(fn) {
   if (skipAuth) return () => {}
   const { supabase } = await shared()

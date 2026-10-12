@@ -1,6 +1,5 @@
 // Who emails come from, where replies go, and the footer details the law asks for.
 import { useEffect, useState } from 'react'
-import { RotateCcw } from 'lucide-react'
 import { useMarketing } from '../MarketingContext.jsx'
 import { Sheet } from '../ui/Sheet.jsx'
 import { Button } from '../ui/core.jsx'
@@ -14,13 +13,11 @@ export function SettingsSheet({ open, onClose, focus }) {
   const toast = useToast()
   const [form, setForm] = useState(settings)
   const [errors, setErrors] = useState({})
-  const [confirmReset, setConfirmReset] = useState(false)
 
   useEffect(() => {
     if (open) {
       setForm(settings)
       setErrors({})
-      setConfirmReset(false)
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -85,32 +82,6 @@ export function SettingsSheet({ open, onClose, focus }) {
             <Input id="s-phone" type="tel" value={form.phone} onChange={(e) => set({ phone: e.target.value })} size="sm" />
           </Field>
         </fieldset>
-
-        <div className="rounded-2xl border border-line p-4">
-          <p className="text-[15px] font-medium">Reset the examples</p>
-          <p className="mt-1 text-[13.5px] leading-relaxed text-mute">Puts the example emails, people and settings back the way they started. Anything you made in this preview goes away.</p>
-          {confirmReset ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button
-                variant="danger"
-                onClick={() => {
-                  actions.resetExamples()
-                  toast('Examples reset')
-                  onClose()
-                }}
-              >
-                Yes, reset everything
-              </Button>
-              <Button variant="quiet" onClick={() => setConfirmReset(false)}>
-                Keep my changes
-              </Button>
-            </div>
-          ) : (
-            <Button variant="ghost" className="mt-4" onClick={() => setConfirmReset(true)}>
-              <RotateCcw size={16} /> Reset the examples
-            </Button>
-          )}
-        </div>
       </form>
     </Sheet>
   )

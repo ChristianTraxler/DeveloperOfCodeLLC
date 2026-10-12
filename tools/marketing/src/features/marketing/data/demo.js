@@ -237,7 +237,7 @@ export function resultsView(stats, now = Date.now()) {
     clicked: clickedPeople.length,
     totalClicks: visible.reduce((n, p) => n + p.clicks.length, 0),
     inquiries: visible.filter((p) => p.inquired).length,
-    unsubscribed: visible.filter((p) => p.unsub).length,
+    unsubscribed: stats.unsubscribed ?? visible.filter((p) => p.unsub).length,
     links: [...linkCounts.entries()].map(([label, clicks]) => ({ label, clicks, url: stats.links.find((l) => l.label === label)?.url })),
     curve,
     people: visible,

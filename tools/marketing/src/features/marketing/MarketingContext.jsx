@@ -1,10 +1,10 @@
-// Feature state: emails, people and sender settings, with saving and the preview's send simulation.
+// Feature state: emails, people and sender settings, saved to the server, with real sending and results.
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import * as api from './marketingApi.js'
 import { fromTemplate } from './data/templates.js'
 import { copyCampaign } from './data/blocks.js'
 import { canEmail, resolveAudience } from './data/segments.js'
-import { simulateResults, resultsView, liveProgress } from './data/demo.js'
+import { resultsView } from './data/demo.js'
 import { daysSince, pct } from './lib/format.js'
 import { uid } from './lib/rng.js'
 
@@ -50,59 +50,157 @@ function reducer(state, action) {
       return { ...state, contacts: state.contacts.filter((c) => c.id !== action.id) }
     case 'settings/update':
       return { ...state, settings: { ...state.settings, ...action.patch } }
-    case 'tick': {
-      let changed = false
+    case 'merge': {
+      // Server-owned fields only (status, results, unsubscribes), so edits in progress are never overwritten
+      const known = new Map(state.campaigns.map((c) => [c.id, c]))
       const campaigns = state.campaigns.map((c) => {
-        // A scheduled email waits until the mailing address is in place, like the real send would
-        if (c.status === 'scheduled' && c.scheduledFor && new Date(c.scheduledFor) <= action.now && state.settings.mailingAddress?.trim()) {
-          changed = true
-          const sentAt = c.scheduledFor
-          return { ...c, status: 'sent', sentAt, scheduledFor: null, updatedAt: sentAt, stats: { ...simulateResults(c, state.contacts, sentAt), live: stamp() } }
-        }
-        if (c.stats?.live && liveProgress(c.stats, action.now.getTime()) >= 1) {
-          changed = true
-          return { ...c, stats: { ...c.stats, live: null } }
-        }
-        return c
+        const n = action.campaigns.find((x) => x.id === c.id)
+        if (!n) return c
+        const same = n.status === c.status && n.sentAt === c.sentAt && n.scheduledFor === c.scheduledFor && JSON.stringify(n.stats) === JSON.stringify(c.stats)
+        return same ? c : { ...c, status: n.status, sentAt: n.sentAt, scheduledFor: n.scheduledFor, stats: n.stats, updatedAt: c.updatedAt }
       })
-      return changed ? { ...state, campaigns } : state
+      const added = action.campaigns.filter((n) => !known.has(n.id))
+      const people = new Map(action.contacts.map((c) => [c.id, c]))
+      const contacts = state.contacts.map((c) => {
+        const n = people.get(c.id)
+        return n && (n.unsubscribed !== c.unsubscribed || n.unsubscribedAt !== c.unsubscribedAt) ? { ...c, unsubscribed: n.unsubscribed, unsubscribedAt: n.unsubscribedAt } : c
+      })
+      const have = new Set(state.contacts.map((c) => c.id))
+      const addedPeople = action.contacts.filter((c) => !have.has(c.id))
+      return { ...state, campaigns: added.length ? [...added, ...campaigns] : campaigns, contacts: addedPeople.length ? [...addedPeople, ...contacts] : contacts }
     }
     default:
       return state
   }
 }
 
+const POLL_MS = 30000
+
 export function MarketingProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, null, () => api.loadState(new Date()))
+  const [state, dispatch] = useReducer(reducer, null)
+  const [phase, setPhase] = useState('loading') // loading | ready | error
+  const [loadError, setLoadError] = useState('')
   const [now, setNow] = useState(() => new Date())
   const [saved, setSaved] = useState(true)
-  const first = useRef(true)
-
-  // Save shortly after each change
-  useEffect(() => {
-    if (first.current) {
-      first.current = false
-      return
-    }
-    const t = setTimeout(() => setSaved(api.saveState(state)), 300)
-    return () => clearTimeout(t)
-  }, [state])
-
-  const anyLive = state.campaigns.some((c) => c.stats?.live)
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), anyLive ? 900 : 30000)
-    return () => clearInterval(id)
-  }, [anyLive])
-
-  useEffect(() => {
-    dispatch({ type: 'tick', now })
-  }, [now])
-
   const stateRef = useRef(state)
   stateRef.current = state
+  const savedSnap = useRef(new Map())
+  const saving = useRef(null)
+
+  const load = useCallback(async () => {
+    setPhase('loading')
+    setLoadError('')
+    try {
+      const data = await api.loadState()
+      // First time here: nothing is saved yet, so the settings count as a change and get saved
+      savedSnap.current = api.snapshot({ settings: data.hasSettings ? data.settings : {}, contacts: data.contacts, campaigns: data.campaigns })
+      dispatch({ type: 'replace', state: { settings: data.settings, contacts: data.contacts, campaigns: data.campaigns } })
+      setPhase('ready')
+    } catch (err) {
+      setLoadError(err.message || 'Could not load.')
+      setPhase('error')
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  // Writes whatever changed since the last successful save. One at a time; a change made mid-save follows right after.
+  const flush = useCallback(async () => {
+    while (saving.current) await saving.current.catch(() => {})
+    const run = (async () => {
+      const current = stateRef.current
+      if (!current) return true
+      try {
+        savedSnap.current = await api.saveChanges(savedSnap.current, current)
+        setSaved(true)
+        return true
+      } catch {
+        setSaved(false)
+        return false
+      }
+    })()
+    saving.current = run
+    try {
+      return await run
+    } finally {
+      saving.current = null
+    }
+  }, [])
+
+  const first = useRef(true)
+  useEffect(() => {
+    if (!state || phase !== 'ready') return
+    if (first.current) {
+      first.current = false
+      // Settings that were never saved still need their first save
+      if (api.snapshot(state).get('settings:main') === savedSnap.current.get('settings:main')) return
+    }
+    setSaved(false)
+    const t = setTimeout(flush, 600)
+    return () => clearTimeout(t)
+  }, [state, phase, flush])
+
+  // Keep results, scheduled sends and unsubscribes fresh
+  const refresh = useCallback(async () => {
+    try {
+      const data = await api.loadState()
+      dispatch({ type: 'merge', campaigns: data.campaigns, contacts: data.contacts })
+    } catch {
+      // A missed refresh is fine; the next one tries again
+    }
+  }, [])
+  useEffect(() => {
+    if (phase !== 'ready') return
+    const id = setInterval(() => {
+      setNow(new Date())
+      if (!document.hidden) refresh()
+    }, POLL_MS)
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [phase, refresh])
+
+  // A scheduled email is queued with its content as it was, so edits to it are queued again
+  const requeueTimer = useRef(null)
+  const lastScheduled = useRef(new Map())
+  useEffect(() => {
+    if (!state) return
+    const next = new Map()
+    let changed = null
+    for (const c of state.campaigns) {
+      if (c.status !== 'scheduled') continue
+      const fp = JSON.stringify([c.blocks, c.subject, c.preheader, c.style, c.audience, c.fromName, state.settings, c.scheduledFor])
+      next.set(c.id, fp)
+      if (lastScheduled.current.has(c.id) && lastScheduled.current.get(c.id) !== fp) changed = c.id
+    }
+    lastScheduled.current = next
+    if (!changed) return
+    clearTimeout(requeueTimer.current)
+    requeueTimer.current = setTimeout(async () => {
+      const s = stateRef.current
+      const c = s.campaigns.find((x) => x.id === changed)
+      if (!c || c.status !== 'scheduled') return
+      await flush()
+      try {
+        await api.sendCampaign(c, s.settings, resolveAudience(s.contacts, c.audience).recipients, c.scheduledFor)
+      } catch {
+        // The old queued version stays; the next change tries again
+      }
+    }, 1500)
+  }, [state, flush])
 
   const actions = useMemo(() => {
     const get = () => stateRef.current
+    const apply = (campaign) => campaign && dispatch({ type: 'campaign/update', id: campaign.id, patch: { status: campaign.status, sentAt: campaign.sentAt ?? null, scheduledFor: campaign.scheduledFor ?? null }, touch: false })
+    const recipientsOf = (c) => resolveAudience(get().contacts, c.audience).recipients
+    const ensureSaved = async () => {
+      if (!(await flush())) throw new Error('Your latest changes could not be saved, so nothing was sent. Check your connection and try again.')
+    }
     return {
       createFromTemplate(templateId) {
         const s = get()
@@ -130,28 +228,34 @@ export function MarketingProvider({ children }) {
         dispatch({ type: 'campaign/remove', id })
         return () => dispatch({ type: 'campaign/insert', campaign, index })
       },
-      schedule(id, when) {
-        const s = get()
-        const c = s.campaigns.find((x) => x.id === id)
-        if (!c) return
-        api.sendCampaign(c, resolveAudience(s.contacts, c.audience).recipients, when)
-        dispatch({ type: 'campaign/update', id, patch: { status: 'scheduled', scheduledFor: new Date(when).toISOString() } })
-      },
-      unschedule(id) {
+      // These three talk to the server and throw an Error with a plain message if it refuses.
+      async schedule(id, when) {
+        await ensureSaved()
         const c = get().campaigns.find((x) => x.id === id)
-        if (c) api.cancelScheduled(c)
-        dispatch({ type: 'campaign/update', id, patch: { status: 'draft', scheduledFor: null } })
+        if (!c) return
+        const out = await api.sendCampaign(c, get().settings, recipientsOf(c), when)
+        apply(out.campaign)
       },
-      sendNow(id) {
+      async unschedule(id) {
+        const c = get().campaigns.find((x) => x.id === id)
+        if (!c) return
+        apply(await api.cancelScheduled(c))
+      },
+      async sendNow(id) {
+        await ensureSaved()
+        const c = get().campaigns.find((x) => x.id === id)
+        if (!c) return
+        const out = await api.sendCampaign(c, get().settings, recipientsOf(c))
+        apply(out.campaign)
+        refresh()
+        return out
+      },
+      async sendTest(id, to) {
         const s = get()
         const c = s.campaigns.find((x) => x.id === id)
         if (!c) return
-        const sentAt = stamp()
-        api.sendCampaign(c, resolveAudience(s.contacts, c.audience).recipients)
-        dispatch({ type: 'campaign/update', id, patch: { status: 'sent', sentAt, scheduledFor: null, stats: { ...simulateResults(c, s.contacts, sentAt), live: sentAt } } })
-      },
-      markTest(id, to) {
-        api.sendTest(get().campaigns.find((x) => x.id === id), to)
+        const contact = resolveAudience(s.contacts, c.audience).recipients[0] || s.contacts[0] || null
+        await api.sendTest(c, s.settings, contact, to)
         dispatch({ type: 'campaign/update', id, patch: { testSentTo: to }, touch: false })
       },
       addContact(fields) {
@@ -172,15 +276,15 @@ export function MarketingProvider({ children }) {
       updateSettings(patch) {
         dispatch({ type: 'settings/update', patch })
       },
-      resetExamples() {
-        dispatch({ type: 'replace', state: api.resetState(new Date()) })
-      },
     }
-  }, [])
+  }, [flush, refresh])
 
+  const contactsNow = state?.contacts
+  const campaignsNow = state?.campaigns
   const derived = useMemo(() => {
-    const reachable = state.contacts.filter(canEmail).length
-    const sent = state.campaigns.filter((c) => c.status === 'sent' && c.stats)
+    if (!contactsNow || !campaignsNow) return null
+    const reachable = contactsNow.filter(canEmail).length
+    const sent = campaignsNow.filter((c) => c.status === 'sent' && c.stats)
     const views = new Map(sent.map((c) => [c.id, resultsView(c.stats, now.getTime())]))
     const rates = sent.map((c) => views.get(c.id)).filter((v) => v.delivered).map((v) => v.opened / v.delivered)
     const recent = sent.filter((c) => daysSince(c.sentAt, now) <= 90)
@@ -197,12 +301,12 @@ export function MarketingProvider({ children }) {
         activity.set(p.id, { campaignId: c.id, name: c.name, kind: p.inquired ? 'inquired' : p.clicks.length ? 'clicked' : 'opened', at: new Date(new Date(c.sentAt).getTime() + p.at * 60000).toISOString() })
       }
     }
-    const scheduled = state.campaigns.filter((c) => c.status === 'scheduled').sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor))
-    const drafts = state.campaigns.filter((c) => c.status === 'draft')
+    const scheduled = campaignsNow.filter((c) => c.status === 'scheduled').sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor))
+    const drafts = campaignsNow.filter((c) => c.status === 'draft')
     const lastSent = bySent[0] || null
     return {
       reachable,
-      total: state.contacts.length,
+      total: contactsNow.length,
       avgOpen,
       clicks90,
       inquiries90,
@@ -213,9 +317,26 @@ export function MarketingProvider({ children }) {
       lastSent,
       lastSentRate: lastSent ? pct(views.get(lastSent.id).opened, views.get(lastSent.id).delivered) : null,
     }
-  }, [state.contacts, state.campaigns, now])
+  }, [contactsNow, campaignsNow, now])
 
-  const value = useMemo(() => ({ ...state, now, saved, actions, derived }), [state, now, saved, actions, derived])
+  const value = useMemo(() => (state ? { ...state, now, saved, actions, derived } : null), [state, now, saved, actions, derived])
+  if (phase !== 'ready' || !value) {
+    return (
+      <main className="mx-auto max-w-[1120px] px-4 pb-24 pt-20 sm:px-6 lg:px-10">
+        {phase === 'error' ? (
+          <div role="alert">
+            <h1 className="display text-[clamp(36px,9vw,64px)] leading-[0.95]">Marketing did not load</h1>
+            <p className="mt-5 max-w-[52ch] text-[16px] text-mute">{loadError}</p>
+            <button type="button" onClick={load} className="mt-8 inline-flex h-11 items-center rounded-full bg-ember px-5 text-[15px] font-semibold text-[#1c0a02] hover:bg-[#ff6f3a]">
+              Try again
+            </button>
+          </div>
+        ) : (
+          <p className="text-[16px] text-mute" role="status">Loading your emails and people.</p>
+        )}
+      </main>
+    )
+  }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

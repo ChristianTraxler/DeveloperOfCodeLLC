@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Copy, Eye, MessageSquare, MousePointerClick, Table2, LineChart, Check } from 'lucide-react'
 import { useMarketing } from '../MarketingContext.jsx'
 import { audienceLabel, TYPE_LABEL } from '../data/segments.js'
-import { Avatar, Button, Pill, Empty, ExampleTag, cx } from '../ui/core.jsx'
+import { Avatar, Button, Pill, Empty, cx } from '../ui/core.jsx'
 import { EmailFrame } from '../ui/EmailFrame.jsx'
 import { DeviceSwitch, InboxMock, PhoneFrame } from '../ui/preview.jsx'
 import { useToast } from '../ui/Toast.jsx'
@@ -154,7 +154,6 @@ export function Report({ id, navigate, onPreview }) {
             <span className="text-[13.5px] text-mute">
               {dayDate(campaign.sentAt, now)} at {time(campaign.sentAt)}
             </span>
-            <ExampleTag />
           </div>
           <h1 className="display mt-4 text-balance text-[clamp(36px,8vw,64px)] leading-[0.98]">{campaign.name}</h1>
           <p className="mt-4 max-w-[64ch] text-[15px] leading-relaxed text-mute">
