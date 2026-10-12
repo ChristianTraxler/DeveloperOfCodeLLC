@@ -1,0 +1,31 @@
+{
+  "name": "mail",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mail: the business Gmail inside the admin. Served at /admin/mail/ behind the admin login; backend is the mail-* Supabase Edge Functions.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:server": "node --experimental-strip-types --no-warnings tests/server.test.ts",
+    "typecheck:server": "tsc -p tests/tsconfig.functions.json",
+    "check": "npm run typecheck:server && npm run test:server && npm run build"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.15",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.7"
+  }
+}
