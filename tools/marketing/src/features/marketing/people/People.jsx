@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Search, UserPlus, Check, CircleSlash, MinusCircle, Trash2, MousePointerClick, MailOpen, MessageSquare } from 'lucide-react'
 import { useMarketing } from '../MarketingContext.jsx'
 import { canEmail, TYPE_LABEL } from '../data/segments.js'
-import { Avatar, Button, Pill, Empty, ExampleTag, cx } from '../ui/core.jsx'
+import { Avatar, Button, Pill, Empty, cx } from '../ui/core.jsx'
 import { Field, Input, Select, Switch, Textarea, Check2 } from '../ui/fields.jsx'
 import { Sheet } from '../ui/Sheet.jsx'
 import { useToast } from '../ui/Toast.jsx'
@@ -72,7 +72,6 @@ function MixBar({ contacts }) {
           <span className="wide text-[22px] font-semibold">{contacts.filter(canEmail).length}</span>
           <span className="text-mute"> of {plural(contacts.length, 'person', 'people')} can get your emails</span>
         </p>
-        <ExampleTag />
       </div>
       <div className="mt-4 flex h-2.5 w-full gap-[2px] overflow-hidden rounded-full" role="img" aria-label={counts.map((c) => `${c.label}: ${c.n}`).join(', ')}>
         {counts.map((c) => (

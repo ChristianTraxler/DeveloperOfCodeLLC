@@ -1,5 +1,5 @@
 // The full-screen email editor: Design, Audience and Review, with undo and redo.
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, Undo2, Redo2, ArrowRight, ArrowLeft, Check, CloudOff, Send, CalendarClock, FlaskConical } from 'lucide-react'
 import { useMarketing } from '../MarketingContext.jsx'
@@ -122,22 +122,40 @@ export function Studio({ id, navigate, onOpenSettings }) {
     }
   }
 
-  const sendNow = () => {
-    actions.sendNow(campaign.id)
-    setSheet(null)
-    toast(`Sending to ${plural(result.recipients.length, 'person', 'people')}. Results come in as people open it.`)
-    navigate(`report/${campaign.id}`)
+  // One send at a time: the buttons can be pressed twice, the server only sends once
+  const working = useRef(false)
+  const run = async (task) => {
+    if (working.current) return
+    working.current = true
+    try {
+      await task()
+    } catch (err) {
+      toast(err.message || 'That did not work. Try again.', { tone: 'warn' })
+    } finally {
+      working.current = false
+    }
   }
-  const schedule = (when) => {
-    actions.schedule(campaign.id, when)
-    setSheet(null)
-    toast(`Scheduled for ${relativeDayTime(when, now)}`)
-    navigate('')
-  }
-  const unschedule = () => {
-    actions.unschedule(campaign.id)
-    toast('Unscheduled. It is a draft again.')
-  }
+  const sendNow = () =>
+    run(async () => {
+      const count = result.recipients.length
+      toast('Sending...')
+      await actions.sendNow(campaign.id)
+      setSheet(null)
+      toast(`Sent to ${plural(count, 'person', 'people')}. Opens and clicks show up on the report.`)
+      navigate(`report/${campaign.id}`)
+    })
+  const schedule = (when) =>
+    run(async () => {
+      await actions.schedule(campaign.id, when)
+      setSheet(null)
+      toast(`Scheduled for ${relativeDayTime(when, now)}`)
+      navigate('')
+    })
+  const unschedule = () =>
+    run(async () => {
+      await actions.unschedule(campaign.id)
+      toast('Unscheduled. It is a draft again.')
+    })
 
   const scheduled = campaign.status === 'scheduled'
   const nextStep = step === 'design' ? 'audience' : step === 'audience' ? 'review' : null
@@ -297,11 +315,13 @@ export function Studio({ id, navigate, onOpenSettings }) {
         onClose={() => setSheet(null)}
         campaign={campaign}
         defaultTo={settings.testEmail}
-        onSend={(to) => {
-          actions.markTest(campaign.id, to)
-          setSheet(null)
-          toast(`Test marked as sent to ${to}. This preview never sends real email.`)
-        }}
+        onSend={(to) =>
+          run(async () => {
+            await actions.sendTest(campaign.id, to)
+            setSheet(null)
+            toast(`Test sent to ${to}`)
+          })
+        }
       />
       {sheet === 'schedule' && <ScheduleSheet open onClose={() => setSheet(null)} campaign={campaign} now={now} onSchedule={schedule} />}
       <SendSheet open={sheet === 'send'} onClose={() => setSheet(null)} campaign={campaign} count={result.recipients.length} onConfirm={sendNow} />

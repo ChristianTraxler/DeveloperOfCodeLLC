@@ -3,15 +3,14 @@
 import { useMemo } from 'react'
 import { CalendarClock } from 'lucide-react'
 import { useMarketing } from './MarketingContext.jsx'
-import * as api from './marketingApi.js'
+import { DEFAULT_SETTINGS } from './data/demo.js'
 import { resultsView } from './data/demo.js'
 import { EmailThumb } from './ui/EmailFrame.jsx'
 import { pct } from './lib/format.js'
 
 function useSnapshot() {
   const live = useMarketing()
-  const loaded = useMemo(() => (live ? null : api.loadState(new Date())), [live])
-  const state = live || loaded
+  const state = live || { settings: DEFAULT_SETTINGS, campaigns: [] }
   return useMemo(() => {
     const campaigns = state.campaigns
     const scheduled = campaigns.filter((c) => c.status === 'scheduled').sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor))

@@ -47,7 +47,6 @@ export function TestSheet({ open, onClose, campaign, defaultTo, onSend }) {
         <Field label="Send the test to" htmlFor="t-to" error={error} hint={'The subject starts with "Test:" so it is easy to spot.'}>
           <Input id="t-to" data-autofocus type="email" value={to} onChange={(e) => { setTo(e.target.value); setError('') }} size="sm" invalid={!!error} />
         </Field>
-        <p className="rounded-[14px] bg-white/[0.04] px-4 py-3 text-[13px] leading-relaxed text-mute">In this preview nothing is emailed. Once the tool is connected, this sends right away.</p>
       </form>
     </Sheet>
   )
@@ -161,7 +160,6 @@ export function SendSheet({ open, onClose, campaign, count, onConfirm }) {
         ))}
       </dl>
       <p className="mt-5 text-[13.5px] leading-relaxed text-mute">Once it goes out it can't be called back. You'll see opens and clicks come in on the report.</p>
-      <p className="mt-3 rounded-[14px] bg-white/[0.04] px-4 py-3 text-[13px] text-mute">This is a design preview, so no real emails go out.</p>
     </Sheet>
   )
 }
