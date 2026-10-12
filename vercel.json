@@ -23,7 +23,7 @@
   ],
   "crons": [
     { "path": "/api/keep-alive", "schedule": "0 6 * * *" },
-    { "path": "/api/marketing?action=cron", "schedule": "*/5 * * * *" }
+    { "path": "/api/marketing?action=cron", "schedule": "0 13 * * *" }
   ],
   "functions": {
     "api/demos.mjs": { "maxDuration": 60 },

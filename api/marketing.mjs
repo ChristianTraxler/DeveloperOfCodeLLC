@@ -38,6 +38,8 @@ const KINDS = new Set(['settings', 'contact', 'campaign']);
 const BATCH = 100;
 const BATCH_GAP_MS = 600; // Resend allows 2 requests a second
 const MAX_SEND = 2000;
+const MAX_RESEND_SCHEDULED = 80; // one request each at 2 a second has to fit in the 60 second limit
+const RESEND_SCHEDULE_DAYS = 29; // Resend schedules at most 30 days ahead
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -214,6 +216,46 @@ async function settleCampaign(campaignId) {
   await putDoc('campaign', campaignId, { ...c, status: 'sent', sentAt: first[0]?.sent_at || stamp(), scheduledFor: null, updatedAt: stamp() });
 }
 
+// Hands each queued row to Resend with a send time, so Resend sends it later without any cron.
+async function scheduleAtResend(rows, settings, when) {
+  let sent = 0;
+  let failed = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (i) await sleep(BATCH_GAP_MS);
+    const url = unsubUrl(r.contact_id);
+    try {
+      const out = await resend('/emails', {
+        from: fromLine(settings),
+        to: [r.email],
+        subject: r.subject,
+        html: String(r.html || '').split(UNSUBSCRIBE_TOKEN).join(url),
+        ...(settings.replyTo ? { reply_to: settings.replyTo } : {}),
+        headers: { 'List-Unsubscribe': `<${url}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+        tags: [{ name: 'campaign', value: tag(r.campaign_id) }, { name: 'contact', value: tag(r.contact_id) }],
+        scheduled_at: when.toISOString(),
+      }, `mk-${r.campaign_id}-${r.id}-${when.getTime()}`.slice(0, 256));
+      if (!out?.id) throw new Error('Resend did not return an id.');
+      await patchRows('marketing_sends', `id=eq.${r.id}`, { status: 'sent', sent_at: when.toISOString(), resend_id: out.id, html: null, error: null });
+      sent++;
+    } catch (err) {
+      await patchRows('marketing_sends', `id=eq.${r.id}`, { status: 'failed', error: String(err.message || err).slice(0, 300) });
+      failed++;
+    }
+  }
+  return { sent, failed };
+}
+
+// Takes back emails Resend is holding for a future time, and forgets them here.
+async function cancelResendScheduled(campaignId) {
+  const held = await selectAll(`/rest/v1/marketing_sends?campaign_id=eq.${enc(campaignId)}&status=eq.sent&send_at=gt.${enc(stamp())}&select=id,resend_id`);
+  for (let i = 0; i < held.length; i++) {
+    if (i) await sleep(BATCH_GAP_MS);
+    if (held[i].resend_id) await resend(`/emails/${held[i].resend_id}/cancel`, {}).catch(() => {}); // already gone is fine
+  }
+  if (held.length) await deleteRows('marketing_sends', `campaign_id=eq.${enc(campaignId)}&status=eq.sent&send_at=gt.${enc(stamp())}`);
+}
+
 // ── Admin actions ───────────────────────────────────────────────────────────
 
 async function load() {
@@ -225,6 +267,16 @@ async function load() {
   const settings = docs.find((d) => d.kind === 'settings')?.data || null;
   const contacts = docs.filter((d) => d.kind === 'contact').map((d) => d.data);
   const campaigns = docs.filter((d) => d.kind === 'campaign').map((d) => d.data);
+
+  // An email Resend was holding for later counts as sent once its time has passed
+  for (const c of campaigns) {
+    if (c.status !== 'scheduled' || !c.scheduledFor || new Date(c.scheduledFor) > new Date()) continue;
+    if (sends.some((x) => x.campaign_id === c.id && x.status === 'queued')) continue; // the cron still has to send it
+    c.status = 'sent';
+    c.sentAt = c.scheduledFor;
+    c.scheduledFor = null;
+    await putDoc('campaign', c.id, c);
+  }
   const contactById = new Map(contacts.map((c) => [c.id, c]));
 
   for (const c of campaigns) {
@@ -345,7 +397,8 @@ async function send(body) {
   }
   if (!rows.length) throw new HttpError(400, 'No one on this list can get email right now.');
 
-  // Replace whatever was queued before (a changed scheduled email), but never resend to someone already sent.
+  // Replace whatever was queued or held at Resend before (a changed scheduled email), but never resend to someone already sent.
+  if (campaign.status === 'scheduled') await cancelResendScheduled(campaignId);
   await deleteRows('marketing_sends', `campaign_id=eq.${enc(campaignId)}&status=in.(queued,failed)`);
   const done = new Set((await (await sb(`/rest/v1/marketing_sends?campaign_id=eq.${enc(campaignId)}&status=eq.sent&select=contact_id`)).json()).map((r) => r.contact_id));
   const fresh = rows.filter((r) => !done.has(r.contact_id));
@@ -353,9 +406,19 @@ async function send(body) {
   await upsertRows('marketing_sends', fresh, 'campaign_id,contact_id');
 
   if (later) {
+    // Small lists go to Resend now with a send time. Big or far-off ones wait for the daily cron.
+    const atResend = fresh.length <= MAX_RESEND_SCHEDULED && when.getTime() < Date.now() + RESEND_SCHEDULE_DAYS * 86400000;
+    if (atResend) {
+      const queuedRows = await selectAll(`/rest/v1/marketing_sends?campaign_id=eq.${enc(campaignId)}&status=eq.queued&select=id,campaign_id,contact_id,email,subject,html&order=id.asc`);
+      const out = await scheduleAtResend(queuedRows, settings, when);
+      if (!out.sent) {
+        const err = (await (await sb(`/rest/v1/marketing_sends?campaign_id=eq.${enc(campaignId)}&status=eq.failed&select=error&limit=1`)).json())[0]?.error;
+        throw new HttpError(502, `Nothing was scheduled. Resend said: ${err || 'unknown error'}`);
+      }
+    }
     const next = { ...campaign, status: 'scheduled', scheduledFor: when.toISOString(), sentAt: null, updatedAt: stamp() };
     await putDoc('campaign', campaignId, next);
-    return { ok: true, scheduled: true, count: fresh.length, campaign: next };
+    return { ok: true, scheduled: true, exact: atResend, count: fresh.length, campaign: next };
   }
 
   const queued = await selectAll(`/rest/v1/marketing_sends?campaign_id=eq.${enc(campaignId)}&status=eq.queued&select=id,campaign_id,contact_id,email,subject,html&order=id.asc`);
@@ -373,6 +436,7 @@ async function cancel(body) {
   const c = await getDoc('campaign', campaignId);
   if (!c) throw new HttpError(404, 'Email not found.');
   if (c.status === 'sent') throw new HttpError(409, 'This email already went out.');
+  await cancelResendScheduled(campaignId);
   await deleteRows('marketing_sends', `campaign_id=eq.${enc(campaignId)}&status=in.(queued,failed)`);
   const next = { ...c, status: 'draft', scheduledFor: null, updatedAt: stamp() };
   await putDoc('campaign', campaignId, next);
