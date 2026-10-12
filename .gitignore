@@ -13,6 +13,8 @@ public/admin/tracker/
 public/admin/outlay/
 # Marketing build output (regenerated from tools/marketing on every deploy)
 public/admin/marketing/
+# Mail build output (regenerated from tools/mail on every deploy)
+public/admin/mail/
 
 # Local env + cruft (.env.example is the committed template)
 .env
@@ -27,3 +29,7 @@ public/admin/marketing/
 # Dependencies excluded from iCloud (node_modules links to node_modules.nosync)
 node_modules
 node_modules.nosync
+
+# Mail setup values with secrets (filled cron SQL, Pub/Sub push URL). Never commit.
+supabase/*.local.*
+supabase/.temp/

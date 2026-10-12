@@ -65,6 +65,9 @@ export default function Footer({ current = 'home' }) {
             <a className="u-link" href={links.phone}>
               {contact.phone}
             </a>
+            <a className="u-link" href="/privacy.html">
+              Privacy Policy
+            </a>
           </p>
         </div>
       </div>
