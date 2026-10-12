@@ -98,6 +98,19 @@ function wrapTrailing(el, doc) {
   return box
 }
 
+const PURIFY = {
+  FORBID_TAGS: ['style', 'script', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'form', 'input', 'button', 'textarea', 'select', 'option', 'link', 'meta', 'base', 'noscript', 'template', 'audio', 'video', 'source', 'track'],
+  FORBID_ATTR: ['srcset', 'action', 'formaction', 'ping', 'autofocus'],
+  ADD_ATTR: ['target', 'bgcolor', 'background', 'align', 'valign', 'cellpadding', 'cellspacing'],
+}
+
+// For HTML that goes straight into the live Mail page rather than the sandboxed frame: quoted
+// originals, drafts opened from Gmail and send-as signatures. Strips scripts, event handlers
+// and javascript: links so a hostile email can't run code with the admin's session.
+export function sanitizeFragment(html) {
+  return html ? DOMPurify.sanitize(html, PURIFY) : ''
+}
+
 export function prepareEmail(message, { loadImages = false, showQuote = false, rewrite = null } = {}) {
   const source = message?.html?.trim() ? message.html : textToHtml(message?.text || message?.snippet || '')
   const parsed = new DOMParser().parseFromString(source, 'text/html')
@@ -110,11 +123,7 @@ export function prepareEmail(message, { loadImages = false, showQuote = false, r
 
   // DOMPurify returns a string; it is parsed again in an inert document so nothing in it can
   // start loading (an <img> adopted into the live page would fetch its src right away).
-  const cleanHtml = DOMPurify.sanitize(wrapped, {
-    FORBID_TAGS: ['style', 'script', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'form', 'input', 'button', 'textarea', 'select', 'option', 'link', 'meta', 'base', 'noscript', 'template', 'audio', 'video', 'source', 'track'],
-    FORBID_ATTR: ['srcset', 'action', 'formaction', 'ping', 'autofocus'],
-    ADD_ATTR: ['target', 'bgcolor', 'background', 'align', 'valign', 'cellpadding', 'cellspacing'],
-  })
+  const cleanHtml = DOMPurify.sanitize(wrapped, PURIFY)
   const work = new DOMParser().parseFromString(`<body>${cleanHtml}</body>`, 'text/html')
   const doc = work
   const frag = work.body

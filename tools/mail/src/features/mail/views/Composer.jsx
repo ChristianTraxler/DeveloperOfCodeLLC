@@ -8,7 +8,7 @@ import { useMail } from '../state/MailContext.jsx'
 import { useSettings } from '../state/settings.js'
 import { useToast } from '../ui/Toast.jsx'
 import { useLockBody } from '../ui/hooks.js'
-import { htmlToText } from '../lib/html.js'
+import { htmlToText, sanitizeFragment } from '../lib/html.js'
 import { fileToBase64 } from '../lib/files.js'
 import { isEmail } from '../lib/address.js'
 import { fileSize, nameOf } from '../lib/format.js'
@@ -73,10 +73,11 @@ export function Composer({ init, layout = 'dock', onClose, onReopen, contacts = 
 
   const sheet = layout === 'sheet'
   useLockBody(sheet)
-  const signature = sendAs.find((s) => s.email === from)?.signature || ''
+  const signature = sanitizeFragment(sendAs.find((s) => s.email === from)?.signature || '')
+  const [quoteHtml] = useState(() => sanitizeFragment(init.quoteHtml || ''))
 
   useLayoutEffect(() => {
-    if (editor.current) editor.current.innerHTML = init.html || ''
+    if (editor.current) editor.current.innerHTML = sanitizeFragment(init.html || '')
     const t = setTimeout(() => {
       if (replyish || init.mode === 'draft' || (init.to?.length && !sheet)) {
         editor.current?.focus()
@@ -99,7 +100,7 @@ export function Composer({ init, layout = 'dock', onClose, onReopen, contacts = 
   const payload = useCallback(() => {
     const body = bodyHtml()
     const sig = signatureOn && signature ? `<br><div class="gmail_signature">${signature}</div>` : ''
-    const quote = includeQuote && init.quoteHtml ? `<br>${init.quoteHtml}` : ''
+    const quote = includeQuote && quoteHtml ? `<br>${quoteHtml}` : ''
     const sa = sendAs.find((s) => s.email === from)
     return {
       to,
@@ -393,7 +394,7 @@ export function Composer({ init, layout = 'dock', onClose, onReopen, contacts = 
                 {includeQuote ? 'Leave it out' : 'Include it'}
               </button>
             </div>
-            {showQuote && includeQuote && <div className="ml-quote-preview mt-3 max-h-64 overflow-auto rounded-[12px] border border-black/[0.07] p-3" dangerouslySetInnerHTML={{ __html: init.quoteHtml }} />}
+            {showQuote && includeQuote && <div className="ml-quote-preview mt-3 max-h-64 overflow-auto rounded-[12px] border border-black/[0.07] p-3" dangerouslySetInnerHTML={{ __html: quoteHtml }} />}
           </div>
         )}
 
