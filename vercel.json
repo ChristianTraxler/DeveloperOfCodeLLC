@@ -7,6 +7,8 @@
     { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" }
   ],
   "redirects": [
+    { "source": "/admin/relay-solo", "destination": "https://relay-solo.vercel.app/", "permanent": false },
+    { "source": "/admin/relay-solo/:path*", "destination": "https://relay-solo.vercel.app/", "permanent": false },
     { "source": "/relay-solo.html", "destination": "/notify.html?product=Relay%20Solo", "permanent": true },
     { "source": "/habit-tracker.html", "destination": "/products.html", "permanent": true },
     { "source": "/wedding-planner.html", "destination": "/products.html", "permanent": true },
