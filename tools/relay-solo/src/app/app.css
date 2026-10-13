@@ -1,0 +1,106 @@
+/*
+  Global styles for the Relay Solo tool shell: fonts, color tokens, page background and grain,
+  matching the Admin Hub so the shell looks the same as the Hub and Mail.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Mona Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  src: url('./fonts/mona-sans-latin-standard-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Literata Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('./fonts/literata-latin-standard-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Literata Variable';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('./fonts/literata-latin-standard-italic.woff2') format('woff2-variations');
+}
+
+:root {
+  --ink-rgb: 7 10 18;
+  --panel-rgb: 13 19 34;
+  --raised-rgb: 19 27 47;
+  --bone-rgb: 236 232 223;
+  --mute-rgb: 152 161 181;
+  --faint-rgb: 98 107 129;
+  --ember-rgb: 255 90 31;
+  --live-rgb: 79 209 139;
+  --danger-rgb: 255 107 94;
+  --ink: rgb(var(--ink-rgb));
+  --bone: rgb(var(--bone-rgb));
+  --ember: rgb(var(--ember-rgb));
+  --line: rgba(236, 232, 223, 0.09);
+  --line2: rgba(236, 232, 223, 0.17);
+  --font-display: 'Literata Variable', Georgia, serif;
+  --font-ui: 'Mona Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: dark;
+  height: 100%;
+  background-color: var(--ink);
+}
+
+body {
+  min-height: 100%;
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(1100px 520px at 50% -6%, rgba(255, 90, 31, 0.13), transparent 70%),
+    radial-gradient(900px 600px at -10% 20%, rgba(52, 84, 160, 0.14), transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--bone);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: rgba(255, 90, 31, 0.35); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+input, textarea, select { font: inherit; color: inherit; }
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  font-variation-settings: 'opsz' 72;
+}
+.wide { font-stretch: 108%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

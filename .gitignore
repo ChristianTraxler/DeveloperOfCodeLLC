@@ -15,6 +15,8 @@ public/admin/outlay/
 public/admin/marketing/
 # Mail build output (regenerated from tools/mail on every deploy)
 public/admin/mail/
+# Relay Solo build output (regenerated from tools/relay-solo on every deploy)
+public/admin/relay-solo/
 
 # Local env + cruft (.env.example is the committed template)
 .env
