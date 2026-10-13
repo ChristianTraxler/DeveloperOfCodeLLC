@@ -1,6 +1,6 @@
 // Prefills the composer for replies and forwards, and builds the quoted original the way
 // Gmail does, so Gmail folds it away for the person reading your reply.
-import { escapeHtml, textToHtml } from './html.js'
+import { escapeHtml, sanitizeFragment, textToHtml } from './html.js'
 import { quoteDate, nameOf } from './format.js'
 import { formatAddress, sameEmail, uniqueAddresses } from './address.js'
 
@@ -27,7 +27,7 @@ export function quoteBlock(message) {
   return (
     `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">On ${escapeHtml(quoteDate(message.date))} ${who} wrote:<br></div>` +
     `<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">` +
-    `${bodyOnly(lightHtml(message))}</blockquote></div>`
+    `${sanitizeFragment(bodyOnly(lightHtml(message)))}</blockquote></div>`
   )
 }
 
@@ -41,7 +41,7 @@ export function forwardBlock(message) {
     line('Subject', escapeHtml(message.subject || '')) +
     line('To', list(message.to || [])) +
     line('Cc', list(message.cc || [])) +
-    `<br></div><br>${bodyOnly(lightHtml(message))}</div>`
+    `<br></div><br>${sanitizeFragment(bodyOnly(lightHtml(message)))}</div>`
   )
 }
 

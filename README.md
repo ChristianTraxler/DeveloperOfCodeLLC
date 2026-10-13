@@ -53,6 +53,7 @@ Locally, `npm run dev` serves `api/*.mjs` at `/api/*` (see `scripts/vite-plugins
 | `public/admin/`, `public/admin.webmanifest`, `public/js/pwa.js` | The `/admin` hub and login. `public/admin/tracker/` is build output from `tools/project-tracker` and is gitignored |
 | `public/img/` | The old site's image folder, kept at `/img/` because the admin icons, the home page's structured data logo, and outside links point into it |
 | `tools/project-tracker/` | The Projects Tracker app served at `/admin/tracker/` |
+| `tools/relay-solo/` | The Relay Solo tool served at `/admin/relay-solo/`: the admin shell around the live Relay Solo app |
 | `archive/legacy-site/` | The previous static site, kept for reference only |
 | `docs/` | Design notes and `admin-setup.md` for the admin hub and Supabase |
 | `api/` | Vercel Functions: `notify.mjs` (Resend mailer), `status.mjs` (status badge proxy), `keep-alive.mjs` (Supabase cron ping) |
