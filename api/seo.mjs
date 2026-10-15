@@ -5,7 +5,12 @@
 //   GET  get&id=<uuid>   one review with all of its checks
 //   GET  meta            check labels, categories and services from api/_lib/seo-config.mjs
 //   POST run             { url, business, city, service, fresh? } runs the checks and saves them
+//   POST review          { id, reviewed } sets or clears reviewed_at (only reviewed reviews will share)
+//   POST task            { id, done } ticks a Next Steps task
 //   POST delete          { id }
+//
+// Scores and Next Steps (api/_lib/seo-score.mjs) are written on run. Reviews saved before
+// Phase 2 get theirs the first time they are read.
 //
 // Env vars (server only):
 //   SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS   same as api/marketing.mjs and api/demos.mjs
@@ -16,6 +21,7 @@
 import { randomBytes } from 'node:crypto';
 import { AuditInputError, normalizeUrl, runAudit, PHASE_ONE } from './_lib/seo-checks.mjs';
 import { CATEGORIES, CHECKS, SERVICES, FETCH } from './_lib/seo-config.mjs';
+import { scoreAudit, buildTasks } from './_lib/seo-score.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
@@ -70,13 +76,29 @@ const enc = encodeURIComponent;
 
 // ── Shaping ─────────────────────────────────────────────────────────────────
 
-function countsByCategory(checks) {
+// Per-category counts plus the Phase 2 score and rescaled weight. checks use { key, category, status, score }.
+function categoryScores(checks) {
+  const scored = scoreAudit(checks);
   const out = {};
-  for (const key of Object.keys(CATEGORIES)) out[key] = { pass: 0, warn: 0, fail: 0, skipped: 0, notRun: 0, score: null };
+  for (const key of Object.keys(CATEGORIES)) out[key] = { pass: 0, warn: 0, fail: 0, skipped: 0, notRun: 0, ...scored.categories[key] };
   for (const c of checks) out[c.category][c.status]++;
   for (const m of Object.values(CHECKS)) if (m.phase > 1) out[m.category].notRun++;
-  return out;
+  return { overall: scored.overall, categories: out };
 }
+
+// Saved check rows (check_key, id) to Next Steps rows.
+const taskRows = (auditId, savedChecks) => {
+  const ids = Object.fromEntries(savedChecks.map((r) => [r.check_key, r.id]));
+  return buildTasks(savedChecks.map((r) => ({ key: r.check_key, category: r.category, status: r.status }))).map((t) => ({
+    audit_id: auditId,
+    check_id: ids[t.checkKey] ?? null,
+    title: t.title,
+    impact: t.impact,
+    effort: t.effort,
+    service_tag: t.serviceTag,
+    priority_order: t.priorityOrder,
+  }));
+};
 
 const checkRow = (auditId) => (c) => ({
   audit_id: auditId,
@@ -106,6 +128,19 @@ function toCheck(row) {
   };
 }
 
+function toTask(row, checkKeys) {
+  return {
+    id: row.id,
+    checkKey: checkKeys[row.check_id] || null,
+    title: row.title,
+    impact: row.impact,
+    effort: row.effort,
+    service: SERVICES[row.service_tag] || row.service_tag,
+    priorityOrder: row.priority_order,
+    done: row.done,
+  };
+}
+
 export const meta = () => ({
   categories: CATEGORIES,
   checks: Object.fromEntries(Object.entries(CHECKS).map(([k, v]) => [k, { ...v, service: SERVICES[v.service] }])),
@@ -115,8 +150,34 @@ export const meta = () => ({
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
+// Reviews saved before Phase 2 have no score. Score them from their saved checks, write it back,
+// and create their Next Steps if they have none. Mutates audit so the caller returns fresh values.
+async function backfill(audit, savedChecks, hasTasks) {
+  if (audit.status !== 'complete' || audit.overall_score != null || !savedChecks.length) return;
+  const scored = categoryScores(savedChecks.map((r) => ({ key: r.check_key, category: r.category, status: r.status, score: r.score == null ? null : Number(r.score) })));
+  audit.overall_score = scored.overall;
+  audit.category_scores = scored.categories;
+  await patch('seo_audits', `id=eq.${audit.id}`, { overall_score: scored.overall, category_scores: scored.categories });
+  if (!hasTasks) {
+    const tasks = taskRows(audit.id, savedChecks);
+    if (tasks.length) await insert('seo_audit_tasks', tasks);
+  }
+}
+
+const BACKFILL_PER_LIST = 25;
+
 async function list() {
-  return { audits: await rows(`/rest/v1/seo_audits?select=${AUDIT_COLUMNS}&order=created_at.desc&limit=500`), meta: meta() };
+  const audits = await rows(`/rest/v1/seo_audits?select=${AUDIT_COLUMNS}&order=created_at.desc&limit=500`);
+  const stale = audits.filter((a) => a.status === 'complete' && a.overall_score == null).slice(0, BACKFILL_PER_LIST);
+  if (stale.length) {
+    const ids = stale.map((a) => a.id).join(',');
+    const [checks, tasks] = await Promise.all([
+      rows(`/rest/v1/seo_audit_checks?audit_id=in.(${ids})&select=id,audit_id,category,check_key,status,score`),
+      rows(`/rest/v1/seo_audit_tasks?audit_id=in.(${ids})&select=audit_id`),
+    ]);
+    for (const a of stale) await backfill(a, checks.filter((c) => c.audit_id === a.id), tasks.some((t) => t.audit_id === a.id));
+  }
+  return { audits, meta: meta() };
 }
 
 async function getOne(id) {
@@ -124,7 +185,13 @@ async function getOne(id) {
   const [audit] = await rows(`/rest/v1/seo_audits?id=eq.${id}&select=${AUDIT_COLUMNS}&limit=1`);
   if (!audit) throw new HttpError(404, 'That review was deleted or never existed.');
   const checks = await rows(`/rest/v1/seo_audit_checks?audit_id=eq.${id}&select=*&order=id.asc`);
-  return { audit, checks: checks.map(toCheck), meta: meta() };
+  let tasks = await rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${id}&select=*&order=priority_order.asc`);
+  if (audit.overall_score == null && audit.status === 'complete') {
+    await backfill(audit, checks, tasks.length > 0);
+    if (!tasks.length) tasks = await rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${id}&select=*&order=priority_order.asc`);
+  }
+  const checkKeys = Object.fromEntries(checks.map((c) => [c.id, c.check_key]));
+  return { audit, checks: checks.map(toCheck), tasks: tasks.map((t) => toTask(t, checkKeys)), meta: meta() };
 }
 
 // Reuse a PageSpeed result for the same address from the last 24 hours (it is slow and metered).
@@ -174,11 +241,15 @@ async function run(body) {
         render: async (u, ms) => (await import('./_lib/seo-render.mjs')).renderHtml(u, ms),
       },
     );
-    await insert('seo_audit_checks', out.checks.map(checkRow(audit.id)));
+    const saved = await insert('seo_audit_checks', out.checks.map(checkRow(audit.id)));
+    const tasks = taskRows(audit.id, saved);
+    if (tasks.length) await insert('seo_audit_tasks', tasks);
+    const scored = categoryScores(out.checks);
     const done = {
       status: 'complete',
       final_url: out.site.finalUrl,
-      category_scores: countsByCategory(out.checks),
+      overall_score: scored.overall,
+      category_scores: scored.categories,
       duration_ms: out.durationMs,
       notes: { notes: out.notes, site: out.site, pageSpeedKey: !!PAGESPEED_KEY },
       error: out.site.error || null,
@@ -191,6 +262,23 @@ async function run(body) {
     if (err instanceof AuditInputError) throw new HttpError(400, message);
     throw err;
   }
+}
+
+async function setReviewed(body) {
+  if (!UUID.test(body.id || '')) throw new HttpError(400, 'That review id is not valid.');
+  const [audit] = await rows(`/rest/v1/seo_audits?id=eq.${body.id}&select=status&limit=1`);
+  if (!audit) throw new HttpError(404, 'That review was deleted or never existed.');
+  if (body.reviewed && audit.status !== 'complete') throw new HttpError(400, 'Only a finished review can be marked reviewed.');
+  const reviewedAt = body.reviewed ? new Date().toISOString() : null;
+  await patch('seo_audits', `id=eq.${body.id}`, { reviewed_at: reviewedAt });
+  return { ok: true, reviewedAt };
+}
+
+async function setTask(body) {
+  const id = Number(body.id);
+  if (!Number.isSafeInteger(id) || id < 1) throw new HttpError(400, 'That task id is not valid.');
+  await patch('seo_audit_tasks', `id=eq.${id}`, { done: !!body.done });
+  return { ok: true };
 }
 
 async function remove(body) {
@@ -214,6 +302,8 @@ export default {
       if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed.');
       const body = await request.json().catch(() => { throw new HttpError(400, 'Invalid JSON body.'); });
       if (action === 'run') return json(await run(body));
+      if (action === 'review') return json(await setReviewed(body));
+      if (action === 'task') return json(await setTask(body));
       if (action === 'delete') return json(await remove(body));
       throw new HttpError(400, 'Unknown action.');
     } catch (err) {

@@ -169,3 +169,80 @@ test('a cached PageSpeed result is reused instead of calling Google', async () =
   assert.equal(c.page_speed.details.cached, true);
   assert.ok(!f.calls.some((x) => x.url.includes('googleapis')));
 });
+
+// ── Phase 2: scoring and Next Steps ─────────────────────────────────────────
+import { scoreAudit, buildTasks } from '../api/_lib/seo-score.mjs';
+
+const results = (statuses) =>
+  Object.entries(statuses).map(([key, status]) => ({ key, category: CHECKS[key].category, status, score: STATUS_POINTS[status] }));
+
+test('score matches a hand calculation: weak site, visibility dropped', () => {
+  // On-page: title 1, meta 0.5, h1 1, keywords 0, image_alt 1 (internal_links skipped) = 3.5 / 5 = 70
+  // Technical: 1 + 1 + 0.5 + 0 + 1 + 1 = 4.5 / 6 = 75
+  // Local: schema 0 = 0. Visibility has no data and drops out.
+  // Weights 25, 25, 30 rescale to 31.25, 31.25, 37.5.
+  // Overall = 70 * 0.3125 + 75 * 0.3125 + 0 * 0.375 = 45.3125, rounds to 45.
+  const s = scoreAudit(results({
+    title: 'pass', meta_description: 'warn', h1: 'pass', keywords: 'fail', image_alt: 'pass', internal_links: 'skipped',
+    https: 'pass', mobile: 'pass', page_speed: 'warn', sitemap: 'fail', robots: 'pass', broken_links: 'pass',
+    schema: 'fail',
+  }));
+  assert.equal(s.overall, 45);
+  assert.equal(s.categories.onpage.score, 70);
+  assert.equal(s.categories.technical.score, 75);
+  assert.equal(s.categories.local.score, 0);
+  assert.equal(s.categories.visibility.score, null);
+  assert.deepEqual(s.dropped, ['visibility']);
+  assert.equal(s.categories.local.weight, 37.5);
+});
+
+test('score matches a hand calculation: strong site, skipped speed', () => {
+  // On-page all pass = 100. Technical: 1 + 0.5 + 0 + 1 + 1 (broken_links skipped) = 3.5 / 5 = 70.
+  // Local: schema 1 = 100. Overall = 100 * 0.3125 + 70 * 0.3125 + 100 * 0.375 = 90.625, rounds to 91.
+  const s = scoreAudit(results({
+    title: 'pass', meta_description: 'pass', h1: 'pass', keywords: 'pass', image_alt: 'pass', internal_links: 'pass',
+    https: 'pass', mobile: 'warn', page_speed: 'fail', sitemap: 'pass', robots: 'pass', broken_links: 'skipped',
+    schema: 'pass',
+  }));
+  assert.equal(s.overall, 91);
+  assert.equal(s.categories.technical.score, 70);
+});
+
+test('weights are not rescaled when every category has data', () => {
+  // 100 * 0.25 + 0 * 0.25 + 100 * 0.30 + 50 * 0.20 = 65
+  const s = scoreAudit(results({ title: 'pass', https: 'fail', schema: 'pass', rank: 'warn' }));
+  assert.equal(s.overall, 65);
+  assert.deepEqual(s.dropped, []);
+  assert.equal(s.categories.visibility.weight, 20);
+});
+
+test('a review with nothing scored has no overall score', () => {
+  const s = scoreAudit(results({ title: 'skipped', https: 'skipped' }));
+  assert.equal(s.overall, null);
+  assert.equal(Object.keys(CATEGORIES).length, s.dropped.length);
+});
+
+test('Next Steps: only fails and warns, high impact, then small effort, then fail before warn', () => {
+  const tasks = buildTasks(results({
+    title: 'warn', meta_description: 'fail', keywords: 'fail', image_alt: 'fail', https: 'pass',
+    mobile: 'fail', sitemap: 'skipped', schema: 'fail', page_speed: 'warn',
+  }));
+  assert.deepEqual(tasks.map((t) => t.checkKey), [
+    'schema', // high, small, fail
+    'title', // high, small, warn
+    'keywords', // high, medium, fail
+    'page_speed', // high, medium, warn
+    'mobile', // high, large
+    'meta_description', // medium, small
+    'image_alt', // low
+  ]);
+  assert.deepEqual(tasks.map((t) => t.priorityOrder), [1, 2, 3, 4, 5, 6, 7]);
+  for (const t of tasks) {
+    assert.ok(t.title && !/[—–]/.test(t.title), `${t.checkKey} has a plain title`);
+    assert.ok(t.serviceTag, `${t.checkKey} links to a service`);
+  }
+});
+
+test('every check has a Next Steps title', () => {
+  for (const [key, c] of Object.entries(CHECKS)) assert.ok(c.task, `${key} needs a task title in seo-config.mjs`);
+});

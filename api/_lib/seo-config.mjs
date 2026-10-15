@@ -31,29 +31,30 @@ export const SERVICES = {
 };
 
 // The 18 checks. phase says when each one starts running. impact is how much fixing it likely
-// helps local visibility; effort is the owner's time to fix it (small, medium, large).
+// helps local visibility; effort is the owner's time to fix it (small, medium, large). task is the
+// plain action shown in Next Steps when the check fails or warns.
 export const CHECKS = {
-  title: { label: 'Title tag', category: 'onpage', phase: 1, impact: 'high', effort: 'small', service: 'onpage' },
-  meta_description: { label: 'Meta description', category: 'onpage', phase: 1, impact: 'medium', effort: 'small', service: 'onpage' },
-  h1: { label: 'Main heading', category: 'onpage', phase: 1, impact: 'medium', effort: 'small', service: 'onpage' },
-  keywords: { label: 'City and service on the page', category: 'onpage', phase: 1, impact: 'high', effort: 'medium', service: 'content' },
-  image_alt: { label: 'Image descriptions', category: 'onpage', phase: 1, impact: 'low', effort: 'small', service: 'onpage' },
-  internal_links: { label: 'Links to other pages', category: 'onpage', phase: 1, impact: 'medium', effort: 'medium', service: 'content' },
+  title: { label: 'Title tag', task: 'Add the city and service to the page title', category: 'onpage', phase: 1, impact: 'high', effort: 'small', service: 'onpage' },
+  meta_description: { label: 'Meta description', task: 'Write a meta description that names the service and city', category: 'onpage', phase: 1, impact: 'medium', effort: 'small', service: 'onpage' },
+  h1: { label: 'Main heading', task: 'Give the home page one clear main heading', category: 'onpage', phase: 1, impact: 'medium', effort: 'small', service: 'onpage' },
+  keywords: { label: 'City and service on the page', task: 'Mention the city and main service in the page copy', category: 'onpage', phase: 1, impact: 'high', effort: 'medium', service: 'content' },
+  image_alt: { label: 'Image descriptions', task: 'Describe each photo for Google and screen readers', category: 'onpage', phase: 1, impact: 'low', effort: 'small', service: 'onpage' },
+  internal_links: { label: 'Links to other pages', task: 'Link the home page to the service, about and contact pages', category: 'onpage', phase: 1, impact: 'medium', effort: 'medium', service: 'content' },
 
-  https: { label: 'Secure connection', category: 'technical', phase: 1, impact: 'high', effort: 'small', service: 'technical' },
-  mobile: { label: 'Works on phones', category: 'technical', phase: 1, impact: 'high', effort: 'large', service: 'mobile' },
-  page_speed: { label: 'Page speed', category: 'technical', phase: 1, impact: 'high', effort: 'medium', service: 'speed' },
-  sitemap: { label: 'Sitemap', category: 'technical', phase: 1, impact: 'low', effort: 'small', service: 'technical' },
-  robots: { label: 'robots.txt', category: 'technical', phase: 1, impact: 'medium', effort: 'small', service: 'technical' },
-  broken_links: { label: 'Broken links', category: 'technical', phase: 1, impact: 'medium', effort: 'small', service: 'technical' },
+  https: { label: 'Secure connection', task: 'Serve the whole site over a secure connection', category: 'technical', phase: 1, impact: 'high', effort: 'small', service: 'technical' },
+  mobile: { label: 'Works on phones', task: 'Make the site work well on phones', category: 'technical', phase: 1, impact: 'high', effort: 'large', service: 'mobile' },
+  page_speed: { label: 'Page speed', task: 'Speed up the home page on phones', category: 'technical', phase: 1, impact: 'high', effort: 'medium', service: 'speed' },
+  sitemap: { label: 'Sitemap', task: 'Add a sitemap so Google finds every page', category: 'technical', phase: 1, impact: 'low', effort: 'small', service: 'technical' },
+  robots: { label: 'robots.txt', task: 'Fix robots.txt so Google can read the site', category: 'technical', phase: 1, impact: 'medium', effort: 'small', service: 'technical' },
+  broken_links: { label: 'Broken links', task: 'Fix or remove the broken links', category: 'technical', phase: 1, impact: 'medium', effort: 'small', service: 'technical' },
 
-  schema: { label: 'Business details for Google', category: 'local', phase: 1, impact: 'high', effort: 'small', service: 'schema' },
-  nap: { label: 'Name, address and phone match', category: 'local', phase: 3, impact: 'high', effort: 'small', service: 'schema' },
-  gbp: { label: 'Google Business Profile', category: 'local', phase: 3, impact: 'high', effort: 'medium', service: 'gbp' },
-  reviews: { label: 'Google reviews', category: 'local', phase: 3, impact: 'high', effort: 'large', service: 'reviews' },
+  schema: { label: 'Business details for Google', task: 'Add business details Google can read (name, address, phone, hours)', category: 'local', phase: 1, impact: 'high', effort: 'small', service: 'schema' },
+  nap: { label: 'Name, address and phone match', task: 'Match the name, address and phone on the site to Google', category: 'local', phase: 3, impact: 'high', effort: 'small', service: 'schema' },
+  gbp: { label: 'Google Business Profile', task: 'Fill in the Google Business Profile: hours, photos, website and category', category: 'local', phase: 3, impact: 'high', effort: 'medium', service: 'gbp' },
+  reviews: { label: 'Google reviews', task: 'Start asking happy customers for Google reviews', category: 'local', phase: 3, impact: 'high', effort: 'large', service: 'reviews' },
 
-  rank: { label: 'Rank for service and city', category: 'visibility', phase: 3, impact: 'high', effort: 'large', service: 'care' },
-  competitors: { label: 'Top 3 local competitors', category: 'visibility', phase: 3, impact: 'medium', effort: 'large', service: 'care' },
+  rank: { label: 'Rank for service and city', task: 'Build local pages to rank for the service and city', category: 'visibility', phase: 3, impact: 'high', effort: 'large', service: 'care' },
+  competitors: { label: 'Top 3 local competitors', task: 'Close the gap with the top local competitors', category: 'visibility', phase: 3, impact: 'medium', effort: 'large', service: 'care' },
 };
 
 // Starting thresholds. Tune freely.
