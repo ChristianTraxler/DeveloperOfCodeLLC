@@ -12,7 +12,7 @@ const FIELDS = [
   { key: 'service', label: 'Main service', placeholder: 'Roofing', autoComplete: 'off' },
 ]
 
-function NewReview({ draft, setDraft, onRun, pageSpeedKey, leads = [] }) {
+function NewReview({ draft, setDraft, onRun, pageSpeedKey, placesKey, leads = [] }) {
   const [errors, setErrors] = useState({})
   const first = useRef(null)
   const set = (k) => (e) => {
@@ -29,7 +29,7 @@ function NewReview({ draft, setDraft, onRun, pageSpeedKey, leads = [] }) {
     if (!draft.service.trim()) next.service = 'Enter the main service.'
     setErrors(next)
     if (Object.keys(next).length) return
-    onRun({ ...draft, leadId: draft.leadId || null, url: draft.url.trim(), business: draft.business.trim(), city: draft.city.trim(), service: draft.service.trim() })
+    onRun({ ...draft, gbpLink: (draft.gbpLink || '').trim() || undefined, leadId: draft.leadId || null, url: draft.url.trim(), business: draft.business.trim(), city: draft.city.trim(), service: draft.service.trim() })
   }
 
   return (
@@ -70,6 +70,14 @@ function NewReview({ draft, setDraft, onRun, pageSpeedKey, leads = [] }) {
           </Field>
         ))}
       </div>
+      <Field
+        label="Google profile link (optional)"
+        htmlFor="seo-gbp"
+        className="mt-5"
+        hint={placesKey ? 'Only needed if Google matches the wrong listing.' : 'Paste the Google Maps or Share link. After the review you copy a few details from the profile, no Google billing needed.'}
+      >
+        <Input id="seo-gbp" inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="maps.app.goo.gl/..." value={draft.gbpLink || ''} onChange={set('gbpLink')} />
+      </Field>
       <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center">
         <Button id="seo-run" type="submit" variant="ember" size="lg" className="w-full sm:w-auto">
           Run review
@@ -169,7 +177,7 @@ export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads })
             </p>
           )}
         </div>
-        <NewReview draft={draft} setDraft={setDraft} onRun={onRun} pageSpeedKey={meta?.pageSpeedKey} leads={list.leads} />
+        <NewReview draft={draft} setDraft={setDraft} onRun={onRun} pageSpeedKey={meta?.pageSpeedKey} placesKey={meta?.placesKey} leads={list.leads} />
       </section>
 
       <section className="mt-20 sm:mt-24" aria-labelledby="seo-reviews">

@@ -113,6 +113,8 @@ export function installFakes() {
       const q = JSON.parse(init.body).textQuery;
       return Response.json({ places: q === 'Pressure washing in Hickory, NC' ? PLACES : [] });
     }
+    if (s === 'https://maps.app.goo.gl/abc123') return new Response(null, { status: 302, headers: { location: 'https://www.google.com/maps/place/Blue+Ridge+Wash/@35.73,-81.34,17z/data=!3m1' } });
+    if (s === 'https://maps.app.goo.gl/evil') return new Response(null, { status: 302, headers: { location: 'https://evil.test/phish' } });
     if (s === 'https://api.resend.com/emails') {
       stats.emails.push(JSON.parse(init.body));
       return Response.json({ id: 'email' });

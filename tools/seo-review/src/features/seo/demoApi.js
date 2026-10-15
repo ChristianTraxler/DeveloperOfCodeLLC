@@ -210,3 +210,37 @@ export async function deleteLead(id) {
   for (const a of store.audits) if (a.lead_id === id) a.lead_id = null
   return { ok: true }
 }
+
+// ── The Google profile typed in by hand, in the preview ─────────────────────
+// Graded with the same thresholds as the server, kept simple here.
+
+export async function checkMapsLink(url) {
+  await wait(250)
+  const name = /\/maps\/place\/([^/@]+)/.exec(url)?.[1]
+  return { url, name: name ? decodeURIComponent(name.replace(/\+/g, ' ')) : null, resolved: !/goo\.gl|share\.google|g\.page/.test(url) }
+}
+
+export async function saveProfile(id, p) {
+  await wait(300)
+  const audit = store.audits.find((a) => a.id === id)
+  const local = (audit.notes.local ||= {})
+  if (p.none) {
+    local.manual = { none: true, place: null, enteredAt: new Date().toISOString() }
+    upsertCheck(id, { key: 'gbp', category: 'local', label: 'Google Business Profile', status: 'fail', score: 0, summary: 'No Google Business Profile found.', explanation: 'Marked as having no profile.', impact: 'high', effort: 'medium', service: 'Google Business Profile setup', details: { found: false } })
+    store.checks[id] = store.checks[id].filter((c) => c.key !== 'reviews')
+    return getReview(id)
+  }
+  if (!String(p.name || '').trim()) throw new Error('Enter the business name as it shows on Google.')
+  const reviews = Number(p.reviews || 0)
+  const rating = p.rating === '' || p.rating == null ? null : Number(p.rating)
+  const hours = String(p.hours || '').split('\n').map((l) => l.trim()).filter(Boolean)
+  const place = { manual: true, name: p.name, address: p.address || null, phone: p.phone || null, website: p.website || null, category: p.category || null, rating: reviews ? rating : null, reviews, photos: Number(p.photos || 0), hours, hoursListed: hours.length > 0 || !!p.hoursListed, status: p.status || 'OPERATIONAL', mapsUrl: p.link || null }
+  local.manual = { place, link: p.link ? { url: p.link } : null, enteredAt: new Date().toISOString() }
+  const has = { hours: place.hoursListed, photos: place.photos > 0, website: !!place.website, category: !!place.category }
+  const missing = Object.keys(has).filter((k) => !has[k])
+  const gbp = missing.length ? 'fail' : 'pass'
+  const rv = reviews < 10 || (rating ?? 0) < 4 ? 'fail' : reviews < 25 || rating < 4.5 ? 'warn' : 'pass'
+  upsertCheck(id, { key: 'gbp', category: 'local', label: 'Google Business Profile', status: gbp, score: PTS[gbp], summary: missing.length ? `The profile is missing ${missing.join(', ')}.` : `Complete profile listed as ${place.category}.`, explanation: 'From the profile details entered by hand.', impact: 'high', effort: 'medium', service: 'Google Business Profile setup', details: { found: true, manual: true, ...place, has } })
+  upsertCheck(id, { key: 'reviews', category: 'local', label: 'Google reviews', status: rv, score: PTS[rv], summary: `${reviews} reviews, ${rating == null ? 'no rating' : `a ${rating.toFixed(1)} rating`}.`, explanation: 'From the profile details entered by hand.', impact: 'high', effort: 'large', service: 'Review request system', details: { rating, reviews } })
+  return getReview(id)
+}

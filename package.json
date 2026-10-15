@@ -16,7 +16,7 @@
     "build:single": "node scripts/build-single.mjs",
     "preview": "vite preview",
     "test:demos": "node --test tests/*.test.mjs",
-    "test:seo": "node --test tests/seo.test.mjs tests/seo-api.test.mjs tests/seo-phase4.test.mjs"
+    "test:seo": "node --test tests/seo.test.mjs tests/seo-api.test.mjs tests/seo-phase4.test.mjs tests/seo-gbp.test.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^147.0.0",

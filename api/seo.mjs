@@ -27,6 +27,11 @@
 //   POST competitorRemove{ id, competitorId }
 //   POST place           { id, placeId | 'none' } picks the right Google listing when the match was wrong
 //   POST rank            { id, position | null, keyword? } the manual rank entry (null: not in the top 10)
+//   POST profile         { id, link?, none?, name, address, phone, website, category, rating, reviews,
+//                          photos, hoursListed, hours, status } the Google profile typed in by hand
+//                          (no Places key needed). Later reviews of the same site reuse it.
+//   POST mapsLink        { url } checks a Google Maps or profile share link and reads the name from it
+//   run also takes { gbpLink } and saves it for the profile form.
 //
 // Phase 4, leads (api/_lib/seo-leads.mjs):
 //   GET  leads           every lead with its latest score and review count
@@ -58,6 +63,7 @@ import { LeadInputError, cleanLead, followUpPlan, plannedFollowUp, scoreHistory,
 import { scoreAudit, buildTasks } from './_lib/seo-score.mjs';
 import { findLocal, localChecks, placeStatuses, rankCheck, competitorsCheck, hostOf } from './_lib/seo-local.mjs';
 import { cityName } from './_lib/seo-html.mjs';
+import { GbpInputError, manualPlace, resolveMapsLink } from './_lib/seo-gbp.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
@@ -365,6 +371,15 @@ async function run(body, { rescan = false } = {}) {
     throw new HttpError(400, e.message);
   }
   const siteUrl = url.href;
+  let gbpLink = null;
+  if (body.gbpLink) {
+    try {
+      gbpLink = await resolveMapsLink(body.gbpLink);
+    } catch (e) {
+      if (e instanceof GbpInputError) throw new HttpError(400, e.message);
+      throw e;
+    }
+  }
   const leadId = body.leadId || null;
   if (leadId) await loadLead(leadId);
 
@@ -390,7 +405,10 @@ async function run(body, { rescan = false } = {}) {
         render: async (u, ms) => (await import('./_lib/seo-render.mjs')).renderHtml(u, ms),
       },
     );
-    const local = await localPromise;
+    let local = await localPromise;
+    // No Places answer: use the profile typed in on an earlier review of this site, if there is one.
+    const manual = !local.place ? await lastManualProfile(siteUrl, out.site.finalUrl) : null;
+    if (manual) local = manualLocal(manual.place, { query: local.query, competitors: local.competitors });
     out.checks.push(...localChecks(local, out.site.nap, { business, city, siteUrl: out.site.finalUrl }));
     const order = Object.keys(CHECKS);
     out.checks.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
@@ -410,7 +428,13 @@ async function run(body, { rescan = false } = {}) {
       overall_score: scored.overall,
       category_scores: scored.categories,
       duration_ms: out.durationMs,
-      notes: { notes: out.notes, site: out.site, pageSpeedKey: !!PAGESPEED_KEY, local: localNotes(local), ...(rescan ? { rescan: true } : {}) },
+      notes: {
+        notes: out.notes,
+        site: out.site,
+        pageSpeedKey: !!PAGESPEED_KEY,
+        local: { ...localNotes(local), ...(manual ? { manual } : {}), ...(gbpLink ? { link: gbpLink } : {}) },
+        ...(rescan ? { rescan: true } : {}),
+      },
       error: out.site.error || null,
     };
     await patch('seo_audits', `id=eq.${audit.id}`, done);
@@ -546,6 +570,56 @@ async function pickPlace(body) {
   if (fresh.length) await insert('seo_audit_competitors', fresh.map(competitorRow(audit.id)));
   await patch('seo_audits', `id=eq.${audit.id}`, { notes: { ...audit.notes, local: { ...saved, placeId: place?.placeId || null, position: local.position, picked: true } } });
   return compare({ id: audit.id });
+}
+
+// ── The Google profile entered by hand ──────────────────────────────────────
+
+// A findLocal()-shaped result around a typed-in place, so localChecks runs on it unchanged.
+const manualLocal = (place, { query, competitors = [], position = null }) => ({ configured: true, manual: true, query, place, position, competitors, candidates: [], calls: 0, error: null });
+
+async function lastManualProfile(...urls) {
+  for (const u of [...new Set(urls.filter(Boolean))]) {
+    const recent = await rows(`/rest/v1/seo_audits?site_url=eq.${enc(u)}&status=eq.complete&select=notes&order=created_at.desc&limit=10`).catch(() => []);
+    const hit = recent.find((a) => a.notes?.local?.manual?.place || a.notes?.local?.manual?.none);
+    if (hit) return hit.notes.local.manual;
+  }
+  return null;
+}
+
+async function mapsLink(body) {
+  try {
+    const link = await resolveMapsLink(body.url);
+    if (!link) throw new HttpError(400, 'Paste a Google Maps link first.');
+    return { url: link.url, name: link.name, resolved: link.resolved };
+  } catch (e) {
+    if (e instanceof GbpInputError) throw new HttpError(400, e.message);
+    throw e;
+  }
+}
+
+async function saveProfile(body) {
+  const audit = await loadAudit(body.id);
+  const saved = audit.notes?.local || {};
+  let manual;
+  try {
+    if (body.none) {
+      manual = { none: true, place: null, enteredAt: new Date().toISOString() };
+    } else {
+      const link = body.link ? await resolveMapsLink(body.link) : saved.link || null;
+      manual = { place: manualPlace(body, link), link, enteredAt: new Date().toISOString() };
+    }
+  } catch (e) {
+    if (e instanceof GbpInputError) throw new HttpError(400, e.message);
+    throw e;
+  }
+  // Ratings of the competitors already on the review, for "nearby competitors average N reviews".
+  const comps = await rows(`/rest/v1/seo_audit_competitors?audit_id=eq.${audit.id}&select=scores`);
+  const compPlaces = comps.map((c) => c.scores?.place).filter((p) => p && p.reviews != null);
+  const local = manualLocal(manual.place, { query: saved.query || `${audit.service} in ${audit.city}`, competitors: compPlaces, position: saved.position ?? null });
+  for (const c of localChecks(local, audit.notes?.site?.nap || null, clientInput(audit))) await upsertCheck(audit.id, c);
+  await patch('seo_audits', `id=eq.${audit.id}`, { notes: { ...audit.notes, local: { ...saved, manual, ...(manual.link ? { link: manual.link } : {}) } } });
+  await rescore(audit.id);
+  return getOne(audit.id);
 }
 
 async function setRank(body) {
@@ -929,6 +1003,8 @@ export default {
       if (action === 'competitorRemove') return json(await removeCompetitor(body));
       if (action === 'place') return json(await pickPlace(body));
       if (action === 'rank') return json(await setRank(body));
+      if (action === 'profile') return json(await saveProfile(body));
+      if (action === 'mapsLink') return json(await mapsLink(body));
       if (action === 'leadSave') return json(await leadSave(body));
       if (action === 'followup') return json(await followUp(body));
       if (action === 'link') return json(await linkAudit(body));

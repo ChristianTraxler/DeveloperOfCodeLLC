@@ -134,7 +134,7 @@ export async function findLocal(input, deps = {}) {
 const CLOSED = { CLOSED_TEMPORARILY: 'marked temporarily closed', CLOSED_PERMANENTLY: 'marked permanently closed' };
 
 export function gbpFacts(place) {
-  const has = { hours: place.hours.length > 0, photos: place.photos > 0, website: !!place.website, category: !!place.category };
+  const has = { hours: place.hours.length > 0 || !!place.hoursListed, photos: place.photos > 0, website: !!place.website, category: !!place.category };
   const missing = Object.keys(has).filter((k) => !has[k]);
   return { has, missing, closed: CLOSED[place.status] || null };
 }
@@ -170,7 +170,7 @@ function checkGbp(local, input) {
     );
   }
   const g = gbpFacts(p);
-  const details = { found: true, name: p.name, address: p.address, category: p.category, photos: p.photos, hours: p.hours, has: g.has, rating: p.rating, reviews: p.reviews, position: local.position, query: local.query, mapsUrl: p.mapsUrl };
+  const details = { found: true, name: p.name, address: p.address, category: p.category, photos: p.photos, hours: p.hours, has: g.has, rating: p.rating, reviews: p.reviews, position: local.position, query: local.query, mapsUrl: p.mapsUrl, ...(p.manual ? { manual: true } : {}) };
   if (g.closed) return result('gbp', 'fail', `The profile is ${g.closed}.`, `Google shows this business as ${g.closed}. People who find it on the map will think they cannot hire you. If that is wrong, update it in Google Business Profile right away.`, details);
   if (g.missing.length) {
     return result(

@@ -17,7 +17,7 @@ function Tool({ path, navigate }) {
   const toast = useToast()
   const [list, setList] = useState({ status: 'loading', audits: [], leads: [], meta: null, error: null })
   const [run, setRun] = useState(null) // { input, startedAt, status: 'running' | 'error', error }
-  const [draft, setDraft] = useState({ url: '', business: '', city: '', service: '', fresh: false })
+  const [draft, setDraft] = useState({ url: '', business: '', city: '', service: '', gbpLink: '', fresh: false })
   const cache = useRef(new Map())
 
   const load = useCallback(async () => {

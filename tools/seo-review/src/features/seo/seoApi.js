@@ -45,3 +45,7 @@ export const saveLead = (lead) => call('leadSave', { body: lead })
 export const setFollowUp = (id, day, done) => call('followup', { body: { id, day, done } })
 export const linkReview = (auditId, leadId) => call('link', { body: { auditId, leadId } })
 export const deleteLead = (id) => call('leadDelete', { body: { id } })
+
+// The Google profile typed in by hand (no Google Places key needed).
+export const saveProfile = (id, profile) => call('profile', { body: { id, ...profile } })
+export const checkMapsLink = (url) => call('mapsLink', { body: { url } })
