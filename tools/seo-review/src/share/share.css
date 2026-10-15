@@ -1,0 +1,133 @@
+/*
+  The client report's look: developerofcode.com, not the dark admin. Limestone page, Blue Hour
+  text, Lamp accent, Literata and Mona Sans.
+
+  It reuses the admin's token NAMES so the shared Dial and status marks work unchanged:
+  --ink is the page, --bone is the text, --ember is Lamp. Status colors are darkened to pass
+  AA contrast on Limestone, and the dark theme follows the reader like the main site.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Mona Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  src: url('../app/fonts/mona-sans-latin-standard-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Literata Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('../app/fonts/literata-latin-standard-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Literata Variable';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('../app/fonts/literata-latin-standard-italic.woff2') format('woff2-variations');
+}
+
+:root {
+  --ink-rgb: 241 241 238; /* Limestone page */
+  --panel-rgb: 250 250 248;
+  --raised-rgb: 255 255 255;
+  --bone-rgb: 17 36 72; /* Blue Hour text */
+  --mute-rgb: 84 95 117;
+  --faint-rgb: 104 113 133;
+  --ember-rgb: 176 66 22; /* Lamp, deepened for text and marks on Limestone */
+  --lamp-rgb: 255 122 56; /* Lamp fill, always with Blue Hour text on it */
+  --night-rgb: 17 36 72;
+  --live-rgb: 26 117 72;
+  --danger-rgb: 190 45 35;
+  --amber-rgb: 148 88 0;
+  --ink: rgb(var(--ink-rgb));
+  --bone: rgb(var(--bone-rgb));
+  --ember: rgb(var(--ember-rgb));
+  --line: rgba(17, 36, 72, 0.1);
+  --line2: rgba(17, 36, 72, 0.2);
+  --font-display: 'Literata Variable', Georgia, serif;
+  --font-ui: 'Mona Sans Variable', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink-rgb: 12 20 38;
+    --panel-rgb: 19 30 54;
+    --raised-rgb: 27 40 68;
+    --bone-rgb: 232 235 241;
+    --mute-rgb: 158 171 194;
+    --faint-rgb: 128 141 166;
+    --ember-rgb: 255 142 86;
+    --live-rgb: 79 209 139;
+    --danger-rgb: 255 120 108;
+    --amber-rgb: 242 184 75;
+    --line: rgba(232, 235, 241, 0.1);
+    --line2: rgba(232, 235, 241, 0.2);
+    color-scheme: dark;
+  }
+}
+
+html { background-color: var(--ink); }
+body {
+  min-height: 100%;
+  background-color: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: rgba(255, 122, 56, 0.3); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; border-radius: 6px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'opsz' 72;
+}
+
+/* The Blue Hour band: the score, and the closing call to action. Stays dark in both themes. */
+.band {
+  --bone-rgb: 238 240 244;
+  --mute-rgb: 172 184 206;
+  --faint-rgb: 140 154 180;
+  --ember-rgb: 255 142 86;
+  --live-rgb: 96 214 150;
+  --danger-rgb: 255 128 116;
+  --amber-rgb: 245 192 92;
+  --line: rgba(238, 240, 244, 0.12);
+  --line2: rgba(238, 240, 244, 0.22);
+  background-color: rgb(var(--night-rgb));
+  background-image: radial-gradient(900px 420px at 85% -10%, rgba(255, 122, 56, 0.16), transparent 70%);
+  color: rgb(var(--bone-rgb));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Print and Save as PDF: Limestone becomes white paper, buttons drop out, sections do not split. */
+@media print {
+  @page { margin: 14mm 12mm; }
+  :root {
+    --ink-rgb: 255 255 255; --panel-rgb: 250 250 248; --bone-rgb: 17 36 72; --mute-rgb: 84 95 117; --faint-rgb: 104 113 133;
+    --ember-rgb: 176 66 22; --live-rgb: 26 117 72; --danger-rgb: 190 45 35; --amber-rgb: 148 88 0;
+    --line: rgba(17, 36, 72, 0.12); --line2: rgba(17, 36, 72, 0.22); color-scheme: light;
+  }
+  html, body { background: #fff !important; }
+  .band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .no-print { display: none !important; }
+  section, li, .keep { break-inside: avoid; }
+  a { text-decoration: none; }
+}

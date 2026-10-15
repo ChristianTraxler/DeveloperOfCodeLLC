@@ -1,0 +1,29 @@
+{
+  "name": "seo-review",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SEO Review: local SEO audits for Developer of Code, LLC. Served at /admin/seo/ behind the admin login.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:open": "VITE_SEO_SKIP_AUTH=1 vite",
+    "dev:demo": "VITE_SEO_DEMO=1 vite",
+    "build": "vite build",
+    "build:preview": "VITE_SEO_DEMO=1 vite build --config vite.preview.config.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

@@ -4,7 +4,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" }
+    { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" },
+    { "source": "/seo/:token", "destination": "/admin/seo/share.html" }
   ],
   "redirects": [
     { "source": "/admin/relay-solo", "destination": "https://relay-solo.vercel.app/", "permanent": false },
@@ -22,6 +23,14 @@
     {
       "source": "/admin.webmanifest",
       "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }]
+    },
+    {
+      "source": "/seo/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
     }
   ],
   "crons": [
@@ -30,6 +39,7 @@
   ],
   "functions": {
     "api/demos.mjs": { "maxDuration": 60 },
-    "api/marketing.mjs": { "maxDuration": 60 }
+    "api/marketing.mjs": { "maxDuration": 60 },
+    "api/seo.mjs": { "maxDuration": 60 }
   }
 }
