@@ -30,8 +30,22 @@ export function normalizeUrl(input) {
 }
 
 const PRIVATE_V4 = [/^0\./, /^10\./, /^127\./, /^169\.254\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, /^22[4-9]\./, /^2[3-5]\d\./];
-const isPrivate = (ip) =>
-  isIP(ip) === 4 ? PRIVATE_V4.some((re) => re.test(ip)) : /^(::1?$|f[cd]|fe[89ab]|::ffff:(10|127|192\.168|169\.254)\.)/i.test(ip);
+// IPv6: loopback, unspecified, unique local, link local, multicast, documentation, and any
+// address that wraps an IPv4 one (mapped ::ffff:, NAT64 64:ff9b::, 6to4 2002:) is judged by that IPv4.
+function embeddedV4(ip) {
+  const dotted = /(?:^::ffff:|^64:ff9b::|^::)(\d+\.\d+\.\d+\.\d+)$/i.exec(ip)?.[1];
+  if (dotted) return dotted;
+  const hex = /^(?:::ffff:|64:ff9b::|2002:)([0-9a-f]{1,4}):([0-9a-f]{1,4})(?::|$)/i.exec(ip);
+  if (!hex) return null;
+  const [a, b] = [parseInt(hex[1], 16), parseInt(hex[2], 16)];
+  return `${a >> 8}.${a & 255}.${b >> 8}.${b & 255}`;
+}
+const isPrivate = (ip) => {
+  if (isIP(ip) === 4) return PRIVATE_V4.some((re) => re.test(ip));
+  const v4 = embeddedV4(ip);
+  if (v4) return PRIVATE_V4.some((re) => re.test(v4));
+  return /^(::1?$|f[c-f]|ff|2001:db8:|::ffff:)/i.test(ip);
+};
 
 const hostChecks = new Map();
 async function assertPublicHost(hostname) {
@@ -50,6 +64,23 @@ let hostGuard = assertPublicHost;
 export const setHostGuard = (fn) => {
   hostGuard = fn || assertPublicHost;
 };
+
+// For the headless browser: true only for http(s) addresses on public hosts.
+export async function isPublicUrl(raw) {
+  let u;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+  try {
+    await hostGuard(u.hostname.replace(/^\[|\]$/g, ''));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function readCapped(res, max) {
   if (!res.body) return '';

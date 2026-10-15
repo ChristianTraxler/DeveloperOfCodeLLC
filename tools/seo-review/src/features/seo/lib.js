@@ -25,6 +25,9 @@ export function tallyFromCategories(cats = {}) {
   return t
 }
 
+// Only http(s) links are rendered as links.
+export const httpHref = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null)
+
 export const domainOf = (url = '') => {
   try {
     return new URL(url).hostname.replace(/^www\./, '')

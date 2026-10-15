@@ -6,7 +6,7 @@ import { api } from './api.js'
 import { StatusMark } from './Checks.jsx'
 import { Button, Field, Input, inputClass } from './ui/core.jsx'
 import { scoreTone } from './Report.jsx'
-import { cx, domainOf, plural } from './lib.js'
+import { cx, domainOf, httpHref, plural } from './lib.js'
 
 const Heading = ({ id, children, blurb }) => (
   <div>
@@ -54,8 +54,8 @@ function Profile({ audit, checks, busy, onPick }) {
         <div>
           <dt className="text-faint">Listing</dt>
           <dd className="mt-1 font-semibold text-bone">
-            {d.mapsUrl ? (
-              <a href={d.mapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-line2 underline-offset-4 hover:decoration-ember">
+            {httpHref(d.mapsUrl) ? (
+              <a href={httpHref(d.mapsUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-line2 underline-offset-4 hover:decoration-ember">
                 {d.name} <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             ) : (
@@ -274,8 +274,8 @@ function Competitors({ audit, checks, competitors, meta, busy, running, onAdd, o
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{c.name}</span>
                   <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-mute">
-                    {c.site ? (
-                      <a href={c.site} target="_blank" rel="noreferrer" className="underline decoration-line2 underline-offset-4 hover:text-bone">
+                    {httpHref(c.site) ? (
+                      <a href={httpHref(c.site)} target="_blank" rel="noreferrer" className="underline decoration-line2 underline-offset-4 hover:text-bone">
                         {domainOf(c.site)}
                       </a>
                     ) : (

@@ -35,6 +35,9 @@ const FIELDS = [
   .map((f) => `places.${f}`)
   .join(',');
 
+// Only http(s) links from Google are kept, so nothing else can reach an href.
+const httpUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
+
 // The facts the checks and reports use. Never the raw Places response.
 export function compactPlace(p) {
   const part = (type) => (p.addressComponents || []).find((c) => (c.types || []).includes(type))?.shortText || null;
@@ -46,14 +49,14 @@ export function compactPlace(p) {
     route: part('route'),
     postalCode: part('postal_code'),
     phone: p.nationalPhoneNumber || p.internationalPhoneNumber || null,
-    website: p.websiteUri || null,
+    website: httpUrl(p.websiteUri),
     rating: typeof p.rating === 'number' ? p.rating : null,
     reviews: typeof p.userRatingCount === 'number' ? p.userRatingCount : 0,
     hours: p.regularOpeningHours?.weekdayDescriptions || [],
     photos: (p.photos || []).length,
     category: p.primaryTypeDisplayName?.text || null,
     status: p.businessStatus || null,
-    mapsUrl: p.googleMapsUri || null,
+    mapsUrl: httpUrl(p.googleMapsUri),
   };
 }
 

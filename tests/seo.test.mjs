@@ -410,3 +410,19 @@ test('runAudit saves name, address and phone facts from the home page', async ()
   assert.deepEqual(out.site.nap.phones, ['8285550100']);
   assert.match(out.site.nap.schemaAddress, /1 Main St/);
 });
+
+test('private address guard: IPv4 wrapped in IPv6 and odd schemes are refused', async () => {
+  const { isPublicUrl, setHostGuard: set } = await import('../api/_lib/seo-checks.mjs');
+  set(null);
+  for (const u of ['http://127.0.0.1/', 'http://[::ffff:127.0.0.1]/', 'http://[::ffff:7f00:1]/', 'http://[64:ff9b::a00:1]/', 'http://[fe80::1]/', 'http://[::1]/', 'http://169.254.169.254/latest', 'javascript:alert(1)', 'file:///etc/passwd', 'http://localhost/'])
+    assert.equal(await isPublicUrl(u), false, u);
+  assert.equal(await isPublicUrl('http://8.8.8.8/'), true);
+  set(async () => {});
+});
+
+test('Places links that are not http(s) are dropped', async () => {
+  const f = placesFetch({ 'Pressure washing in Hickory, NC': [place({ website: 'javascript:alert(1)' }), { ...place({ id: 'z', name: 'Zed' }), googleMapsUri: 'javascript:x' }] });
+  const out = await findLocal(localInput, { fetch: f, key: 'k' });
+  assert.ok(out.candidates.every((c) => c.website == null || /^https?:/.test(c.website)));
+  assert.ok(out.candidates.every((c) => c.mapsUrl == null || /^https?:/.test(c.mapsUrl)));
+});
