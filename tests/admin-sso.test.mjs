@@ -22,7 +22,7 @@ const call = (token, app = 'pricing-desk') =>
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   }));
 
-test('an admin gets a signed 60 second ticket for the app', async () => {
+test('an admin gets a signed 20 second ticket for the app', async () => {
   const before = Date.now();
   const res = await call('good');
   assert.equal(res.status, 200);
@@ -30,7 +30,7 @@ test('an admin gets a signed 60 second ticket for the app', async () => {
   const m = /^https:\/\/pricing-desk\.vercel\.app\/sso#(\d+)\.([\w-]+)$/.exec(url);
   assert.ok(m, url);
   const expires = Number(m[1]);
-  assert.ok(expires >= before + 60_000 && expires <= Date.now() + 60_000);
+  assert.ok(expires >= before + 20_000 && expires <= Date.now() + 20_000);
   assert.equal(m[2], createHmac('sha256', 'shh').update(`pricing-desk:${expires}`).digest('base64url'));
 });
 

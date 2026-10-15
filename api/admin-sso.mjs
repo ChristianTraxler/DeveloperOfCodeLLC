@@ -3,7 +3,7 @@
 //   GET ?app=pricing-desk   (Supabase session whose email is in ADMIN_EMAILS)
 //     → { url } pointing at the app's /sso page with a signed ticket in the hash.
 //
-// The ticket is "<expires>.<HMAC-SHA256 of '<app>:<expires>'>" (base64url) and lives 60 seconds.
+// The ticket is "<expires>.<HMAC-SHA256 of '<app>:<expires>'>" (base64url) and lives 20 seconds.
 // The app checks it with the same SSO_SECRET and starts its own session. The Supabase token never
 // leaves this site.
 //
@@ -20,7 +20,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
-const TICKET_MS = 60_000;
+const TICKET_MS = 20_000;
 
 const APPS = {
   'pricing-desk': 'https://pricing-desk.vercel.app',
