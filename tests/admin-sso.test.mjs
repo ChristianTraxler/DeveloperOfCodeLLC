@@ -27,7 +27,7 @@ test('an admin gets a signed 20 second ticket for the app', async () => {
   const res = await call('good');
   assert.equal(res.status, 200);
   const { url } = await res.json();
-  const m = /^https:\/\/pricing-desk\.vercel\.app\/sso#(\d+)\.([\w-]+)$/.exec(url);
+  const m = /^\/admin\/pricing-desk\/sso#(\d+)\.([\w-]+)$/.exec(url);
   assert.ok(m, url);
   const expires = Number(m[1]);
   assert.ok(expires >= before + 20_000 && expires <= Date.now() + 20_000);
