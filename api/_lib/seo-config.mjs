@@ -65,6 +65,25 @@ export const THRESHOLDS = {
   internalLinks: { fail: 3, warn: 5 }, // unique pages linked from the home page
   pageSpeed: { pass: 90, warn: 50 }, // Lighthouse performance score: 90+ pass, 50 to 89 warn, under 50 fail
   brokenLinks: { maxChecked: 40, concurrency: 6, timeoutMs: 6000 },
+  // Google reviews. The brief: fewer than 10 reviews or a rating under 4.0 fails.
+  // Tighten (warn) below 25 reviews or under 4.5 is our own starting point.
+  reviews: { failCount: 10, failRating: 4.0, warnCount: 25, warnRating: 4.5 },
+  // Rank for "[service] [city]", entered by hand: top 3 works, 4 to 10 tighten, past 10 fix.
+  rank: { pass: 3, warn: 10 },
+  // Competitors: the client is "behind" on a check when most competitors score higher on it.
+  // Behind on more than half of the compared checks fails, on a quarter or more tightens.
+  competitors: { failShareBehind: 0.5, warnShareBehind: 0.25, minCompared: 5 },
+};
+
+// Google Places API (New), Phase 3. One Text Search for "[service] in [city]" finds the business
+// and its competitors; a second search for "[business] [city]" runs only when the first misses it.
+// Results are cached in seo_places_cache, by search and by place_id.
+export const LOCAL = {
+  maxCallsPerReview: 2,
+  searchSize: 10,
+  competitors: 3,
+  timeoutMs: 8000,
+  cacheHours: 72,
 };
 
 // How the server fetches sites.

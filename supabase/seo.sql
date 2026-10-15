@@ -93,9 +93,30 @@ create table if not exists seo_audit_manual (
 );
 create index if not exists seo_audit_manual_audit on seo_audit_manual (audit_id);
 
+-- Phase 3 additions to the competitor rows.
+--   position  place in Google's map results for "[service] in [city]" (null when added by hand)
+--   status    pending until its checks have run, then complete or failed
+--   scores    { place: Google facts, statuses: { check_key: status }, overall, ranAt }
+alter table seo_audit_competitors add column if not exists position   integer;
+alter table seo_audit_competitors add column if not exists status     text not null default 'pending';
+alter table seo_audit_competitors add column if not exists error      text;
+alter table seo_audit_competitors add column if not exists created_at timestamptz not null default now();
+do $$ begin
+  alter table seo_audit_competitors add constraint seo_audit_competitors_status check (status in ('pending', 'complete', 'failed'));
+exception when duplicate_object then null; end $$;
+
+-- Phase 3: Google Places answers, so repeat reviews do not pay for the same search twice.
+--   cache_key  "search:<query>:<size>" (a list of places) or "place:<place_id>" (one place)
+create table if not exists seo_places_cache (
+  cache_key  text primary key,
+  data       jsonb not null,
+  fetched_at timestamptz not null default now()
+);
+
 alter table seo_audits            enable row level security;
 alter table seo_audit_checks      enable row level security;
 alter table seo_audit_tasks       enable row level security;
 alter table seo_audit_competitors enable row level security;
 alter table seo_audit_manual      enable row level security;
-revoke all on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual from anon, authenticated;
+alter table seo_places_cache      enable row level security;
+revoke all on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache from anon, authenticated;

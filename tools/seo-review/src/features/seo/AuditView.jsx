@@ -9,6 +9,7 @@ import { Button } from './ui/core.jsx'
 import { Sheet } from './ui/Sheet.jsx'
 import { useToast } from './ui/Toast.jsx'
 import { CategoryBars, NextSteps, ShareControl, scoreTone as overallTone } from './Report.jsx'
+import { LocalLayer } from './Local.jsx'
 import { STATUS, bySeverity, cx, domainOf, longWhen, seconds, tally } from './lib.js'
 
 function scoreTone(n) {
@@ -103,10 +104,16 @@ function Tally({ checks, laterCount, scored }) {
         </div>
       ))}
       <p className="col-span-2 text-[13.5px] leading-relaxed text-faint sm:col-span-4">
-        {checks.length} of {checks.length + laterCount} checks ran. {scored ? 'The rest come with the local layer.' : 'This review has no score yet.'}
+        {checks.length} of {checks.length + laterCount} checks ran.{' '}
+        {!scored ? 'This review has no score yet.' : laterCount ? 'Enter the rank and check competitors below to fill in the rest.' : 'Every check has a result.'}
       </p>
     </dl>
   )
+}
+
+const LATER_HINT = {
+  rank: 'Enter the rank in the Rank section above.',
+  competitors: 'Fills in once at least one competitor has been checked.',
 }
 
 function Category({ catKey, cat, checks, laterChecks }) {
@@ -128,7 +135,7 @@ function Category({ catKey, cat, checks, laterChecks }) {
             <StatusMark status="later" />
             <span className="min-w-0 flex-1">
               <span className="text-[16.5px] font-semibold text-mute">{m.label}</span>
-              <span className="mt-1 block text-[14.5px] text-faint">Comes with the local layer in Phase 3.</span>
+              <span className="mt-1 block text-[14.5px] text-faint">{LATER_HINT[key] || 'Run the review again to check this.'}</span>
             </span>
           </li>
         ))}
@@ -219,7 +226,8 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
   const { audit, checks, meta, tasks = [] } = state
   const overall = audit.overall_score
   const notes = audit.notes?.notes || []
-  const later = Object.entries(meta.checks).filter(([, m]) => m.phase > 1)
+  const ran = new Set(checks.map((c) => c.key))
+  const later = Object.entries(meta.checks).filter(([k]) => !ran.has(k))
   const speed = checks.find((c) => c.key === 'page_speed')
   const url = audit.final_url || audit.site_url
 
@@ -306,6 +314,8 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
       <ShareControl audit={audit} onReviewed={markReviewed} busy={savingReview} />
 
       <NextSteps tasks={tasks} onToggle={toggleTask} />
+
+      <LocalLayer data={state} onData={(data) => update(() => ({ status: 'ready', ...data }))} toast={toast} />
 
       {speed && <SpeedPanel check={speed} />}
 

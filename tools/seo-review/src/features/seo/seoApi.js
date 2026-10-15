@@ -28,3 +28,11 @@ export const runReview = (input) => call('run', { body: input })
 export const deleteReview = (id) => call('delete', { body: { id } })
 export const setReviewed = (id, reviewed) => call('review', { body: { id, reviewed } })
 export const setTaskDone = (id, done) => call('task', { body: { id, done } })
+
+// Phase 3: the local layer.
+export const runCompetitor = (id, competitorId) => call('competitor', { body: { id, competitorId } })
+export const compareCompetitors = (id) => call('compare', { body: { id } })
+export const addCompetitor = (id, name, url) => call('competitorAdd', { body: { id, name, url } })
+export const removeCompetitor = (id, competitorId) => call('competitorRemove', { body: { id, competitorId } })
+export const pickPlace = (id, placeId) => call('place', { body: { id, placeId } })
+export const setRank = (id, position, keyword) => call('rank', { body: { id, position, keyword } })

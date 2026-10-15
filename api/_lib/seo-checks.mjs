@@ -197,7 +197,7 @@ export async function runPageSpeed(fetchImpl, url, strategy, key, timeoutMs = FE
 
 // ── Result helpers ──────────────────────────────────────────────────────────
 
-function result(key, status, summary, explanation, details = {}) {
+export function result(key, status, summary, explanation, details = {}) {
   const meta = CHECKS[key];
   return {
     key,
@@ -213,11 +213,11 @@ function result(key, status, summary, explanation, details = {}) {
     details,
   };
 }
-const skipped = (key, reason) =>
+export const skipped = (key, reason) =>
   result(key, 'skipped', `Not checked: ${reason}`, `This one could not be checked this time (${reason.replace(/\.$/, '')}). It does not count for or against the site.`, { reason });
 const grade = (issues) => (issues === 0 ? 'pass' : issues === 1 ? 'warn' : 'fail');
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const errText = (e) => (e?.name === 'TimeoutError' || /abort|timed out/i.test(e?.message || '') ? 'the site took too long to answer' : e?.message || 'an unknown error');
+export const errText = (e) => (e?.name === 'TimeoutError' || /abort|timed out/i.test(e?.message || '') ? 'the site took too long to answer' : e?.message || 'an unknown error');
 
 // ── On-page checks ──────────────────────────────────────────────────────────
 
@@ -588,6 +588,44 @@ function checkSchema(page, ctx) {
   return result('schema', 'pass', `Describes the business as a ${type}.`, 'The site tells Google the business name, address, phone and more in the format it reads directly.', { type, has, invalid });
 }
 
+// ── Name, address and phone facts (compared with Google in api/_lib/seo-local.mjs) ──
+
+const PHONE = /(?:\+?1[\s.-]?)?\(?\b(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})\b/g;
+const STREET = /\b\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Za-z0-9.' ]{2,40}?\s(?:St|Street|Rd|Road|Ave|Avenue|Blvd|Boulevard|Dr|Drive|Ln|Lane|Way|Hwy|Highway|Ct|Court|Pkwy|Parkway|Pl|Place|Cir|Circle|Pike|Trl|Trail|Ter|Terrace|Sq|Square)\b\.?/gi;
+export const phoneDigits = (s = '') => String(s).replace(/\D/g, '').slice(-10);
+
+// Small, saved facts about what the home page says about the business, so the comparison
+// with the Google Business Profile can be run again later without fetching the page.
+export function siteFacts(page) {
+  if (!page) return null;
+  const nodes = [];
+  for (const raw of page.jsonLd) {
+    try {
+      nodesOf(JSON.parse(raw), nodes);
+    } catch {
+      /* counted by the schema check */
+    }
+  }
+  const local = nodes.find((n) => typesOf(n).some(isLocalType)) || null;
+  const a = local?.address;
+  const schemaAddress = typeof a === 'string' ? a : a && typeof a === 'object' ? [a.streetAddress, a.addressLocality, a.addressRegion, a.postalCode].filter(Boolean).join(', ') : '';
+  const phones = new Set();
+  for (const l of page.links) if (/^tel:/i.test(l.href)) phones.add(phoneDigits(l.href));
+  if (local?.telephone) phones.add(phoneDigits(local.telephone));
+  for (const m of page.bodyText.matchAll(PHONE)) phones.add(m[1] + m[2] + m[3]);
+  const streets = [...new Set([...page.bodyText.matchAll(STREET)].map((m) => squash(m[0])))];
+  const text = page.bodyText;
+  return {
+    schemaName: typeof local?.name === 'string' ? squash(local.name) : null,
+    schemaAddress: squash(schemaAddress) || null,
+    phones: [...phones].filter((p) => p.length === 10).slice(0, 10),
+    streets: streets.slice(0, 10),
+    postalCodes: [...new Set([...`${schemaAddress} ${text}`.matchAll(/\b(\d{5})(?:-\d{4})?\b/g)].map((m) => m[1]))].slice(0, 10),
+    // The title, headings and the start and end of the page, where names and footers live.
+    brandText: squash([page.titles[0], page.h1s[0], local?.name, text.slice(0, 400), text.slice(-1500)].filter((v) => typeof v === 'string').join(' ')).slice(0, 2400),
+  };
+}
+
 // ── The audit ───────────────────────────────────────────────────────────────
 
 export const PHASE_ONE = Object.keys(CHECKS).filter((k) => CHECKS[k].phase === 1);
@@ -732,6 +770,7 @@ export async function runAudit(input, deps = {}) {
       rendered: !!ctx.rendered,
       title: ctx.page?.titles?.[0] || null,
       error: homeError,
+      nap: siteFacts(ctx.page),
     },
     pageSpeedFetched: !psi.cached && !!(psi.mobile || psi.desktop),
     notes,

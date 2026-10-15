@@ -52,6 +52,8 @@ const Links = ({ items }) => (
   </ul>
 )
 
+const GBP_LABEL = { hours: 'Hours', photos: 'Photos', website: 'Website link', category: 'Main category' }
+const CHECK_LABEL = { title: 'title tag', meta_description: 'meta description', h1: 'main heading', keywords: 'city and service on the page', image_alt: 'image descriptions', internal_links: 'links to other pages', https: 'secure connection', mobile: 'phones', page_speed: 'page speed', sitemap: 'sitemap', robots: 'robots.txt', broken_links: 'broken links', schema: 'business details', nap: 'name, address and phone', gbp: 'Google profile', reviews: 'reviews' }
 const SCHEMA_LABEL = { name: 'Name', address: 'Address', telephone: 'Phone', url: 'Website', hours: 'Hours', geo: 'Map location', image: 'Logo or photo', areaServed: 'Service area', priceRange: 'Price range', sameAs: 'Social profiles' }
 
 function Facts({ check }) {
@@ -123,6 +125,44 @@ function Facts({ check }) {
     case 'mobile':
       rows.push(<Fact key="v" label="Phone setting">{d.viewport ? <span className="text-mute">{d.viewport}</span> : <span className="text-danger">None</span>}</Fact>)
       if (d.pageSpeedSeo != null) rows.push(<Fact key="s" label="Google's SEO basics score">{d.pageSpeedSeo} out of 100</Fact>)
+      break
+    case 'gbp':
+      if (d.has)
+        rows.push(
+          <Fact key="h" label="On the profile">
+            <span className="flex flex-wrap gap-x-5 gap-y-1.5">
+              {Object.entries(GBP_LABEL).map(([k, label]) => (
+                <Yes key={k} ok={d.has[k]}>{label}</Yes>
+              ))}
+            </span>
+          </Fact>,
+        )
+      if (d.category) rows.push(<Fact key="c" label="Main category">{d.category}</Fact>)
+      if (d.hours?.length) rows.push(<Fact key="o" label="Hours"><span className="text-mute">{d.hours.join(', ')}</span></Fact>)
+      if (d.found === false && d.query) rows.push(<Fact key="q" label="Searched for">{d.query}</Fact>)
+      break
+    case 'reviews':
+      rows.push(<Fact key="r" label="Reviews">{d.reviews ?? 0}{d.rating != null ? `, rated ${d.rating.toFixed(1)}` : ''}</Fact>)
+      if (d.competitorAverage != null) rows.push(<Fact key="c" label="Competitors average">{d.competitorAverage} reviews{d.competitorRating != null ? `, rated ${d.competitorRating.toFixed(1)}` : ''}</Fact>)
+      break
+    case 'nap':
+      for (const i of d.items || [])
+        rows.push(
+          <Fact key={i.key} label={i.label}>
+            <Yes ok={i.ok}>{i.ok ? 'Matches' : 'Does not match'}</Yes>
+            <span className="mt-1 block text-[13.5px] text-mute">Google: {i.google || 'none'}</span>
+            <span className="block text-[13.5px] text-mute">Site: {i.site || 'not found on the home page'}</span>
+          </Fact>,
+        )
+      break
+    case 'rank':
+      rows.push(<Fact key="k" label="Search">{d.keyword}</Fact>)
+      rows.push(<Fact key="p" label="Position">{d.position ?? 'Not in the top 10'}</Fact>)
+      break
+    case 'competitors':
+      if (d.competitors?.length) rows.push(<Fact key="n" label="Compared with">{d.competitors.join(', ')}</Fact>)
+      if (d.behind?.length) rows.push(<Fact key="b" label="Behind on"><span className="text-danger">{d.behind.map((k) => CHECK_LABEL[k] || k).join(', ')}</span></Fact>)
+      if (d.ahead?.length) rows.push(<Fact key="a" label="Ahead on"><span className="text-live">{d.ahead.map((k) => CHECK_LABEL[k] || k).join(', ')}</span></Fact>)
       break
     default:
       break

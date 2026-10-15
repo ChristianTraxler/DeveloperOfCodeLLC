@@ -179,13 +179,30 @@ function NextSteps({ tasks, checks }) {
 
 const GBP_ITEMS = ['Business hours are listed and correct', 'Recent photos of your work', 'A link to your website', 'The right main category', 'At least 10 reviews, rated 4.0 or higher']
 
-function LocalPlaceholders({ report }) {
+const GBP_HAS = [
+  ['hours', 'Business hours are listed'],
+  ['photos', 'Photos of your work'],
+  ['website', 'A link to your website'],
+  ['category', 'A main category'],
+]
+
+function Card({ id, title, children, later }) {
   return (
-    <div className="mt-20 grid gap-6 md:grid-cols-2">
-      <section aria-labelledby="c-gbp" className="keep rounded-[26px] border border-line bg-panel p-6 sm:p-8">
-        <h2 id="c-gbp" className="display text-[clamp(26px,4vw,32px)] leading-[1.05]">
-          Google Business Profile
-        </h2>
+    <section aria-labelledby={id} className="keep rounded-[26px] border border-line bg-panel p-6 sm:p-8">
+      <h2 id={id} className="display text-[clamp(26px,4vw,32px)] leading-[1.05]">
+        {title}
+      </h2>
+      {children}
+      {later && <p className="mt-5 text-[13.5px] font-medium text-ember">Part of the Full SEO Review</p>}
+    </section>
+  )
+}
+
+function Profile({ report, local }) {
+  const { gbp, reviews } = local
+  if (!gbp) {
+    return (
+      <Card id="c-gbp" title="Google Business Profile" later>
         <p className="mt-3 text-[15px] leading-relaxed text-mute">It is often the first thing people see when they search for a local business. The full review checks each of these.</p>
         <ul className="mt-5 space-y-2.5">
           {GBP_ITEMS.map((t) => (
@@ -195,12 +212,52 @@ function LocalPlaceholders({ report }) {
             </li>
           ))}
         </ul>
-        <p className="mt-5 text-[13.5px] font-medium text-ember">Part of the Full SEO Review</p>
-      </section>
-      <section aria-labelledby="c-comp" className="keep rounded-[26px] border border-line bg-panel p-6 sm:p-8">
-        <h2 id="c-comp" className="display text-[clamp(26px,4vw,32px)] leading-[1.05]">
-          Next to your competitors
-        </h2>
+      </Card>
+    )
+  }
+  if (!gbp.found) {
+    return (
+      <Card id="c-gbp" title="Google Business Profile">
+        <p className="mt-3 text-[15px] leading-relaxed text-mute">
+          We could not find a Google Business Profile for {report.business} in {report.city}. The profile is what puts a business on the map, so setting one up is usually the first fix. If you already have one under another name, it should match the name on your website.
+        </p>
+      </Card>
+    )
+  }
+  return (
+    <Card id="c-gbp" title="Google Business Profile">
+      <p className="mt-3 text-[15px] leading-relaxed text-mute">
+        Your listing{gbp.category ? ` as a ${gbp.category.toLowerCase()}` : ''}. Complete profiles get more calls, and Google uses these details to pick who to show.
+      </p>
+      <ul className="mt-5 space-y-2.5">
+        {GBP_HAS.map(([k, t]) => (
+          <li key={k} className="flex items-start gap-3 text-[15px]">
+            <StatusMark status={gbp.has?.[k] ? 'pass' : 'fail'} size={22} />
+            {t}
+          </li>
+        ))}
+        {reviews && (
+          <li className="flex items-start gap-3 text-[15px]">
+            <StatusMark status={reviews.status} size={22} />
+            <span>
+              {reviews.count ?? 0} {reviews.count === 1 ? 'review' : 'reviews'}
+              {reviews.rating != null ? `, rated ${reviews.rating.toFixed(1)}` : ''}
+              {reviews.competitorAverage != null && <span className="block text-[13.5px] text-mute">Nearby competitors average {reviews.competitorAverage}.</span>}
+            </span>
+          </li>
+        )}
+      </ul>
+    </Card>
+  )
+}
+
+function Rivals({ data }) {
+  const { report, local, checks } = data
+  const comps = local.competitors
+  const rank = local.rank
+  if (!comps.length) {
+    return (
+      <Card id="c-comp" title="Next to your competitors" later>
         <p className="mt-3 text-[15px] leading-relaxed text-mute">
           The full review runs these same checks on the top 3 {report.service.toLowerCase()} businesses in {report.city}, so you can see where you are ahead and where they are.
         </p>
@@ -212,8 +269,42 @@ function LocalPlaceholders({ report }) {
             </div>
           ))}
         </div>
-        <p className="mt-5 text-[13.5px] font-medium text-ember">Part of the Full SEO Review</p>
-      </section>
+      </Card>
+    )
+  }
+  const rows = [{ name: report.business, overall: report.overall, me: true }, ...comps]
+  const summary = checks.find((c) => c.key === 'competitors' && c.status !== 'skipped')
+  return (
+    <Card id="c-comp" title="Next to your competitors">
+      <p className="mt-3 text-[15px] leading-relaxed text-mute">
+        The same checks, run on the {comps.length === 1 ? 'business' : `${comps.length} businesses`} that show up first for {report.service.toLowerCase()} in {report.city}.
+      </p>
+      <ul className="mt-6 space-y-3.5">
+        {rows.map((r) => (
+          <li key={r.name} className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_2.5rem] items-center gap-3">
+            <span className={cx('truncate text-[14px]', r.me ? 'font-semibold' : 'text-bone/85')}>{r.me ? 'You' : r.name}</span>
+            <span className="h-2 rounded-full bg-bone/10">{r.overall != null && <span className={cx('block h-full rounded-full', bar(r.overall))} style={{ width: `${Math.max(r.overall, 2)}%` }} />}</span>
+            <span className={cx('text-right text-[15px] font-semibold tabular-nums', tone(r.overall))}>{r.overall ?? '–'}</span>
+            {!r.me && r.overall == null && <span className="col-span-3 -mt-2 text-[13px] text-faint">No website to check</span>}
+          </li>
+        ))}
+      </ul>
+      {summary && <p className="mt-5 text-[15px] leading-relaxed">{summary.summary}</p>}
+      {rank && (
+        <p className="mt-3 text-[15px] leading-relaxed text-mute">
+          {rank.position ? `You show up number ${rank.position}` : 'You are not on the first page'} when people search &ldquo;{rank.keyword}&rdquo;.
+        </p>
+      )}
+    </Card>
+  )
+}
+
+function Local({ data }) {
+  const local = data.local || { competitors: [] }
+  return (
+    <div className="mt-20 grid gap-6 md:grid-cols-2">
+      <Profile report={data.report} local={local} />
+      <Rivals data={{ ...data, local }} />
     </div>
   )
 }
@@ -323,7 +414,7 @@ function Full({ data }) {
         <CategoryScores report={data.report} />
         <Working checks={data.checks} />
         <NextSteps tasks={data.tasks} checks={data.checks} />
-        <LocalPlaceholders report={data.report} />
+        <Local data={data} />
         <Packages data={data} />
       </main>
       <CallToAction data={data} />

@@ -256,12 +256,157 @@ test('the client share view leaks no ids, tokens, notes or raw details', async (
     { id: 12, audit_id: 'a1b2', check_key: 'page_speed', category: 'technical', status: 'warn', score: 0.5, summary: 'Slow', explanation: 'Plain.', details: { mobile: { score: 62, screenshot: 'data:image/jpeg;base64,AAAA' }, desktop: { score: 91 } } },
   ];
   const taskRows = [{ id: 5, audit_id: 'a1b2', check_id: 11, title: 'Add the city', impact: 'high', effort: 'small', service_tag: 'onpage', priority_order: 1, done: false }];
-  const v = shareView(audit, checkRows, taskRows);
+  checkRows.push({ id: 13, audit_id: 'a1b2', check_key: 'gbp', category: 'local', status: 'pass', score: 1, summary: 'ok', explanation: 'Plain.', details: { found: true, has: { hours: true }, category: 'Pressure washing service', photos: 4, mapsUrl: 'https://maps.google.test/?cid=999', address: '1 Main St' } });
+  const comps = [
+    { id: 77, name: 'Shine Bros', site_url: 'https://www.shine.test/', place_id: 'ChIJsecretplace', status: 'complete', scores: { overall: 81, place: { rating: 4.9, reviews: 120, address: '9 Oak Ave' }, statuses: { title: 'pass', bogus: 'x' } } },
+    { id: 78, name: 'Pending Co', site_url: null, place_id: 'ChIJother', status: 'pending', scores: {} },
+  ];
+  const v = shareView(audit, checkRows, taskRows, comps);
   const text = JSON.stringify(v);
-  for (const leak of ['a1b2', 'secret-token', 'lead-9', '1.2.3.4', 'base64', '<title>']) assert.ok(!text.includes(leak), `share view leaks ${leak}`);
+  for (const leak of ['a1b2', 'secret-token', 'lead-9', '1.2.3.4', 'base64', '<title>', 'ChIJ', 'maps.google', '1 Main St', '9 Oak Ave']) assert.ok(!text.includes(leak), `share view leaks ${leak}`);
+  assert.deepEqual(v.local.competitors, [{ name: 'Shine Bros', site: 'shine.test', overall: 81, rating: 4.9, reviews: 120, statuses: { title: 'pass' } }]);
+  assert.equal(v.local.gbp.category, 'Pressure washing service');
   assert.equal(v.report.site, 'blueridge.test');
   assert.deepEqual(v.report.speed, { phone: 62, computer: 91 });
   assert.equal(v.tasks[0].status, 'fail');
   assert.equal(v.tasks[0].service, 'On-page fixes');
   assert.equal(v.recommended, 'implementation');
+});
+
+// ── Phase 3: local layer ────────────────────────────────────────────────────
+import { findLocal, localChecks, placeStatuses, rankCheck, competitorsCheck, compareNap } from '../api/_lib/seo-local.mjs';
+import { siteFacts } from '../api/_lib/seo-checks.mjs';
+
+const place = (over = {}) => ({
+  id: over.id || 'p1',
+  displayName: { text: over.name || 'Blue Ridge Wash' },
+  formattedAddress: '1 Main St, Hickory, NC 28601, USA',
+  addressComponents: [
+    { shortText: '1', types: ['street_number'] },
+    { shortText: 'Main St', types: ['route'] },
+    { shortText: '28601', types: ['postal_code'] },
+  ],
+  nationalPhoneNumber: '(828) 555-0100',
+  websiteUri: over.website ?? 'https://blueridge.test/',
+  rating: over.rating ?? 4.8,
+  userRatingCount: over.reviews ?? 42,
+  regularOpeningHours: over.hours === false ? undefined : { weekdayDescriptions: ['Monday: 8 AM to 5 PM'] },
+  photos: over.photos === 0 ? [] : [{}, {}],
+  primaryTypeDisplayName: over.category === false ? undefined : { text: 'Pressure washing service' },
+  businessStatus: 'OPERATIONAL',
+});
+
+function placesFetch(answers) {
+  const calls = [];
+  const fn = async (url, init) => {
+    const q = JSON.parse(init.body).textQuery;
+    calls.push(q);
+    return new Response(JSON.stringify({ places: answers[q] || [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  fn.calls = calls;
+  return fn;
+}
+
+const COMPS = [place({ id: 'c1', name: 'Shine Bros', website: 'https://shine.test', reviews: 120, rating: 4.9 }), place({ id: 'c2', name: 'Hickory Clean', website: 'https://hc.test', reviews: 60 }), place({ id: 'c3', name: 'Wash Pros', website: '', reviews: 8, rating: 4.2 })];
+const localInput = { business: 'Blue Ridge Wash', city: 'Hickory, NC', service: 'Pressure washing', siteUrl: 'https://blueridge.test/' };
+
+test('findLocal: finds the client by website, its map position, and the top 3 competitors in one call', async () => {
+  const f = placesFetch({ 'Pressure washing in Hickory, NC': [COMPS[0], place(), COMPS[1], COMPS[2], place({ id: 'c4', name: 'Fourth' })] });
+  const store = new Map();
+  const cache = { get: async (k) => store.get(k) ?? null, set: async (k, v) => store.set(k, v) };
+  const out = await findLocal(localInput, { fetch: f, key: 'k', cache });
+  assert.equal(out.place.placeId, 'p1');
+  assert.equal(out.position, 2);
+  assert.deepEqual(out.competitors.map((c) => [c.name, c.position]), [['Shine Bros', 1], ['Hickory Clean', 3], ['Wash Pros', 4]]);
+  assert.equal(out.calls, 1);
+  assert.ok(store.has('place:c1'), 'places cached by place_id');
+  const again = await findLocal(localInput, { fetch: f, key: 'k', cache });
+  assert.equal(again.calls, 0, 'second review reads the cache');
+  assert.equal(f.calls.length, 1);
+});
+
+test('findLocal: a second search by name only when the first misses, never more than 2 calls', async () => {
+  const f = placesFetch({ 'Pressure washing in Hickory, NC': COMPS, 'Blue Ridge Wash Hickory, NC': [place({ website: '' })] });
+  const out = await findLocal(localInput, { fetch: f, key: 'k' });
+  assert.equal(out.place.placeId, 'p1');
+  assert.equal(out.position, null);
+  assert.equal(out.calls, 2);
+  const none = await findLocal(localInput, { fetch: placesFetch({}), key: 'k' });
+  assert.equal(none.place, null);
+  assert.equal(none.calls, 2);
+});
+
+test('local checks: no key or a Places error saves them as skipped', async () => {
+  const off = localChecks(await findLocal(localInput, {}), null, localInput);
+  assert.deepEqual(off.map((c) => c.status), ['skipped', 'skipped', 'skipped']);
+  const broken = await findLocal(localInput, { key: 'k', fetch: async () => new Response('{"error":{"message":"API key not valid"}}', { status: 400 }) });
+  const c = localChecks(broken, null, localInput);
+  assert.ok(c.every((x) => x.status === 'skipped' && /API key not valid/.test(x.summary)));
+});
+
+test('local checks: complete profile, review grades and the brief thresholds', async () => {
+  const f = placesFetch({ 'Pressure washing in Hickory, NC': [place(), ...COMPS] });
+  const local = await findLocal(localInput, { fetch: f, key: 'k' });
+  const facts = siteFacts(readPage(GOOD_HOME));
+  const [gbp, reviews, nap] = localChecks(local, facts, localInput);
+  assert.equal(gbp.status, 'pass');
+  assert.equal(reviews.status, 'pass');
+  assert.match(reviews.explanation, /average 63 reviews/);
+  assert.equal(nap.status, 'pass', JSON.stringify(nap.details));
+  assert.deepEqual(placeStatuses(compactOf(place({ reviews: 9 }))), { gbp: 'pass', reviews: 'fail' });
+  assert.equal(placeStatuses(compactOf(place({ rating: 3.9, reviews: 200 }))).reviews, 'fail');
+  assert.equal(placeStatuses(compactOf(place({ reviews: 12 }))).reviews, 'warn');
+  assert.equal(placeStatuses(compactOf(place({ hours: false }))).gbp, 'fail');
+  assert.equal(placeStatuses(compactOf(place({ photos: 0 }))).gbp, 'fail');
+});
+
+function compactOf(p) {
+  return { name: p.displayName.text, hours: p.regularOpeningHours?.weekdayDescriptions || [], photos: p.photos.length, website: p.websiteUri, category: p.primaryTypeDisplayName?.text, rating: p.rating, reviews: p.userRatingCount, status: p.businessStatus };
+}
+
+test('NAP: a different phone and a missing address are caught; no profile skips', async () => {
+  const facts = siteFacts(readPage(BAD_HOME.replace('Welcome', 'Welcome to Blue Ridge Wash. Call 828-555-0199')));
+  assert.deepEqual(facts.phones, ['8285550199']);
+  const local = await findLocal(localInput, { fetch: placesFetch({ 'Pressure washing in Hickory, NC': [place()] }), key: 'k' });
+  const items = compareNap(local.place, facts, localInput.siteUrl);
+  assert.deepEqual(items.map((i) => [i.key, i.ok]), [['name', true], ['phone', false], ['address', false], ['website', true]]);
+  assert.equal(localChecks(local, facts, localInput)[2].status, 'fail');
+  const missing = await findLocal(localInput, { fetch: placesFetch({}), key: 'k' });
+  const [gbp, reviews, nap] = localChecks(missing, facts, localInput);
+  assert.equal(gbp.status, 'fail');
+  assert.equal(reviews.status, 'skipped');
+  assert.equal(nap.status, 'skipped');
+});
+
+test('rank: top 3 works, 4 to 10 tightens, past 10 or not found fails', () => {
+  assert.equal(rankCheck('pressure washing hickory', 2).status, 'pass');
+  assert.equal(rankCheck('pressure washing hickory', 7).status, 'warn');
+  assert.equal(rankCheck('pressure washing hickory', 14).status, 'fail');
+  assert.equal(rankCheck('pressure washing hickory', null).status, 'fail');
+});
+
+test('competitors: fails when most competitors beat the client on most checks', () => {
+  const keys = ['title', 'meta_description', 'h1', 'keywords', 'https', 'sitemap', 'schema', 'reviews'];
+  const all = (s) => Object.fromEntries(keys.map((k) => [k, s]));
+  const strong = { name: 'A', statuses: all('pass') };
+  const weak = { name: 'B', statuses: all('fail') };
+  assert.equal(competitorsCheck(all('fail'), [strong, strong, weak]).status, 'fail');
+  assert.equal(competitorsCheck(all('pass'), [strong, strong, weak]).status, 'pass');
+  const mixed = { ...all('pass'), title: 'fail', h1: 'fail' };
+  const c = competitorsCheck(mixed, [strong, strong, weak]);
+  assert.equal(c.status, 'warn');
+  assert.deepEqual(c.details.behind, ['title', 'h1']);
+  assert.equal(competitorsCheck(all('pass'), [{ name: 'X', statuses: {} }]).status, 'skipped');
+  for (const x of [c, rankCheck('x', null)]) assert.ok(!/—/.test(x.explanation));
+});
+
+test('runAudit saves name, address and phone facts from the home page', async () => {
+  const f = fakeFetch({
+    'https://blueridge.test/robots.txt': { body: 'User-agent: *\nAllow: /', type: 'text/plain' },
+    'https://blueridge.test/': { body: GOOD_HOME },
+  });
+  const out = await runAudit(input, { fetch: f, pageSpeedKey: '' });
+  assert.equal(out.site.nap.schemaName, 'Blue Ridge Wash');
+  assert.deepEqual(out.site.nap.phones, ['8285550100']);
+  assert.match(out.site.nap.schemaAddress, /1 Main St/);
 });

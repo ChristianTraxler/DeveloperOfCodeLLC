@@ -118,7 +118,7 @@ export function marksFor(meta, checks = []) {
     key,
     label: m.label,
     category: m.category,
-    status: byKey.get(key)?.status || (m.phase > 1 ? 'later' : 'skipped'),
+    status: byKey.get(key)?.status || 'later',
   }))
 }
 
@@ -129,8 +129,8 @@ export function marksFromCounts(meta, cats = {}) {
     const keys = Object.entries(meta.checks).filter(([, m]) => m.category === cat)
     const c = cats[cat] || {}
     const pool = [...Array(c.fail || 0).fill('fail'), ...Array(c.warn || 0).fill('warn'), ...Array(c.pass || 0).fill('pass'), ...Array(c.skipped || 0).fill('skipped')]
-    let j = 0
-    keys.forEach(([key, m]) => out.push({ key, label: m.label, category: cat, status: m.phase > 1 ? 'later' : pool[j++] || 'skipped' }))
+    // Checks that did not run (the local layer before Phase 3, or rank not entered yet) go last.
+    keys.forEach(([key], j) => out.push({ key, label: meta.checks[key].label, category: cat, status: pool[j] || 'later' }))
   }
   return out
 }
