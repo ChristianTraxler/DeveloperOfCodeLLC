@@ -1,8 +1,11 @@
 // api/seo.mjs: backend for /admin/seo/ (SEO Review), one function with an ?action= switch.
 //
-// Public action (no sign in, used by the client report at /seo/<share_token>):
+// Public actions (no sign in, used by the client report at /seo/<share_token>):
 //   GET  share&t=<token> one reviewed review, shaped for the client. Never ids, tokens, notes,
 //                        raw check details or anything about other reviews.
+//   POST request&t=<token> { tasks: [order], offer?, name, email?, phone?, message? } "Request
+//                        implementation": saves the picks and emails Christian (Resend).
+//   GET  cron            monthly re-scans for care plan leads (Vercel Cron, CRON_SECRET)
 //
 // Admin actions (need a Supabase session whose email is in ADMIN_EMAILS):
 //   GET  list            every review, newest first, without the check details
@@ -12,6 +15,7 @@
 //   POST review          { id, reviewed } sets or clears reviewed_at (only reviewed reviews will share)
 //   POST task            { id, done } ticks a Next Steps task
 //   POST delete          { id }
+//   GET  fixreport&id=   the fix-it report: Markdown instructions for Claude (api/_lib/seo-fixreport.mjs)
 //
 // Phase 3, the local layer (api/_lib/seo-local.mjs):
 //   run also looks the business up on Google Places, saves gbp, reviews and nap, and lists the
@@ -24,6 +28,16 @@
 //   POST place           { id, placeId | 'none' } picks the right Google listing when the match was wrong
 //   POST rank            { id, position | null, keyword? } the manual rank entry (null: not in the top 10)
 //
+// Phase 4, leads (api/_lib/seo-leads.mjs):
+//   GET  leads           every lead with its latest score and review count
+//   GET  lead&id=<uuid>  one lead, its reviews, score history, follow-up plan and requests
+//   POST leadSave        { id?, fromAuditId?, business, site, city, service, contact, email, phone,
+//                          source, status, carePlan, lastContact, nextFollowUp, notes }
+//   POST followup        { id, day, done } ticks a day 0, 1, 3 or 7 follow-up
+//   POST link            { auditId, leadId | null } puts a review on a lead (or takes it off)
+//   POST leadDelete      { id } deletes the lead and keeps its reviews
+//   run also takes { leadId } to file the new review under a lead.
+//
 // Scores and Next Steps (api/_lib/seo-score.mjs) are written on run. Reviews saved before
 // Phase 2 get theirs the first time they are read.
 //
@@ -31,12 +45,16 @@
 //   SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS   same as api/marketing.mjs and api/demos.mjs
 //   PAGESPEED_API_KEY                         Google PageSpeed Insights API key (free)
 //   GOOGLE_PLACES_API_KEY                     Google Places API (New) key (free allowance, then paid)
+//   RESEND_API_KEY, NOTIFY_FROM, NOTIFY_TO    same as api/notify.mjs, for implementation requests
+//   CRON_SECRET                               Vercel sends it to the cron action as a Bearer token
 //
 // The checks themselves live in api/_lib/seo-checks.mjs and every threshold in seo-config.mjs.
 
 import { randomBytes } from 'node:crypto';
 import { AuditInputError, normalizeUrl, runAudit, PHASE_ONE } from './_lib/seo-checks.mjs';
-import { CATEGORIES, CHECKS, SERVICES, FETCH, OFFERS, BRAND, LOCAL } from './_lib/seo-config.mjs';
+import { CATEGORIES, CHECKS, SERVICES, FETCH, OFFERS, BRAND, LOCAL, LEAD_STATUSES, LEAD_SOURCES, FOLLOW_UPS, RESCAN, REQUESTS } from './_lib/seo-config.mjs';
+import { buildFixReport, fixReportFilename } from './_lib/seo-fixreport.mjs';
+import { LeadInputError, cleanLead, followUpPlan, plannedFollowUp, scoreHistory, dueForRescan, today } from './_lib/seo-leads.mjs';
 import { scoreAudit, buildTasks } from './_lib/seo-score.mjs';
 import { findLocal, localChecks, placeStatuses, rankCheck, competitorsCheck, hostOf } from './_lib/seo-local.mjs';
 import { cityName } from './_lib/seo-html.mjs';
@@ -46,6 +64,10 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPA
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const PAGESPEED_KEY = process.env.PAGESPEED_API_KEY || '';
 const PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || '';
+const RESEND_KEY = process.env.RESEND_API_KEY || '';
+const NOTIFY_FROM = process.env.NOTIFY_FROM || 'Developer Of Code, LLC <notify@developerofcode.com>';
+const NOTIFY_TO = process.env.NOTIFY_TO || 'DeveloperOfCodeLLC@Gmail.com';
+const CRON_SECRET = process.env.CRON_SECRET || '';
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
@@ -169,6 +191,10 @@ export const meta = () => ({
   pageSpeedKey: !!PAGESPEED_KEY,
   placesKey: !!PLACES_KEY,
   maxCompetitors: LOCAL.competitors,
+  leadStatuses: LEAD_STATUSES,
+  leadSources: LEAD_SOURCES,
+  followUps: FOLLOW_UPS,
+  rescanDays: RESCAN.everyDays,
 });
 
 // ── Actions ─────────────────────────────────────────────────────────────────
@@ -200,7 +226,8 @@ async function list() {
     ]);
     for (const a of stale) await backfill(a, checks.filter((c) => c.audit_id === a.id), tasks.some((t) => t.audit_id === a.id));
   }
-  return { audits, meta: meta() };
+  const leads = await rows('/rest/v1/seo_leads?select=id,business_name&order=business_name.asc').catch(() => []);
+  return { audits, leads: leads.map((l) => ({ id: l.id, business: l.business_name })), meta: meta() };
 }
 
 async function getOne(id) {
@@ -324,7 +351,7 @@ async function loadAudit(id) {
 
 const clean = (v, max = 120) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
-async function run(body) {
+async function run(body, { rescan = false } = {}) {
   const business = clean(body.business);
   const city = clean(body.city, 80);
   const service = clean(body.service, 80);
@@ -338,6 +365,8 @@ async function run(body) {
     throw new HttpError(400, e.message);
   }
   const siteUrl = url.href;
+  const leadId = body.leadId || null;
+  if (leadId) await loadLead(leadId);
 
   const [audit] = await insert('seo_audits', {
     site_url: siteUrl,
@@ -346,7 +375,7 @@ async function run(body) {
     service,
     status: 'running',
     share_token: randomBytes(18).toString('base64url'),
-    lead_id: body.leadId ? clean(body.leadId, 64) : null,
+    lead_id: leadId,
   });
 
   // Google Places runs alongside the site checks. findLocal never throws.
@@ -381,10 +410,11 @@ async function run(body) {
       overall_score: scored.overall,
       category_scores: scored.categories,
       duration_ms: out.durationMs,
-      notes: { notes: out.notes, site: out.site, pageSpeedKey: !!PAGESPEED_KEY, local: localNotes(local) },
+      notes: { notes: out.notes, site: out.site, pageSpeedKey: !!PAGESPEED_KEY, local: localNotes(local), ...(rescan ? { rescan: true } : {}) },
       error: out.site.error || null,
     };
     await patch('seo_audits', `id=eq.${audit.id}`, done);
+    if (leadId) await afterLeadReview(leadId);
     return getOne(audit.id);
   } catch (err) {
     const message = err instanceof AuditInputError ? err.message : 'The review stopped early. Try running it again.';
@@ -529,6 +559,201 @@ async function setRank(body) {
   return getOne(audit.id);
 }
 
+
+// ── Fix-it report ───────────────────────────────────────────────────────────
+
+async function fixReport(id) {
+  const view = await getOne(id);
+  if (view.audit.status !== 'complete') throw new HttpError(400, 'Wait for the review to finish first.');
+  return { markdown: buildFixReport(view), filename: fixReportFilename(view.audit) };
+}
+
+// ── Phase 4: leads ──────────────────────────────────────────────────────────
+
+function toLead(row) {
+  return {
+    id: row.id,
+    business: row.business_name,
+    site: row.site_url,
+    city: row.city,
+    service: row.service,
+    contact: row.contact_name,
+    email: row.email,
+    phone: row.phone,
+    source: row.source,
+    status: row.status,
+    carePlan: row.care_plan,
+    lastContact: row.last_contact,
+    nextFollowUp: row.next_follow_up,
+    reportSentOn: row.report_sent_on,
+    followups: row.followups || {},
+    notes: row.notes || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function loadLead(id) {
+  if (!UUID.test(id || '')) throw new HttpError(400, 'That lead id is not valid.');
+  const [lead] = await rows(`/rest/v1/seo_leads?id=eq.${id}&select=*&limit=1`);
+  if (!lead) throw new HttpError(404, 'That lead was deleted or never existed.');
+  return lead;
+}
+
+const firstReviewAt = async (leadId) =>
+  (await rows(`/rest/v1/seo_audits?lead_id=eq.${leadId}&status=eq.complete&select=created_at&order=created_at.asc&limit=1`))[0]?.created_at || null;
+
+// A finished review moves a new lead to "Audit run" and starts the follow-ups.
+async function afterLeadReview(leadId) {
+  const lead = await loadLead(leadId);
+  if (lead.status !== 'new') return;
+  const next = { ...lead, status: 'audit_run' };
+  await patch('seo_leads', `id=eq.${leadId}`, { status: 'audit_run', next_follow_up: lead.next_follow_up || plannedFollowUp(next, await firstReviewAt(leadId)), updated_at: new Date().toISOString() });
+}
+
+async function leads() {
+  const [list, audits] = await Promise.all([
+    rows('/rest/v1/seo_leads?select=*&order=next_follow_up.asc.nullslast,created_at.desc&limit=1000'),
+    rows('/rest/v1/seo_audits?lead_id=not.is.null&select=id,lead_id,overall_score,status,created_at&order=created_at.desc&limit=5000'),
+  ]);
+  return {
+    leads: list.map((l) => {
+      const mine = audits.filter((a) => a.lead_id === l.id);
+      const scored = mine.find((a) => a.status === 'complete' && a.overall_score != null);
+      return { ...toLead(l), reviews: mine.length, latestScore: scored?.overall_score ?? null, latestAuditId: scored?.id || null, lastReviewAt: mine[0]?.created_at || null };
+    }),
+    meta: meta(),
+  };
+}
+
+async function leadOne(id) {
+  const lead = await loadLead(id);
+  const [audits, requests] = await Promise.all([
+    rows(`/rest/v1/seo_audits?lead_id=eq.${id}&select=${AUDIT_COLUMNS}&order=created_at.desc`),
+    rows(`/rest/v1/seo_requests?lead_id=eq.${id}&select=id,audit_id,offer,tasks,name,email,phone,message,created_at&order=created_at.desc&limit=50`),
+  ]);
+  const first = [...audits].reverse().find((a) => a.status === 'complete')?.created_at || null;
+  return {
+    lead: toLead(lead),
+    audits: audits.map((a) => ({ id: a.id, site: a.final_url || a.site_url, status: a.status, overall: a.overall_score, createdAt: a.created_at, reviewedAt: a.reviewed_at, monthly: !!a.notes?.rescan })),
+    history: scoreHistory(audits),
+    plan: followUpPlan(lead, first),
+    requests: requests.map((r) => ({ ...r, offer: OFFERS.find((o) => o.key === r.offer)?.name || null })),
+    meta: meta(),
+  };
+}
+
+async function leadSave(body) {
+  let fields;
+  try {
+    fields = cleanLead(body, { creating: !body.id });
+  } catch (e) {
+    if (e instanceof LeadInputError) throw new HttpError(400, e.message);
+    throw e;
+  }
+  const now = new Date().toISOString();
+  if (body.id) {
+    const lead = await loadLead(body.id);
+    if ((fields.status === 'won' || fields.status === 'lost') && !('nextFollowUp' in body)) fields.next_follow_up = null;
+    await patch('seo_leads', `id=eq.${lead.id}`, { ...fields, updated_at: now });
+    return leadOne(lead.id);
+  }
+  // A new lead, optionally made from a review: it takes the review's details and the review.
+  let audit = null;
+  if (body.fromAuditId) {
+    if (!UUID.test(body.fromAuditId)) throw new HttpError(400, 'That review id is not valid.');
+    [audit] = await rows(`/rest/v1/seo_audits?id=eq.${body.fromAuditId}&select=${AUDIT_COLUMNS}&limit=1`);
+    if (!audit) throw new HttpError(404, 'That review was deleted or never existed.');
+    fields = {
+      ...fields,
+      site_url: fields.site_url ?? audit.site_url,
+      city: fields.city ?? audit.city,
+      service: fields.service ?? audit.service,
+      status: fields.status === 'new' && audit.status === 'complete' ? 'audit_run' : fields.status,
+    };
+  }
+  const [lead] = await insert('seo_leads', { ...fields, created_at: now, updated_at: now });
+  if (audit) {
+    await patch('seo_audits', `id=eq.${audit.id}`, { lead_id: lead.id });
+    if (!('next_follow_up' in fields)) await patch('seo_leads', `id=eq.${lead.id}`, { next_follow_up: plannedFollowUp(lead, await firstReviewAt(lead.id)) });
+  }
+  return leadOne(lead.id);
+}
+
+async function followUp(body) {
+  const lead = await loadLead(body.id);
+  const day = Number(body.day);
+  if (!FOLLOW_UPS.some((f) => f.day === day)) throw new HttpError(400, 'That follow-up step does not exist.');
+  const stamp = today();
+  const followups = { ...(lead.followups || {}) };
+  if (body.done) followups[day] = stamp;
+  else delete followups[day];
+  const update = { followups, updated_at: new Date().toISOString() };
+  if (body.done) update.last_contact = stamp;
+  if (body.done && day === 0) {
+    update.report_sent_on = lead.report_sent_on || stamp;
+    if (lead.status === 'new' || lead.status === 'audit_run') update.status = 'report_sent';
+  }
+  const next = { ...lead, ...update };
+  update.next_follow_up = plannedFollowUp(next, await firstReviewAt(lead.id));
+  await patch('seo_leads', `id=eq.${lead.id}`, update);
+  return leadOne(lead.id);
+}
+
+async function linkAudit(body) {
+  if (!UUID.test(body.auditId || '')) throw new HttpError(400, 'That review id is not valid.');
+  if (body.leadId) await loadLead(body.leadId);
+  await patch('seo_audits', `id=eq.${body.auditId}`, { lead_id: body.leadId || null });
+  if (body.leadId) await afterLeadReview(body.leadId);
+  return { ok: true };
+}
+
+async function leadDelete(body) {
+  const lead = await loadLead(body.id);
+  await patch('seo_audits', `lead_id=eq.${lead.id}`, { lead_id: null });
+  await sb(`/rest/v1/seo_leads?id=eq.${lead.id}`, { method: 'DELETE' });
+  return { ok: true };
+}
+
+// ── Email (Resend, same account as api/notify.mjs) ──────────────────────────
+
+async function sendEmail({ subject, text, replyTo }) {
+  if (!RESEND_KEY) return false;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: NOTIFY_FROM, to: NOTIFY_TO, subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
+  }).catch((e) => ({ ok: false, statusText: e.message }));
+  if (!res.ok) console.error('seo email not sent:', res.status, res.statusText);
+  return !!res.ok;
+}
+
+// ── Phase 4: monthly re-scans (Vercel Cron) ─────────────────────────────────
+
+async function cron(request) {
+  if (!CRON_SECRET || request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) throw new HttpError(401, 'Not allowed.');
+  const care = await rows('/rest/v1/seo_leads?care_plan=eq.true&status=eq.won&select=*');
+  if (!care.length) return { ran: [] };
+  const audits = await rows(`/rest/v1/seo_audits?lead_id=in.(${care.map((l) => l.id).join(',')})&status=eq.complete&select=id,lead_id,overall_score,created_at,city,service`);
+  const ran = [];
+  for (const { lead, last } of dueForRescan(care, audits).slice(0, RESCAN.perRun)) {
+    try {
+      const out = await run({ url: lead.site_url, business: lead.business_name, city: lead.city || last.city, service: lead.service || last.service, leadId: lead.id, fresh: true }, { rescan: true });
+      const score = out.audit.overall_score;
+      ran.push({ lead: lead.business_name, before: last.overall_score, after: score });
+      const origin = new URL(request.url).origin;
+      await sendEmail({
+        subject: `Monthly SEO re-scan: ${lead.business_name} ${last.overall_score ?? '?'} to ${score ?? '?'}`,
+        text: `The monthly re-scan for ${lead.business_name} (${lead.site_url}) finished.\n\nScore: ${last.overall_score ?? 'none'} last time, ${score ?? 'none'} now.\n\nOpen it, check it and mark it reviewed before sending the report:\n${origin}/admin/seo/#/audit/${out.audit.id}\n`,
+      });
+    } catch (e) {
+      console.error('seo rescan failed:', lead.id, e);
+      ran.push({ lead: lead.business_name, error: e.message });
+    }
+  }
+  return { ran };
+}
+
 // ── Client share ────────────────────────────────────────────────────────────
 
 const SHARE_TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
@@ -568,14 +793,14 @@ export function shareView(audit, checkRows, taskRows_, competitorRows = []) {
       .sort((a, b) => a.priority_order - b.priority_order)
       .map((t) => {
         const c = byKey[keyById[t.check_id]];
-        return { title: t.title, impact: t.impact, effort: t.effort, service: SERVICES[t.service_tag] || t.service_tag, status: c?.status || null, label: CHECKS[c?.check_key]?.label || null, why: c?.explanation || null };
+        return { order: t.priority_order, title: t.title, impact: t.impact, effort: t.effort, service: SERVICES[t.service_tag] || t.service_tag, status: c?.status || null, label: CHECKS[c?.check_key]?.label || null, why: c?.explanation || null };
       }),
     meta: {
       categories: Object.fromEntries(Object.entries(CATEGORIES).map(([k, c]) => [k, { label: c.label }])),
       checks: Object.fromEntries(Object.entries(CHECKS).map(([k, c]) => [k, { label: c.label, category: c.category, phase: c.phase }])),
     },
     local: shareLocal(byKey, competitorRows),
-    offers: OFFERS.map(({ key, name, price, blurb }) => ({ key, name, price, blurb })),
+    offers: OFFERS.map(({ key, name, price, blurb, payUrl }) => ({ key, name, price, blurb, payable: !!payUrl })),
     recommended,
     brand: BRAND,
   };
@@ -602,17 +827,67 @@ function shareLocal(byKey, competitorRows) {
   return { gbp, reviews, nap, rank, competitors };
 }
 
-async function share(token) {
+async function sharedAudit(token) {
   const missing = new HttpError(404, 'This report is not available. Ask Christian for a new link.');
   if (!SHARE_TOKEN.test(token || '')) throw missing;
   const [audit] = await rows(`/rest/v1/seo_audits?share_token=eq.${enc(token)}&reviewed_at=not.is.null&status=eq.complete&select=${AUDIT_COLUMNS}&limit=1`);
   if (!audit) throw missing;
+  return audit;
+}
+
+async function share(token) {
+  const audit = await sharedAudit(token);
   const [checks, tasks, competitors] = await Promise.all([
     rows(`/rest/v1/seo_audit_checks?audit_id=eq.${audit.id}&select=*&order=id.asc`),
     rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${audit.id}&select=*&order=priority_order.asc`),
     rows(`/rest/v1/seo_audit_competitors?audit_id=eq.${audit.id}&select=name,site_url,status,scores&order=position.asc.nullslast,id.asc`),
   ]);
   return shareView(audit, checks, tasks, competitors);
+}
+
+// "Request implementation": the client picks fixes (by their order in Next Steps) and an offer.
+async function requestWork(token, body, request) {
+  const audit = await sharedAudit(token);
+  if (body.website) return { ok: true, payUrl: null }; // a hidden field only bots fill in
+  const name = clean(body.name);
+  const email = clean(body.email, 200).toLowerCase();
+  const phone = clean(body.phone, 40);
+  const message = String(body.message ?? '').trim().slice(0, 2000);
+  if (!name) throw new HttpError(400, 'Add your name.');
+  if (!email && !phone) throw new HttpError(400, 'Add an email or phone number so Christian can reach you.');
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new HttpError(400, 'That email address does not look right.');
+  const offer = OFFERS.find((o) => o.key === body.offer) || null;
+  const picked = new Set((Array.isArray(body.tasks) ? body.tasks : []).map(Number));
+  const tasks = (await rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${audit.id}&select=title,priority_order&order=priority_order.asc`)).filter((t) => picked.has(t.priority_order));
+  if (!tasks.length && !offer) throw new HttpError(400, 'Pick at least one fix or a package.');
+
+  const since = new Date(Date.now() - 86_400_000).toISOString();
+  const recent = await rows(`/rest/v1/seo_requests?audit_id=eq.${audit.id}&created_at=gte.${enc(since)}&select=id`);
+  if (recent.length >= REQUESTS.perReportPerDay) throw new HttpError(429, 'This report already sent several requests today. Christian will be in touch, or call him directly.');
+
+  const [saved] = await insert('seo_requests', { audit_id: audit.id, lead_id: audit.lead_id, offer: offer?.key || null, tasks: tasks.map((t) => t.title), name, email: email || null, phone: phone || null, message: message || null });
+  const origin = new URL(request.url).origin;
+  const emailed = await sendEmail({
+    subject: `Implementation request: ${audit.business_name}`,
+    replyTo: email || undefined,
+    text: [
+      `${name} asked for help with the SEO review of ${audit.business_name} (${audit.final_url || audit.site_url}).`,
+      '',
+      offer ? `Package: ${offer.name} (${offer.price})` : 'Package: none picked',
+      '',
+      tasks.length ? `Fixes picked:\n${tasks.map((t) => `- ${t.title}`).join('\n')}` : 'No single fixes picked.',
+      '',
+      `Email: ${email || 'not given'}`,
+      `Phone: ${phone || 'not given'}`,
+      message ? `\nMessage:\n${message}` : '',
+      '',
+      `Review: ${origin}/admin/seo/#/audit/${audit.id}`,
+      audit.lead_id ? `Lead: ${origin}/admin/seo/#/leads/${audit.lead_id}` : '',
+    ].join('\n'),
+  });
+  if (emailed) await patch('seo_requests', `id=eq.${saved.id}`, { emailed: true });
+  if (audit.lead_id && UUID.test(audit.lead_id)) await patch('seo_leads', `id=eq.${audit.lead_id}`, { next_follow_up: today(), updated_at: new Date().toISOString() }).catch(() => {});
+  return { ok: true, payUrl: offer?.payUrl || null };
 }
 
 async function remove(body) {
@@ -627,11 +902,19 @@ export default {
     const action = url.searchParams.get('action');
     try {
       if (request.method === 'GET' && action === 'share') return json(await share(url.searchParams.get('t')));
+      if (request.method === 'POST' && action === 'request') {
+        const body = await request.json().catch(() => { throw new HttpError(400, 'Invalid JSON body.'); });
+        return json(await requestWork(url.searchParams.get('t'), body, request));
+      }
+      if (request.method === 'GET' && action === 'cron') return json(await cron(request));
       await requireAdmin(request);
       if (request.method === 'GET') {
         if (action === 'list') return json(await list());
         if (action === 'get') return json(await getOne(url.searchParams.get('id')));
         if (action === 'meta') return json(meta());
+        if (action === 'fixreport') return json(await fixReport(url.searchParams.get('id')));
+        if (action === 'leads') return json(await leads());
+        if (action === 'lead') return json(await leadOne(url.searchParams.get('id')));
         throw new HttpError(400, 'Unknown action.');
       }
       if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed.');
@@ -646,6 +929,10 @@ export default {
       if (action === 'competitorRemove') return json(await removeCompetitor(body));
       if (action === 'place') return json(await pickPlace(body));
       if (action === 'rank') return json(await setRank(body));
+      if (action === 'leadSave') return json(await leadSave(body));
+      if (action === 'followup') return json(await followUp(body));
+      if (action === 'link') return json(await linkAudit(body));
+      if (action === 'leadDelete') return json(await leadDelete(body));
       throw new HttpError(400, 'Unknown action.');
     } catch (err) {
       if (err instanceof HttpError) return json({ error: err.message }, err.status);

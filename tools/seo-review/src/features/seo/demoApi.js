@@ -1,20 +1,23 @@
 // Stand-alone preview: real reviews saved from the live checks on Oct 15, 2026, no server needed.
 // A "run" here replays the run screen, then opens the saved review for that site if there is one.
 import fixtures from './demo/fixtures.json'
+import { buildFixReport, fixReportFilename } from '../../../../../api/_lib/seo-fixreport.mjs'
+import { LEAD_STATUSES, LEAD_SOURCES, FOLLOW_UPS, RESCAN } from '../../../../../api/_lib/seo-config.mjs'
+import { cleanLead, followUpPlan, plannedFollowUp, scoreHistory, today } from '../../../../../api/_lib/seo-leads.mjs'
 
 const store = { audits: fixtures.audits.map((a) => ({ ...a })), checks: structuredClone(fixtures.checks), tasks: structuredClone(fixtures.tasks), competitors: {}, ranks: {} }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 export async function listReviews() {
   await wait(250)
-  return { audits: [...store.audits].sort((a, b) => b.created_at.localeCompare(a.created_at)), meta: fixtures.meta }
+  return { audits: [...store.audits].sort((a, b) => b.created_at.localeCompare(a.created_at)), leads: leads.map((l) => ({ id: l.id, business: l.business_name })), meta: meta() }
 }
 
 export async function getReview(id) {
   await wait(200)
   const audit = store.audits.find((a) => a.id === id)
   if (!audit) throw new Error('That review was deleted or never existed.')
-  return { audit, checks: store.checks[id], tasks: store.tasks[id] || [], competitors: store.competitors[id] || [], ranks: store.ranks[id] || [], meta: fixtures.meta }
+  return { audit, checks: store.checks[id], tasks: store.tasks[id] || [], competitors: store.competitors[id] || [], ranks: store.ranks[id] || [], meta: meta() }
 }
 
 export async function setReviewed(id, reviewed) {
@@ -112,4 +115,98 @@ export async function setRank(id, position, keyword) {
   upsertCheck(id, { key: 'rank', category: 'visibility', label: 'Rank for service and city', status, score: PTS[status], summary, explanation: 'Entered by hand from a Google search.', impact: 'high', effort: 'large', service: 'Website Care + Local SEO', details: { keyword: kw, position } })
   ;(store.ranks[id] ||= []).unshift({ keyword: kw, rank_position: position, checked_on: new Date().toISOString().slice(0, 10) })
   return getReview(id)
+}
+
+// ── Phase 4 in the preview: leads and the fix-it report ─────────────────────
+// One sample lead, filed under the saved Washed Up review. Changes last until the page reloads.
+
+const meta = () => ({ ...fixtures.meta, leadStatuses: LEAD_STATUSES, leadSources: LEAD_SOURCES, followUps: FOLLOW_UPS, rescanDays: RESCAN.everyDays })
+const washed = store.audits.find((a) => a.business_name.startsWith('Washed Up'))
+const leads = [
+  { id: 'demo-lead-1', business_name: 'Washed Up Pressure Washing', site_url: 'https://washeduppressure.com/', city: 'Hickory, NC', service: 'Pressure washing', contact_name: 'Owner', email: null, phone: null, source: 'facebook', status: 'report_sent', care_plan: false, last_contact: washed.created_at.slice(0, 10), next_follow_up: null, report_sent_on: washed.created_at.slice(0, 10), followups: { 0: washed.created_at.slice(0, 10) }, notes: 'Asked about the speed score. Follow up with the image fixes.', created_at: washed.created_at, updated_at: washed.created_at },
+]
+washed.lead_id = 'demo-lead-1'
+const firstAt = (id) => store.audits.filter((a) => a.lead_id === id).map((a) => a.created_at).sort()[0] || null
+leads[0].next_follow_up = plannedFollowUp(leads[0], firstAt('demo-lead-1'))
+
+const toLead = (l) => ({ id: l.id, business: l.business_name, site: l.site_url, city: l.city, service: l.service, contact: l.contact_name, email: l.email, phone: l.phone, source: l.source, status: l.status, carePlan: l.care_plan, lastContact: l.last_contact, nextFollowUp: l.next_follow_up, reportSentOn: l.report_sent_on, followups: l.followups, notes: l.notes, createdAt: l.created_at })
+
+export async function getFixReport(id) {
+  const view = await getReview(id)
+  return { markdown: buildFixReport(view), filename: fixReportFilename(view.audit) }
+}
+
+export async function listLeads() {
+  await wait(200)
+  return {
+    leads: leads.map((l) => {
+      const mine = store.audits.filter((a) => a.lead_id === l.id).sort((a, b) => b.created_at.localeCompare(a.created_at))
+      return { ...toLead(l), reviews: mine.length, latestScore: mine[0]?.overall_score ?? null, latestAuditId: mine[0]?.id || null, lastReviewAt: mine[0]?.created_at || null }
+    }),
+    meta: meta(),
+  }
+}
+
+export async function getLead(id) {
+  await wait(150)
+  const l = leads.find((x) => x.id === id)
+  if (!l) throw new Error('That lead was deleted or never existed.')
+  const audits = store.audits.filter((a) => a.lead_id === id).sort((a, b) => b.created_at.localeCompare(a.created_at))
+  return {
+    lead: toLead(l),
+    audits: audits.map((a) => ({ id: a.id, site: a.final_url || a.site_url, status: a.status, overall: a.overall_score, createdAt: a.created_at, reviewedAt: a.reviewed_at, monthly: !!a.notes?.rescan })),
+    history: scoreHistory(audits),
+    plan: followUpPlan(l, firstAt(id)),
+    requests: [],
+    meta: meta(),
+  }
+}
+
+export async function saveLead(body) {
+  await wait(200)
+  const fields = cleanLead(body, { creating: !body.id })
+  if (body.id) {
+    const l = leads.find((x) => x.id === body.id)
+    if ((fields.status === 'won' || fields.status === 'lost') && !('nextFollowUp' in body)) fields.next_follow_up = null
+    Object.assign(l, fields)
+    return getLead(l.id)
+  }
+  const l = { id: `demo-lead-${Date.now()}`, followups: {}, notes: '', care_plan: false, created_at: new Date().toISOString(), ...fields }
+  const audit = body.fromAuditId && store.audits.find((a) => a.id === body.fromAuditId)
+  if (audit) {
+    Object.assign(l, { site_url: l.site_url ?? audit.site_url, city: l.city ?? audit.city, service: l.service ?? audit.service, status: l.status === 'new' ? 'audit_run' : l.status })
+    audit.lead_id = l.id
+    l.next_follow_up = plannedFollowUp(l, audit.created_at)
+  }
+  leads.push(l)
+  return getLead(l.id)
+}
+
+export async function setFollowUp(id, day, done) {
+  const l = leads.find((x) => x.id === id)
+  const stamp = today()
+  l.followups = { ...l.followups }
+  if (done) {
+    l.followups[day] = stamp
+    l.last_contact = stamp
+    if (day === 0) {
+      l.report_sent_on ||= stamp
+      if (l.status === 'new' || l.status === 'audit_run') l.status = 'report_sent'
+    }
+  } else delete l.followups[day]
+  l.next_follow_up = plannedFollowUp(l, firstAt(id))
+  return getLead(id)
+}
+
+export async function linkReview(auditId, leadId) {
+  await wait(150)
+  store.audits.find((a) => a.id === auditId).lead_id = leadId
+  return { ok: true }
+}
+
+export async function deleteLead(id) {
+  await wait(150)
+  leads.splice(leads.findIndex((l) => l.id === id), 1)
+  for (const a of store.audits) if (a.lead_id === id) a.lead_id = null
+  return { ok: true }
 }

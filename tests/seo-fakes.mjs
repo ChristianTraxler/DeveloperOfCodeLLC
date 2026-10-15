@@ -6,13 +6,15 @@ import { randomUUID } from 'node:crypto';
 export function installFakes() {
   // ── In-memory PostgREST: just the filters api/seo.mjs uses ──────────────────
 
-  const db = { seo_audits: [], seo_audit_checks: [], seo_audit_tasks: [], seo_audit_competitors: [], seo_audit_manual: [], seo_places_cache: [] };
+  const db = { seo_audits: [], seo_audit_checks: [], seo_audit_tasks: [], seo_audit_competitors: [], seo_audit_manual: [], seo_places_cache: [], seo_leads: [], seo_requests: [] };
   let serial = 1;
   const DEFAULTS = {
     seo_audits: () => ({ id: randomUUID(), created_at: new Date().toISOString(), notes: {}, category_scores: {}, overall_score: null, reviewed_at: null, final_url: null, error: null, lead_id: null, duration_ms: null }),
     seo_audit_tasks: () => ({ done: false }),
     seo_audit_competitors: () => ({ status: 'pending', scores: {}, position: null, error: null, place_id: null, site_url: null }),
     seo_audit_checks: () => ({ details: {} }),
+    seo_leads: () => ({ id: randomUUID(), status: 'new', care_plan: false, followups: {}, notes: '', next_follow_up: null, report_sent_on: null, last_contact: null }),
+    seo_requests: () => ({ created_at: new Date().toISOString(), emailed: false }),
   };
 
   function matches(row, params) {
@@ -93,7 +95,7 @@ export function installFakes() {
     place('pB', 'Hickory Clean', 'https://hc.test/', 60),
     place('pC', 'Wash Pros', undefined, 4, 3.8),
   ];
-  const stats = { placesCalls: 0 };
+  const stats = { placesCalls: 0, emails: [] };
 
   const page = (title, h1, body) =>
     `<!doctype html><html><head><title>${title}</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${body.slice(0, 120)} pressure washing in Hickory NC for homes and businesses, free quotes."></head><body><h1>${h1}</h1><p>${body} ${'Real local work. '.repeat(25)}</p><a href="/services">Services</a><a href="/about">About</a><a href="/contact">Contact</a><a href="tel:8285550100">Call</a></body></html>`;
@@ -110,6 +112,10 @@ export function installFakes() {
       stats.placesCalls++;
       const q = JSON.parse(init.body).textQuery;
       return Response.json({ places: q === 'Pressure washing in Hickory, NC' ? PLACES : [] });
+    }
+    if (s === 'https://api.resend.com/emails') {
+      stats.emails.push(JSON.parse(init.body));
+      return Response.json({ id: 'email' });
     }
     if (s.startsWith('https://www.googleapis.com/pagespeedonline')) return new Response('{"error":{"message":"no key"}}', { status: 400 });
     if (SITES[s]) return new Response(init.method === 'HEAD' ? null : SITES[s], { status: 200, headers: { 'content-type': 'text/html' } });

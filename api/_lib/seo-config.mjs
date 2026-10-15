@@ -106,11 +106,48 @@ export const FETCH = {
 // The offer ladder on the client report. Prices are placeholders until Christian sets them.
 // recommendFrom: the lowest overall score (inclusive) that points to this offer. The report
 // recommends the first offer whose recommendFrom the score reaches, so order from high to low.
+// payUrl: the Stripe Payment Link for the offer (Phase 4). Leave null until Christian creates them;
+// until then "Request implementation" only emails the request and Christian replies with a quote.
 export const OFFERS = [
-  { key: 'care', name: 'Website Care + Local SEO', price: '[PRICE] per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80 },
-  { key: 'implementation', name: 'Implementation Package', price: '[PRICE]', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0 },
-  { key: 'review', name: 'Full SEO Review', price: '[PRICE]', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null },
+  { key: 'care', name: 'Website Care + Local SEO', price: '[PRICE] per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80, payUrl: null },
+  { key: 'implementation', name: 'Implementation Package', price: '[PRICE]', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0, payUrl: null },
+  { key: 'review', name: 'Full SEO Review', price: '[PRICE]', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null, payUrl: null },
 ];
+
+// Phase 4: the leads list. Statuses run in this order; won and lost end the follow-ups.
+export const LEAD_STATUSES = {
+  new: 'New',
+  audit_run: 'Audit run',
+  report_sent: 'Report sent',
+  walkthrough: 'Walkthrough booked',
+  proposal: 'Proposal sent',
+  won: 'Won',
+  lost: 'Lost',
+};
+export const LEAD_SOURCES = {
+  facebook: 'Facebook group',
+  nextdoor: 'Nextdoor',
+  cold_dm: 'Cold DM',
+  referral: 'Referral',
+  website: 'Website',
+  other: 'Other',
+};
+
+// Follow-ups after a review, counted in days from the day the report goes out (or the day of the
+// first review, until it does). Ticking day 0 marks the report as sent.
+export const FOLLOW_UPS = [
+  { day: 0, label: 'Send the report' },
+  { day: 1, label: 'Confirm they got it' },
+  { day: 3, label: 'Check in with one question' },
+  { day: 7, label: 'Send "Here is what I would fix first"' },
+];
+
+// Monthly re-scans for care plan clients (leads marked care plan and won). The daily cron runs
+// at most perRun reviews, because each one can take most of Vercel's 60 seconds.
+export const RESCAN = { everyDays: 30, perRun: 1 };
+
+// "Request implementation" on the client report: how many requests one report accepts per day.
+export const REQUESTS = { perReportPerDay: 5 };
 
 // Who the client report is from, and where its buttons go.
 export const BRAND = {

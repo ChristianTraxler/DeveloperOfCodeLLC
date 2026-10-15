@@ -24,3 +24,21 @@ export function tokenFromLocation(loc = window.location) {
   const fromPath = /\/seo\/([A-Za-z0-9_-]+)\/?$/.exec(loc.pathname)?.[1]
   return fromPath || new URLSearchParams(loc.search).get('t') || ''
 }
+
+// "Request implementation": the fixes the client picked, the package and how to reach them.
+// Returns { ok, payUrl } (payUrl is the Stripe Payment Link once Christian sets one up).
+export async function requestWork(token, body) {
+  if (isDemo) {
+    await new Promise((r) => setTimeout(r, 700))
+    return { ok: true, payUrl: null }
+  }
+  let res
+  try {
+    res = await fetch(`/api/seo?action=request&t=${encodeURIComponent(token)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  } catch {
+    throw new Error('Could not send. Check your connection and try again.')
+  }
+  const data = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(data?.error || 'Could not send. Try again, or call Christian.')
+  return data
+}

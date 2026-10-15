@@ -8,6 +8,7 @@ import { Dial, marksFor } from '../Dial.jsx'
 import { StatusMark } from '../Checks.jsx'
 import { cx } from '../lib.js'
 import { getShare, tokenFromLocation } from './shareApi.js'
+import { RequestForm } from './RequestForm.jsx'
 
 const fDate = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 const tone = (n) => (n == null ? 'text-faint' : n >= 90 ? 'text-live' : n >= 50 ? 'text-amber' : 'text-danger')
@@ -309,12 +310,6 @@ function Local({ data }) {
   )
 }
 
-function requestHref(data) {
-  const { brand, report, tasks } = data
-  const body = [`Hi Christian,`, ``, `I would like help with the fixes from my SEO review of ${report.site}:`, ``, ...tasks.map((t, i) => `${i + 1}. ${t.title}`), ``, `Thanks,`].join('\n')
-  return `mailto:${brand.email}?subject=${encodeURIComponent(`Fixes from my SEO review: ${report.business}`)}&body=${encodeURIComponent(body)}`
-}
-
 function Packages({ data }) {
   const { offers, recommended } = data
   return (
@@ -353,7 +348,7 @@ function CallToAction({ data, summary }) {
             Book a 15-minute walkthrough <ArrowRight size={17} aria-hidden="true" />
           </a>
           {!summary && tasks.length > 0 && (
-            <a href={requestHref(data)} className="no-print inline-flex h-[54px] items-center justify-center rounded-full border border-line2 px-6 text-[15px] font-medium transition-colors hover:border-bone/50">
+            <a href="#c-request" className="no-print inline-flex h-[54px] items-center justify-center rounded-full border border-line2 px-6 text-[15px] font-medium transition-colors hover:border-bone/50">
               Request these fixes
             </a>
           )}
@@ -416,6 +411,7 @@ function Full({ data }) {
         <NextSteps tasks={data.tasks} checks={data.checks} />
         <Local data={data} />
         <Packages data={data} />
+        <RequestForm data={data} />
       </main>
       <CallToAction data={data} />
       <Footer brand={data.brand} />
