@@ -2,12 +2,13 @@
 // A lead holds every review of one business, its score history and the day 0, 1, 3 and 7
 // follow-ups after the report goes out.
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ArrowUpRight, Check, Mail, Phone, Plus, RotateCw, Trash2, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Check, Copy, Mail, Phone, Plus, RotateCw, Trash2, UserRound } from 'lucide-react'
 import { api, isDemo } from './api.js'
 import { Button, Field, Input, inputClass } from './ui/core.jsx'
 import { Sheet } from './ui/Sheet.jsx'
 import { useToast } from './ui/Toast.jsx'
 import { cx, domainOf, plural, when } from './lib.js'
+import { payMessage } from '../../../../../api/_lib/seo-leads.mjs'
 
 const DAY = 86_400_000
 const todayIso = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10)
@@ -22,6 +23,58 @@ export function dueInfo(iso) {
   if (days === 0) return { text: 'Due today', tone: 'text-amber', due: true }
   if (days === 1) return { text: 'Tomorrow', tone: 'text-bone' }
   return { text: dayLabel(iso), tone: 'text-mute' }
+}
+
+// The payment link for one request, and the note to send the client with it.
+function RequestPay({ request, business, onSave }) {
+  const toast = useToast()
+  const [link, setLink] = useState(request.payUrl || '')
+  const [copied, setCopied] = useState(false)
+  useEffect(() => setLink(request.payUrl || ''), [request.payUrl])
+  const id = `pay-${request.id}`
+  const dirty = link.trim() !== (request.payUrl || '')
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(payMessage(request, business))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+      toast('Copied. Paste it into your email or text to the client.')
+    } catch {
+      toast('Copying did not work in this browser.')
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t border-ember/20 pt-4">
+      <label htmlFor={id} className="mb-2 block text-[13.5px] font-medium text-bone/85">
+        Payment link
+      </label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          id={id}
+          type="url"
+          inputMode="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && dirty && onSave(link.trim())}
+          placeholder="Paste a Stripe, Square or PayPal link"
+          className="sm:flex-1"
+        />
+        <div className="flex gap-2">
+          <Button variant="ghost" size="lg" className="flex-1 sm:flex-none" disabled={!dirty} onClick={() => onSave(link.trim())}>
+            Save
+          </Button>
+          <Button variant="ember" size="lg" className="flex-1 sm:flex-none" disabled={!request.payUrl || dirty} onClick={copy}>
+            {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied' : 'Copy message'}
+          </Button>
+        </div>
+      </div>
+      <p className="mt-2 text-[12.5px] leading-snug text-faint">
+        {request.price ? `Listed as ${request.price}. Edit the price in the message if you quoted an exact tier.` : 'No package picked, so the message leaves the price out.'}
+      </p>
+    </div>
+  )
 }
 
 const STATUS_TONE = {
@@ -596,6 +649,7 @@ export function LeadView({ id, onBack, onOpenAudit, onNewReview, onChanged }) {
                   {r.email && <a className="hover:text-white" href={`mailto:${r.email}`}>{r.email}</a>}
                   {r.phone && <a className="hover:text-white" href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}>{r.phone}</a>}
                 </p>
+                <RequestPay request={r} business={lead.business} onSave={(payUrl) => save(api.setPayLink, { id: r.id, payUrl }, payUrl ? 'Payment link saved.' : 'Payment link removed.')} />
               </li>
             ))}
           </ul>

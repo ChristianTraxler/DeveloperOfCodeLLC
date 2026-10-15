@@ -211,6 +211,11 @@ export async function deleteLead(id) {
   return { ok: true }
 }
 
+// The preview has no requests from a report, so there is no payment link to save.
+export async function setPayLink() {
+  throw new Error('Payment links need the live admin.')
+}
+
 // ── The Google profile typed in by hand, in the preview ─────────────────────
 // Graded with the same thresholds as the server, kept simple here.
 

@@ -94,3 +94,31 @@ export function dueForRescan(leads, audits, now = new Date()) {
     .sort((a, b) => latest[a.id].created_at.localeCompare(latest[b.id].created_at))
     .map((l) => ({ lead: l, last: latest[l.id] }));
 }
+
+// A payment link pasted on a request from the report (Stripe, Square, PayPal...). Empty clears it.
+export function cleanPayUrl(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  let url;
+  try { url = new URL(raw); } catch { throw new LeadInputError('That payment link does not look like a web address.'); }
+  if (url.protocol !== 'https:') throw new LeadInputError('Use the https:// payment link.');
+  if (raw.length > 500) throw new LeadInputError('That payment link is too long.');
+  return url.href;
+}
+
+// The note Christian copies and sends once a request has a payment link.
+export function payMessage(request, business) {
+  const first = String(request.name || '').trim().split(/\s+/)[0] || 'there';
+  const what = request.offer ? `the ${request.offer}${request.price ? ` (${request.price})` : ''}` : 'the fixes you picked';
+  return [
+    `Hi ${first},`,
+    '',
+    `Thanks for asking about ${what} for ${business}.${request.tasks?.length ? ' This covers:' : ''}`,
+    ...(request.tasks || []).map((t) => `- ${t}`),
+    '',
+    request.payUrl ? `You can pay here when you're ready: ${request.payUrl}` : '',
+    'I will start as soon as it comes through. Reply here with any questions.',
+    '',
+    'Christian',
+  ].filter((line, i, all) => line !== '' || all[i - 1] !== '').join('\n');
+}

@@ -109,9 +109,9 @@ export const FETCH = {
 // payUrl: the Stripe Payment Link for the offer (Phase 4). Leave null until Christian creates them;
 // until then "Request implementation" only emails the request and Christian replies with a quote.
 export const OFFERS = [
-  { key: 'care', name: 'Website Care + Local SEO', price: '[PRICE] per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80, payUrl: null },
-  { key: 'implementation', name: 'Implementation Package', price: '[PRICE]', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0, payUrl: null },
-  { key: 'review', name: 'Full SEO Review', price: '[PRICE]', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null, payUrl: null },
+  { key: 'care', name: 'Website Care + Local SEO', price: '$149 to $399 per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80, payUrl: null },
+  { key: 'implementation', name: 'Implementation Package', price: '$495 to $1,200', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0, payUrl: null },
+  { key: 'review', name: 'Full SEO Review', price: '$149', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null, payUrl: null },
 ];
 
 // Phase 4: the leads list. Statuses run in this order; won and lost end the follow-ups.

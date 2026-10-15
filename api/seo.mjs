@@ -59,7 +59,7 @@ import { randomBytes } from 'node:crypto';
 import { AuditInputError, normalizeUrl, runAudit, PHASE_ONE } from './_lib/seo-checks.mjs';
 import { CATEGORIES, CHECKS, SERVICES, FETCH, OFFERS, BRAND, LOCAL, LEAD_STATUSES, LEAD_SOURCES, FOLLOW_UPS, RESCAN, REQUESTS } from './_lib/seo-config.mjs';
 import { buildFixReport, fixReportFilename } from './_lib/seo-fixreport.mjs';
-import { LeadInputError, cleanLead, followUpPlan, plannedFollowUp, scoreHistory, dueForRescan, today } from './_lib/seo-leads.mjs';
+import { LeadInputError, cleanLead, cleanPayUrl, followUpPlan, plannedFollowUp, scoreHistory, dueForRescan, today } from './_lib/seo-leads.mjs';
 import { scoreAudit, buildTasks } from './_lib/seo-score.mjs';
 import { findLocal, localChecks, placeStatuses, rankCheck, competitorsCheck, hostOf } from './_lib/seo-local.mjs';
 import { cityName } from './_lib/seo-html.mjs';
@@ -704,7 +704,7 @@ async function leadOne(id) {
   const lead = await loadLead(id);
   const [audits, requests] = await Promise.all([
     rows(`/rest/v1/seo_audits?lead_id=eq.${id}&select=${AUDIT_COLUMNS}&order=created_at.desc`),
-    rows(`/rest/v1/seo_requests?lead_id=eq.${id}&select=id,audit_id,offer,tasks,name,email,phone,message,created_at&order=created_at.desc&limit=50`),
+    rows(`/rest/v1/seo_requests?lead_id=eq.${id}&select=id,audit_id,offer,tasks,name,email,phone,message,pay_url,created_at&order=created_at.desc&limit=50`),
   ]);
   const first = [...audits].reverse().find((a) => a.status === 'complete')?.created_at || null;
   return {
@@ -712,7 +712,10 @@ async function leadOne(id) {
     audits: audits.map((a) => ({ id: a.id, site: a.final_url || a.site_url, status: a.status, overall: a.overall_score, createdAt: a.created_at, reviewedAt: a.reviewed_at, monthly: !!a.notes?.rescan })),
     history: scoreHistory(audits),
     plan: followUpPlan(lead, first),
-    requests: requests.map((r) => ({ ...r, offer: OFFERS.find((o) => o.key === r.offer)?.name || null })),
+    requests: requests.map(({ pay_url, ...r }) => {
+      const offer = OFFERS.find((o) => o.key === r.offer);
+      return { ...r, offer: offer?.name || null, price: offer?.price || null, payUrl: pay_url || null };
+    }),
     meta: meta(),
   };
 }
@@ -780,6 +783,21 @@ async function linkAudit(body) {
   await patch('seo_audits', `id=eq.${body.auditId}`, { lead_id: body.leadId || null });
   if (body.leadId) await afterLeadReview(body.leadId);
   return { ok: true };
+}
+
+// The payment link Christian pastes on a request before sending the client a note.
+async function requestPayLink(body) {
+  const id = Number(body.id);
+  if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'That request id is not valid.');
+  let payUrl;
+  try { payUrl = cleanPayUrl(body.payUrl); } catch (e) {
+    if (e instanceof LeadInputError) throw new HttpError(400, e.message);
+    throw e;
+  }
+  const [saved] = await rows(`/rest/v1/seo_requests?id=eq.${id}&select=lead_id&limit=1`);
+  if (!saved) throw new HttpError(404, 'That request was deleted.');
+  await patch('seo_requests', `id=eq.${id}`, { pay_url: payUrl });
+  return saved.lead_id ? leadOne(saved.lead_id) : { ok: true };
 }
 
 async function leadDelete(body) {
@@ -1009,6 +1027,7 @@ export default {
       if (action === 'followup') return json(await followUp(body));
       if (action === 'link') return json(await linkAudit(body));
       if (action === 'leadDelete') return json(await leadDelete(body));
+      if (action === 'payLink') return json(await requestPayLink(body));
       throw new HttpError(400, 'Unknown action.');
     } catch (err) {
       if (err instanceof HttpError) return json({ error: err.message }, err.status);
