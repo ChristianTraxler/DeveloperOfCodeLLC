@@ -7,6 +7,7 @@
     { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" },
     { "source": "/seo/:token", "destination": "/admin/seo/share.html" },
     { "source": "/admin/pricing-desk", "destination": "https://pricing-desk.vercel.app/" },
+    { "source": "/admin/pricing-desk/", "destination": "https://pricing-desk.vercel.app/" },
     { "source": "/admin/pricing-desk/:path*", "destination": "https://pricing-desk.vercel.app/:path*" }
   ],
   "redirects": [
