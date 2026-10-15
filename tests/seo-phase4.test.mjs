@@ -17,7 +17,7 @@ process.env.CRON_SECRET = 'cron-secret';
 const { setHostGuard } = await import('../api/_lib/seo-checks.mjs');
 const { default: api } = await import('../api/seo.mjs');
 const { buildFixReport } = await import('../api/_lib/seo-fixreport.mjs');
-const { followUpPlan, scoreHistory, dueForRescan, cleanLead, addDays } = await import('../api/_lib/seo-leads.mjs');
+const { followUpPlan, scoreHistory, dueForRescan, cleanLead, addDays, cleanPayUrl, payMessage } = await import('../api/_lib/seo-leads.mjs');
 setHostGuard(async () => {});
 
 const { db, stats } = installFakes();
@@ -197,6 +197,19 @@ test('leads: create from a review, follow-ups, history, link, request, delete', 
   assert.equal(db.seo_requests.length, count);
   const withReq = await call('lead', null, `&id=${id}`);
   assert.equal(withReq.requests[0].offer, 'Implementation Package');
+  assert.equal(withReq.requests[0].price, '$495 to $1,200');
+  assert.equal(withReq.requests[0].payUrl, null);
+
+  // Paste a payment link on the request, then clear it.
+  const reqId = withReq.requests[0].id;
+  await assert.rejects(call('payLink', { id: reqId, payUrl: 'http://pay.test/x' }), /https/);
+  await assert.rejects(call('payLink', { id: reqId, payUrl: 'not a link' }), /web address/);
+  await assert.rejects(call('payLink', { id: 'x', payUrl: '' }), /not valid/);
+  await assert.rejects(call('payLink', { id: 99999, payUrl: '' }), /deleted/);
+  const linked = await call('payLink', { id: reqId, payUrl: ' https://buy.stripe.com/test_123 ' });
+  assert.equal(linked.requests[0].payUrl, 'https://buy.stripe.com/test_123');
+  assert.equal(db.seo_requests.find((r) => r.id === reqId).pay_url, 'https://buy.stripe.com/test_123');
+  assert.equal((await call('payLink', { id: reqId, payUrl: '' })).requests[0].payUrl, null);
 
   // Unlink a review, then delete the lead: the reviews stay.
   await call('link', { auditId: second.audit.id, leadId: null });
@@ -225,4 +238,17 @@ test('cron: needs the secret, re-scans a care plan client a month on, and emails
   assert.match(stats.emails[before].subject, /Monthly SEO re-scan: Blue Ridge Wash/);
   const one = await call('lead', null, `&id=${lead.id}`);
   assert.equal(one.history.at(-1).monthly, true);
+});
+
+test('payment links: https only, and the client note names the package, price, fixes and link', () => {
+  assert.equal(cleanPayUrl(''), null);
+  assert.equal(cleanPayUrl('https://buy.stripe.com/abc'), 'https://buy.stripe.com/abc');
+  assert.throws(() => cleanPayUrl('javascript:alert(1)'), /https/);
+  assert.throws(() => cleanPayUrl(`https://pay.test/${'a'.repeat(600)}`), /too long/);
+  const note = payMessage({ name: 'Sam Lee', offer: 'Implementation Package', price: '$495 to $1,200', tasks: ['Fix the title'], payUrl: 'https://buy.stripe.com/abc' }, 'Blue Ridge Wash');
+  assert.match(note, /^Hi Sam,/);
+  assert.match(note, /Implementation Package \(\$495 to \$1,200\) for Blue Ridge Wash/);
+  assert.match(note, /- Fix the title/);
+  assert.match(note, /https:\/\/buy\.stripe\.com\/abc/);
+  assert.ok(!/\n\n\n/.test(payMessage({ name: '', offer: null, tasks: [] }, 'Acme')));
 });

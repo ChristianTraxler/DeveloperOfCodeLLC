@@ -154,8 +154,11 @@ create table if not exists seo_requests (
   phone      text,
   message    text,
   emailed    boolean not null default false,
+  pay_url    text,
   created_at timestamptz not null default now()
 );
+-- Added after Phase 4 went live: the payment link pasted on a request.
+alter table seo_requests add column if not exists pay_url text;
 create index if not exists seo_requests_audit on seo_requests (audit_id, created_at desc);
 
 alter table seo_audits            enable row level security;
