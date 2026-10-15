@@ -481,9 +481,11 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
         let isMain = action.targetFrame?.isMainFrame ?? true
         let from = views.first(where: { $0.value === w })?.key
         // A link or script navigation to another tool (e.g. a Hub card) switches the sidebar to that
-        // tool's own view. Back/forward and reloads stay where they are.
+        // tool's own view. Back/forward and reloads stay where they are. A page from another site
+        // (Relay Solo) may only do this with a real link click, never by script or form.
+        let trusted: [WKNavigationType] = isInternal(w.url) ? [.linkActivated, .other, .formSubmitted] : [.linkActivated]
         if isMain, let u = u, let from = from, let t = toolIndex(for: u), t != from,
-           [.linkActivated, .other, .formSubmitted].contains(action.navigationType) {
+           trusted.contains(action.navigationType) {
             decisionHandler(.cancel)
             open(t, at: u)
             return
