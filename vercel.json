@@ -30,6 +30,7 @@
   ],
   "functions": {
     "api/demos.mjs": { "maxDuration": 60 },
-    "api/marketing.mjs": { "maxDuration": 60 }
+    "api/marketing.mjs": { "maxDuration": 60 },
+    "api/seo.mjs": { "maxDuration": 60 }
   }
 }

@@ -1,5 +1,5 @@
 // DOC Admin: native macOS app around the Developer of Code admin hub.
-// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, Demos). Each tool
+// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, SEO Review, Demos). Each tool
 // keeps its own WebKit view so state survives switching. Logins persist between launches.
 // Set DOC_ADMIN_BASE (e.g. http://localhost:5173) to point the app at a dev server.
 
@@ -18,6 +18,7 @@ let tools = [
     Tool(name: "Outlay", path: "/admin/outlay/", symbol: "creditcard"),
     Tool(name: "Marketing", path: "/admin/marketing/", symbol: "megaphone"),
     Tool(name: "Mail", path: "/admin/mail/", symbol: "envelope"),
+    Tool(name: "SEO Review", path: "/admin/seo/", symbol: "magnifyingglass"),
     Tool(name: "Demos", path: "/admin/demos/", symbol: "play.rectangle"),
 ]
 

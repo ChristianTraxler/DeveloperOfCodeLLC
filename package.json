@@ -6,15 +6,17 @@
   "description": "Developer of Code, LLC: the marketing site plus the /admin tools hub.",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:tracker && npm run build:outlay && npm run build:marketing && npm run build:mail && vite build",
+    "build": "npm run build:tracker && npm run build:outlay && npm run build:marketing && npm run build:mail && npm run build:seo && vite build",
     "build:site": "vite build",
     "build:tracker": "cd tools/project-tracker && npm install --include=dev && npm run build && rm -rf node_modules",
     "build:outlay": "cd tools/outlay && npm install --include=dev && npm run build && rm -rf node_modules",
     "build:marketing": "cd tools/marketing && npm install --include=dev && npm run build && rm -rf node_modules",
     "build:mail": "cd tools/mail && npm install --include=dev && npm run build && rm -rf node_modules",
+    "build:seo": "cd tools/seo-review && npm install --include=dev && npm run build && rm -rf node_modules",
     "build:single": "node scripts/build-single.mjs",
     "preview": "vite preview",
-    "test:demos": "node --test tests/*.test.mjs"
+    "test:demos": "node --test tests/*.test.mjs",
+    "test:seo": "node --test tests/seo.test.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^147.0.0",
