@@ -1,7 +1,8 @@
 // api/admin-sso.mjs: lets a signed-in admin open a separately hosted admin app without a second login.
 //
 //   GET ?app=pricing-desk   (Supabase session whose email is in ADMIN_EMAILS)
-//     → { url } pointing at the app's /sso page with a signed ticket in the hash.
+//     → { url } pointing at the app's /sso page with a signed ticket in the hash. Apps are served
+//       through a vercel.json rewrite under /admin/ so they open inside the Admin Hub window.
 //
 // The ticket is "<expires>.<HMAC-SHA256 of '<app>:<expires>'>" (base64url) and lives 20 seconds.
 // The app checks it with the same SSO_SECRET and starts its own session. The Supabase token never
@@ -23,7 +24,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
 const TICKET_MS = 20_000;
 
 const APPS = {
-  'pricing-desk': 'https://pricing-desk.vercel.app',
+  'pricing-desk': '/admin/pricing-desk',
 };
 
 const json = (body, status = 200) =>
