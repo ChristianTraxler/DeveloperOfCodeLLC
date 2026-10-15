@@ -1,5 +1,6 @@
 // DOC Admin: native macOS app around the Developer of Code admin hub.
-// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, SEO Review, Demos). Each tool
+// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, SEO Review, Demos, Pricing Desk,
+// Relay Solo). Each tool
 // keeps its own WebKit view so state survives switching. Logins persist between launches.
 // Set DOC_ADMIN_BASE (e.g. http://localhost:5173) to point the app at a dev server.
 
@@ -11,16 +12,23 @@ import LocalAuthentication
 
 let baseURL = URL(string: ProcessInfo.processInfo.environment["DOC_ADMIN_BASE"] ?? "https://developerofcode.com")!
 
-struct Tool { let name: String; let path: String; let symbol: String }
-let tools = [
-    Tool(name: "Hub", path: "/admin/", symbol: "square.grid.2x2"),
+// `path` is relative to baseURL, or a full URL for a tool hosted elsewhere. `sso` names the app in
+// api/admin-sso.mjs when the tool signs in with a ticket from the hub session.
+struct Tool {
+    let name: String; let path: String; let symbol: String; var sso: String? = nil
+    var url: URL { URL(string: path, relativeTo: baseURL)!.absoluteURL }
+}
+// Hub stays first; the rest are listed A to Z.
+let tools = [Tool(name: "Hub", path: "/admin/", symbol: "square.grid.2x2")] + [
     Tool(name: "Tracker", path: "/admin/tracker/", symbol: "checklist"),
     Tool(name: "Outlay", path: "/admin/outlay/", symbol: "creditcard"),
     Tool(name: "Marketing", path: "/admin/marketing/", symbol: "megaphone"),
     Tool(name: "Mail", path: "/admin/mail/", symbol: "envelope"),
     Tool(name: "SEO Review", path: "/admin/seo/", symbol: "magnifyingglass"),
     Tool(name: "Demos", path: "/admin/demos/", symbol: "play.rectangle"),
-]
+    Tool(name: "Pricing Desk", path: "/admin/pricing-desk/", symbol: "tag", sso: "pricing-desk"),
+    Tool(name: "Relay Solo", path: "https://relay-solo.vercel.app/", symbol: "paperplane"),
+].sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
 
 // MARK: saved logins (macOS Keychain, readable only by this app)
@@ -375,7 +383,7 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
         window.makeFirstResponder(web)
     }
 
-    func makeView(_ i: Int, background: Bool = false) -> WKWebView {
+    func makeView(_ i: Int, background: Bool = false, url: URL? = nil) -> WKWebView {
         let web = WKWebView(frame: container.bounds, configuration: config)
         web.autoresizingMask = [.width, .height]
         web.navigationDelegate = self
@@ -390,8 +398,38 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
                 DispatchQueue.main.async { self?.titleChanged(w.title) }
             })
         }
-        web.load(URLRequest(url: URL(string: tools[i].path, relativeTo: baseURL)!.absoluteURL))
+        if let url = url { web.load(URLRequest(url: url)) }
+        else if let app = tools[i].sso { signIn(web, i, app: app) }
+        else { web.load(URLRequest(url: tools[i].url)) }
         return web
+    }
+
+    // Same as the hub card: trade the hub's Supabase session for a short-lived ticket
+    // (api/admin-sso.mjs). Runs in the Hub view, which shares storage with the admin pages.
+    // Falls back to the tool's plain address, where it can sign in by itself.
+    func signIn(_ web: WKWebView, _ i: Int, app: String) {
+        let js = """
+            const k = Object.keys(localStorage).find((k) => /^sb-.*-auth-token$/.test(k));
+            const t = k && JSON.parse(localStorage.getItem(k) || 'null')?.access_token;
+            if (!t) return null;
+            const r = await fetch('/api/admin-sso?app=' + encodeURIComponent(app), { headers: { Authorization: 'Bearer ' + t } });
+            return r.ok ? (await r.json()).url : null;
+            """
+        guard let hub = views[0], web !== hub, isInternal(hub.url) else { web.load(URLRequest(url: tools[i].url)); return }
+        hub.callAsyncJavaScript(js, arguments: ["app": app], in: nil, in: .page) { res in
+            var dest = tools[i].url
+            if case .success(let v) = res, let s = v as? String,
+               let u = URL(string: s, relativeTo: baseURL)?.absoluteURL, self.isInternal(u) { dest = u }
+            web.load(URLRequest(url: dest))
+        }
+    }
+
+    // Switch the sidebar to tool t, showing `u` in its view when it's not just the tool's start page.
+    func open(_ t: Int, at u: URL) {
+        let atHome = u.absoluteString == tools[t].url.absoluteString
+        if views[t] == nil { _ = makeView(t, url: atHome ? nil : u) }
+        else if !atHome { views[t]!.load(URLRequest(url: u)) }
+        select(t)
     }
 
     var web: WKWebView? { views[current] }
@@ -402,7 +440,7 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
     @objc func back() { web?.goBack() }
     @objc func forward() { web?.goForward() }
     @objc func home() {
-        web?.load(URLRequest(url: URL(string: tools[current].path, relativeTo: baseURL)!.absoluteURL))
+        web?.load(URLRequest(url: tools[current].url))
     }
     @objc func zoomIn() { web?.pageZoom += 0.1 }
     @objc func zoomOut() { web?.pageZoom = max(0.5, (web?.pageZoom ?? 1) - 0.1) }
@@ -441,12 +479,39 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
         if action.shouldPerformDownload { decisionHandler(.download); return }
         let u = action.request.url
         let isMain = action.targetFrame?.isMainFrame ?? true
-        if isMain, u?.scheme != "about", !isInternal(u) {
+        let from = views.first(where: { $0.value === w })?.key
+        // A link or script navigation to another tool (e.g. a Hub card) switches the sidebar to that
+        // tool's own view. Back/forward and reloads stay where they are.
+        if isMain, let u = u, let from = from, let t = toolIndex(for: u), t != from,
+           [.linkActivated, .other, .formSubmitted].contains(action.navigationType) {
+            decisionHandler(.cancel)
+            open(t, at: u)
+            return
+        }
+        // A tool hosted elsewhere may move around its own site inside its view.
+        let ownSite = from.map { u?.host != nil && u?.host == tools[$0].url.host } ?? false
+        if isMain, u?.scheme != "about", !isInternal(u), !ownSite {
             // The window never leaves the admin hub. Off-site links open in the browser on a click.
             if action.navigationType == .linkActivated, let u = u { openExternally(u) }
             decisionHandler(.cancel); return
         }
         decisionHandler(.allow)
+    }
+    // The tool a URL belongs to. Tools hosted elsewhere match by host; admin tools by the longest
+    // path prefix, except Hub, which only matches itself.
+    func toolIndex(for u: URL) -> Int? {
+        let p = u.path.hasSuffix("/") ? u.path : u.path + "/"
+        var best: Int?
+        for (i, t) in tools.enumerated() {
+            let home = t.url
+            let match: Bool
+            if home.host != baseURL.host { match = u.scheme == "https" && u.host == home.host }
+            else if !isInternal(u) { match = false }
+            else if i == 0 { match = p == t.path || u.path == "/admin/index.html" }
+            else { match = p.hasPrefix(t.path) }
+            if match, best == nil || t.path.count > tools[best!].path.count { best = i }
+        }
+        return best
     }
     func webView(_ w: WKWebView, decidePolicyFor resp: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
