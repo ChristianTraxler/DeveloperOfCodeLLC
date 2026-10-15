@@ -1,6 +1,6 @@
 // The tool's front page: the new review form, then every past review.
 import { useRef, useState } from 'react'
-import { ArrowUpRight, Globe, RotateCw } from 'lucide-react'
+import { ArrowUpRight, Globe, RotateCw, UserRound, X } from 'lucide-react'
 import { Button, Field, Input } from './ui/core.jsx'
 import { Dial, marksFromCounts } from './Dial.jsx'
 import { cx, domainOf, plural, tallyFromCategories, when } from './lib.js'
@@ -12,7 +12,7 @@ const FIELDS = [
   { key: 'service', label: 'Main service', placeholder: 'Roofing', autoComplete: 'off' },
 ]
 
-function NewReview({ draft, setDraft, onRun, pageSpeedKey }) {
+function NewReview({ draft, setDraft, onRun, pageSpeedKey, placesKey, leads = [] }) {
   const [errors, setErrors] = useState({})
   const first = useRef(null)
   const set = (k) => (e) => {
@@ -29,11 +29,22 @@ function NewReview({ draft, setDraft, onRun, pageSpeedKey }) {
     if (!draft.service.trim()) next.service = 'Enter the main service.'
     setErrors(next)
     if (Object.keys(next).length) return
-    onRun({ ...draft, url: draft.url.trim(), business: draft.business.trim(), city: draft.city.trim(), service: draft.service.trim() })
+    onRun({ ...draft, gbpLink: (draft.gbpLink || '').trim() || undefined, leadId: draft.leadId || null, url: draft.url.trim(), business: draft.business.trim(), city: draft.city.trim(), service: draft.service.trim() })
   }
 
   return (
     <form onSubmit={submit} noValidate className="seo-bench relative overflow-hidden rounded-[30px] border border-line bg-panel/80 p-5 sm:p-8">
+      {draft.leadId && (
+        <p className="mb-5 flex items-center gap-2 text-[14px] text-mute">
+          <UserRound size={15} className="text-ember" />
+          <span className="min-w-0 flex-1 truncate">
+            Files under the lead <span className="font-semibold text-bone">{leads.find((l) => l.id === draft.leadId)?.business || draft.business}</span>
+          </span>
+          <button type="button" aria-label="Do not file this review under the lead" onClick={() => setDraft((d) => ({ ...d, leadId: null }))} className="grid h-11 w-11 place-items-center rounded-full text-faint hover:bg-white/[0.06] hover:text-bone">
+            <X size={15} />
+          </button>
+        </p>
+      )}
       <Field label="Website" htmlFor="seo-url" error={errors.url}>
         <div className="relative">
           <Globe size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint" aria-hidden="true" />
@@ -59,8 +70,16 @@ function NewReview({ draft, setDraft, onRun, pageSpeedKey }) {
           </Field>
         ))}
       </div>
+      <Field
+        label="Google profile link (optional)"
+        htmlFor="seo-gbp"
+        className="mt-5"
+        hint={placesKey ? 'Only needed if Google matches the wrong listing.' : 'Paste the Google Maps or Share link. After the review you copy a few details from the profile, no Google billing needed.'}
+      >
+        <Input id="seo-gbp" inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="maps.app.goo.gl/..." value={draft.gbpLink || ''} onChange={set('gbpLink')} />
+      </Field>
       <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Button type="submit" variant="ember" size="lg" className="w-full sm:w-auto">
+        <Button id="seo-run" type="submit" variant="ember" size="lg" className="w-full sm:w-auto">
           Run review
         </Button>
         <p className="text-[13.5px] leading-snug text-mute sm:max-w-[52ch]">
@@ -124,7 +143,7 @@ function ReviewRow({ audit, meta, onOpen }) {
   )
 }
 
-export function Home({ list, draft, setDraft, onRun, onOpen, onRetry }) {
+export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads }) {
   const { audits, meta, status, error } = list
   const done = audits.filter((a) => a.status === 'complete')
   const totals = done.reduce((acc, a) => {
@@ -142,6 +161,9 @@ export function Home({ list, draft, setDraft, onRun, onOpen, onRetry }) {
           <p className="mt-6 max-w-[34ch] text-[17px] leading-relaxed text-mute sm:text-[18px]">
             Check how a local business shows up in Google. Every problem it finds is work you can offer to fix.
           </p>
+          <Button variant="ghost" size="md" className="mt-7" onClick={onLeads}>
+            <UserRound size={16} /> Leads{list.leads?.length ? <span className="tabular-nums text-faint">{list.leads.length}</span> : null}
+          </Button>
           {done.length > 0 && (
             <p className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[14px] text-mute">
               <span>
@@ -155,7 +177,7 @@ export function Home({ list, draft, setDraft, onRun, onOpen, onRetry }) {
             </p>
           )}
         </div>
-        <NewReview draft={draft} setDraft={setDraft} onRun={onRun} pageSpeedKey={meta?.pageSpeedKey} />
+        <NewReview draft={draft} setDraft={setDraft} onRun={onRun} pageSpeedKey={meta?.pageSpeedKey} placesKey={meta?.placesKey} leads={list.leads} />
       </section>
 
       <section className="mt-20 sm:mt-24" aria-labelledby="seo-reviews">

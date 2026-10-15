@@ -50,7 +50,8 @@ export default defineConfig({
   base: '/admin/seo/',
   plugins: [react(), serveStaticAdmin()],
   // DEV ONLY: point /api at a local copy of api/seo.mjs (or a deployed one) while designing.
-  server: { proxy: { '/api': process.env.SEO_API || 'http://localhost:3000' } },
+  // fs.allow lets the dev:demo preview import the pure report and lead code from the repo's api/_lib.
+  server: { proxy: { '/api': process.env.SEO_API || 'http://localhost:3000' }, fs: { allow: ['../..'] } },
   build: {
     outDir: '../../public/admin/seo',
     emptyOutDir: true,

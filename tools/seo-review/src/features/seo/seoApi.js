@@ -36,3 +36,16 @@ export const addCompetitor = (id, name, url) => call('competitorAdd', { body: { 
 export const removeCompetitor = (id, competitorId) => call('competitorRemove', { body: { id, competitorId } })
 export const pickPlace = (id, placeId) => call('place', { body: { id, placeId } })
 export const setRank = (id, position, keyword) => call('rank', { body: { id, position, keyword } })
+
+// Phase 4: the fix-it report and leads.
+export const getFixReport = (id) => call('fixreport', { query: `&id=${encodeURIComponent(id)}` })
+export const listLeads = () => call('leads')
+export const getLead = (id) => call('lead', { query: `&id=${encodeURIComponent(id)}` })
+export const saveLead = (lead) => call('leadSave', { body: lead })
+export const setFollowUp = (id, day, done) => call('followup', { body: { id, day, done } })
+export const linkReview = (auditId, leadId) => call('link', { body: { auditId, leadId } })
+export const deleteLead = (id) => call('leadDelete', { body: { id } })
+
+// The Google profile typed in by hand (no Google Places key needed).
+export const saveProfile = (id, profile) => call('profile', { body: { id, ...profile } })
+export const checkMapsLink = (url) => call('mapsLink', { body: { url } })

@@ -1,12 +1,13 @@
 // Phase 3 pieces of the internal report: the Google Business Profile match, the manual rank
 // entry, and the client next to its competitors on the same checks.
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Loader2, MapPin, Plus, Star, X } from 'lucide-react'
+import { ArrowUpRight, Loader2, MapPin, Pencil, Plus, Star, X } from 'lucide-react'
 import { api } from './api.js'
 import { StatusMark } from './Checks.jsx'
 import { Button, Field, Input, inputClass } from './ui/core.jsx'
 import { scoreTone } from './Report.jsx'
-import { cx, domainOf, httpHref, plural } from './lib.js'
+import { cx, domainOf, httpHref, longWhen, plural } from './lib.js'
+import { Sheet } from './ui/Sheet.jsx'
 
 const Heading = ({ id, children, blurb }) => (
   <div>
@@ -30,25 +31,175 @@ function Rating({ rating, reviews }) {
 
 // ── Google Business Profile ─────────────────────────────────────────────────
 
-function Profile({ audit, checks, busy, onPick }) {
+// The profile typed in from Google, for when Google Places is not set up. Open the profile from
+// the link, then copy over what it shows. Nothing is read from Google except a short link's redirect.
+const PROFILE_EMPTY = { link: '', name: '', category: '', rating: '', reviews: '', photos: '', phone: '', address: '', website: '', hoursListed: false, hours: '', status: 'OPERATIONAL' }
+
+function profileFrom(audit) {
+  const m = audit.notes?.local?.manual
+  const p = m?.place
+  const link = m?.link?.url || audit.notes?.local?.link?.url || ''
+  if (!p) return { ...PROFILE_EMPTY, link, name: audit.notes?.local?.link?.name || audit.business_name }
+  return {
+    link,
+    name: p.name || '',
+    category: p.category || '',
+    rating: p.rating ?? '',
+    reviews: p.reviews ?? '',
+    photos: p.photos ?? '',
+    phone: p.phone || '',
+    address: p.address || '',
+    website: p.website || '',
+    hoursListed: !!p.hoursListed,
+    hours: (p.hours || []).join('\n'),
+    status: p.status || 'OPERATIONAL',
+  }
+}
+
+function ProfileForm({ open, onClose, audit, busy, onSave }) {
+  const [f, setF] = useState(PROFILE_EMPTY)
+  const [error, setError] = useState(null)
+  const [reading, setReading] = useState(false)
+  useEffect(() => {
+    if (open) {
+      setF(profileFrom(audit))
+      setError(null)
+    }
+  }, [open, audit])
+  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+  const readLink = async () => {
+    if (!f.link.trim()) return
+    setReading(true)
+    setError(null)
+    try {
+      const out = await api.checkMapsLink(f.link.trim())
+      setF((x) => ({ ...x, link: out.url, name: x.name && x.name !== audit.business_name ? x.name : out.name || x.name }))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setReading(false)
+    }
+  }
+  const save = async (body) => {
+    setError(null)
+    const ok = await onSave(body)
+    if (ok === true) onClose()
+    else if (typeof ok === 'string') setError(ok)
+  }
+  const href = httpHref(f.link) || (f.link && !/\s/.test(f.link) ? `https://${f.link}` : null)
+  const text = (key, label, props = {}) => (
+    <Field label={label} htmlFor={`gbp-${key}`}>
+      <Input id={`gbp-${key}`} value={f[key]} onChange={set(key)} {...props} />
+    </Field>
+  )
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Google profile"
+      kicker="Copy what the profile shows"
+      width={560}
+      footer={
+        <>
+          <Button variant="quiet" disabled={busy} onClick={() => save({ none: true })} className="mr-auto">
+            No profile
+          </Button>
+          <Button variant="ember" type="submit" form="gbp-form" disabled={busy}>
+            {busy ? 'Saving' : 'Save and check'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="gbp-form"
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!f.name.trim()) return setError('Enter the business name as it shows on Google.')
+          const { link, ...rest } = f
+          save({ ...rest, link: link.trim() || undefined })
+        }}
+        className="space-y-5"
+      >
+        <p className="text-[14px] leading-relaxed text-mute">
+          No Google billing needed. Open the profile, then fill in what you see. The profile, reviews and name, address and phone checks run on these details.
+        </p>
+        <Field label="Link to the profile" htmlFor="gbp-link" hint="From Google Maps, or the Share button on the profile. Short links work.">
+          <div className="flex gap-2">
+            <Input id="gbp-link" data-autofocus inputMode="url" autoCapitalize="off" spellCheck={false} placeholder="maps.app.goo.gl/..." value={f.link} onChange={set('link')} onBlur={readLink} className="min-w-0 flex-1" />
+            {href && (
+              <a href={href} target="_blank" rel="noreferrer noopener" aria-label="Open the profile in a new tab" className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[14px] border border-line2 text-mute hover:border-white/30 hover:text-bone">
+                {reading ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={17} />}
+              </a>
+            )}
+          </div>
+        </Field>
+        {text('name', 'Business name on Google', { autoComplete: 'off' })}
+        {text('category', 'Main category', { placeholder: 'Pressure washing service' })}
+        <div className="grid grid-cols-3 gap-3">
+          {text('rating', 'Rating', { inputMode: 'decimal', placeholder: '4.8' })}
+          {text('reviews', 'Reviews', { inputMode: 'numeric', placeholder: '31' })}
+          {text('photos', 'Photos', { inputMode: 'numeric', placeholder: '12' })}
+        </div>
+        {text('phone', 'Phone', { inputMode: 'tel' })}
+        {text('address', 'Address', { placeholder: 'Leave empty for a service-area business' })}
+        {text('website', 'Website on the profile', { inputMode: 'url', autoCapitalize: 'off' })}
+        <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-[14.5px] text-bone">
+          <input type="checkbox" checked={f.hoursListed} onChange={set('hoursListed')} className="h-[18px] w-[18px] accent-[rgb(var(--ember-rgb))]" />
+          Business hours are listed
+        </label>
+        <Field label="Hours (optional)" htmlFor="gbp-hours" hint="Paste them one day per line. They go into the fix-it report so the site can match Google.">
+          <textarea id="gbp-hours" rows={3} value={f.hours} onChange={set('hours')} placeholder={'Monday: 8 AM to 5 PM\nTuesday: 8 AM to 5 PM'} className={cx(inputClass, 'py-3 leading-relaxed')} />
+        </Field>
+        <Field label="Status on Google" htmlFor="gbp-status">
+          <select id="gbp-status" value={f.status} onChange={set('status')} className={cx(inputClass, 'h-[52px] appearance-none')}>
+            <option value="OPERATIONAL">Open</option>
+            <option value="CLOSED_TEMPORARILY">Temporarily closed</option>
+            <option value="CLOSED_PERMANENTLY">Permanently closed</option>
+          </select>
+        </Field>
+        {error && (
+          <p className="text-[13.5px] text-danger" role="alert">
+            {error}
+          </p>
+        )}
+      </form>
+    </Sheet>
+  )
+}
+
+function Profile({ audit, checks, busy, onPick, onSaveProfile }) {
   const local = audit.notes?.local
   const gbp = checks.find((c) => c.key === 'gbp')
   const d = gbp?.details || {}
   const [choice, setChoice] = useState('')
+  const [form, setForm] = useState(false)
   const candidates = local?.candidates || []
+  const manual = local?.manual
+  const canEnter = !local?.configured || !!local?.error || !!manual
+  const enterButton = (
+    <Button variant={manual ? 'ghost' : 'ember'} className="mt-5" onClick={() => setForm(true)}>
+      {manual ? <Pencil size={15} /> : <Plus size={15} />} {manual ? 'Edit the profile details' : 'Enter from the Google profile'}
+    </Button>
+  )
 
   let body
-  if (!local?.configured) {
+  if (manual?.none) {
+    body = <p className="text-[15px] leading-relaxed text-mute">Marked as having no Google Business Profile on {longWhen(manual.enteredAt)}.</p>
+  } else if (manual?.place && d.found) {
+    body = null // the found view below, labeled as entered by hand
+  } else if (!local?.configured) {
     body = (
       <p className="text-[15px] leading-relaxed text-mute">
-        Google Places is not set up, so the profile, reviews and competitors were not looked up. Add <code className="text-bone">GOOGLE_PLACES_API_KEY</code> in Vercel and run the review again. You can still add competitors by hand below.
+        Google Places is not set up, so the profile was not looked up. Open the business on Google Maps and enter what the profile shows: it takes about 30 seconds and needs no Google billing. Competitors can be added by hand below.
       </p>
     )
   } else if (local.error) {
     body = <p className="text-[15px] leading-relaxed text-danger">Google Places did not answer: {local.error}. Run the review again.</p>
   } else if (!d.found) {
     body = <p className="text-[15px] leading-relaxed text-mute">No listing matched {audit.business_name} for &ldquo;{local.query}&rdquo;. If the business has one under another name, pick it below.</p>
-  } else {
+  }
+  if (body === undefined || (manual?.place && d.found)) {
     body = (
       <dl className="grid gap-x-10 gap-y-4 text-[14.5px] sm:grid-cols-2">
         <div>
@@ -64,13 +215,20 @@ function Profile({ audit, checks, busy, onPick }) {
           </dd>
           {d.address && <dd className="mt-0.5 text-mute">{d.address}</dd>}
         </div>
-        <div>
-          <dt className="text-faint">On the map for &ldquo;{local.query}&rdquo;</dt>
-          <dd className="mt-1 inline-flex items-center gap-1.5 text-bone">
-            <MapPin size={14} className="text-ember" aria-hidden="true" />
-            {d.position ? `Number ${d.position}` : 'Not in the first 10'}
-          </dd>
-        </div>
+        {d.manual ? (
+          <div>
+            <dt className="text-faint">Source</dt>
+            <dd className="mt-1 text-bone">Entered by hand{manual?.enteredAt ? ` on ${longWhen(manual.enteredAt)}` : ''}</dd>
+          </div>
+        ) : (
+          <div>
+            <dt className="text-faint">On the map for &ldquo;{local.query}&rdquo;</dt>
+            <dd className="mt-1 inline-flex items-center gap-1.5 text-bone">
+              <MapPin size={14} className="text-ember" aria-hidden="true" />
+              {d.position ? `Number ${d.position}` : 'Not in the first 10'}
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-faint">Reviews</dt>
           <dd className="mt-1 text-bone">
@@ -89,11 +247,13 @@ function Profile({ audit, checks, busy, onPick }) {
 
   return (
     <section aria-labelledby="seo-gbp" className="mt-16 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
-      <Heading id="seo-gbp" blurb="The listing Google matched to this business, from Google Places.">
+      <Heading id="seo-gbp" blurb={manual || !local?.configured ? 'The business listing on Google, entered from the profile.' : 'The listing Google matched to this business, from Google Places.'}>
         Google profile
       </Heading>
       <div className="rounded-[22px] border border-line bg-panel/60 p-5 sm:p-6">
         {body}
+        {canEnter && enterButton}
+        <ProfileForm open={form} onClose={() => setForm(false)} audit={audit} busy={busy} onSave={onSaveProfile} />
         {local?.configured && !local.error && candidates.length > 0 && (
           <form
             className="mt-6 flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-end"
@@ -359,7 +519,24 @@ export function LocalLayer({ data, onData, toast }) {
 
   return (
     <>
-      <Profile audit={audit} checks={checks} busy={busy} onPick={(placeId) => act(() => api.pickPlace(audit.id, placeId), 'Listing updated. Competitors are being checked again.')} />
+      <Profile
+        audit={audit}
+        checks={checks}
+        busy={busy}
+        onPick={(placeId) => act(() => api.pickPlace(audit.id, placeId), 'Listing updated. Competitors are being checked again.')}
+        onSaveProfile={async (profile) => {
+          setBusy(true)
+          try {
+            onData(await api.saveProfile(audit.id, profile))
+            toast(profile.none ? 'Marked as having no Google profile.' : 'Profile saved. The local checks ran again.')
+            return true
+          } catch (e) {
+            return e.message
+          } finally {
+            setBusy(false)
+          }
+        }}
+      />
       <Rank audit={audit} ranks={ranks} busy={busy} onSave={(position, keyword) => act(() => api.setRank(audit.id, position, keyword), 'Rank saved.')} />
       <Competitors
         audit={audit}

@@ -113,15 +113,62 @@ create table if not exists seo_places_cache (
   fetched_at timestamptz not null default now()
 );
 
+-- Phase 4: the leads list. One lead can have many reviews (seo_audits.lead_id holds its id as text).
+--   status          new, audit_run, report_sent, walkthrough, proposal, won, lost
+--   source          facebook, nextdoor, cold_dm, referral, website, other
+--   care_plan       true for Website Care clients: a won care plan lead is re-scanned every month
+--   report_sent_on  day 0 of the follow-ups (set when the "Send the report" step is ticked)
+--   followups       { "<day>": "YYYY-MM-DD" } for the follow-up steps already done
+create table if not exists seo_leads (
+  id             uuid primary key default gen_random_uuid(),
+  business_name  text not null,
+  site_url       text,
+  city           text,
+  service        text,
+  contact_name   text,
+  email          text,
+  phone          text,
+  source         text check (source in ('facebook', 'nextdoor', 'cold_dm', 'referral', 'website', 'other')),
+  status         text not null default 'new' check (status in ('new', 'audit_run', 'report_sent', 'walkthrough', 'proposal', 'won', 'lost')),
+  care_plan      boolean not null default false,
+  last_contact   date,
+  next_follow_up date,
+  report_sent_on date,
+  followups      jsonb not null default '{}'::jsonb,
+  notes          text not null default '',
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists seo_leads_follow_up on seo_leads (next_follow_up);
+
+-- Phase 4: "Request implementation" from the client report. The client's picks and contact
+-- details only; payment happens on Stripe and never touches this table.
+create table if not exists seo_requests (
+  id         bigserial primary key,
+  audit_id   uuid not null references seo_audits (id) on delete cascade,
+  lead_id    text,
+  offer      text,
+  tasks      jsonb not null default '[]'::jsonb,
+  name       text not null,
+  email      text,
+  phone      text,
+  message    text,
+  emailed    boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists seo_requests_audit on seo_requests (audit_id, created_at desc);
+
 alter table seo_audits            enable row level security;
 alter table seo_audit_checks      enable row level security;
 alter table seo_audit_tasks       enable row level security;
 alter table seo_audit_competitors enable row level security;
 alter table seo_audit_manual      enable row level security;
 alter table seo_places_cache      enable row level security;
-revoke all on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache from anon, authenticated;
+alter table seo_leads             enable row level security;
+alter table seo_requests          enable row level security;
+revoke all on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache, seo_leads, seo_requests from anon, authenticated;
 
 -- This project does not auto-grant to the API roles (see demos.sql), so the server's
 -- service_role gets explicit access, including the id sequences behind the bigserial columns.
-grant select, insert, update, delete on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache to service_role;
-grant usage, select on sequence seo_audit_checks_id_seq, seo_audit_tasks_id_seq, seo_audit_competitors_id_seq, seo_audit_manual_id_seq to service_role;
+grant select, insert, update, delete on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache, seo_leads, seo_requests to service_role;
+grant usage, select on sequence seo_audit_checks_id_seq, seo_audit_tasks_id_seq, seo_audit_competitors_id_seq, seo_audit_manual_id_seq, seo_requests_id_seq to service_role;

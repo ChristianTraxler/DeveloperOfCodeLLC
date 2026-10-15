@@ -10,6 +10,8 @@ import { Sheet } from './ui/Sheet.jsx'
 import { useToast } from './ui/Toast.jsx'
 import { CategoryBars, NextSteps, ShareControl, scoreTone as overallTone } from './Report.jsx'
 import { LocalLayer } from './Local.jsx'
+import { FixReport } from './FixReport.jsx'
+import { LeadControl } from './Leads.jsx'
 import { STATUS, bySeverity, cx, domainOf, longWhen, seconds, tally } from './lib.js'
 
 function scoreTone(n) {
@@ -144,7 +146,7 @@ function Category({ catKey, cat, checks, laterChecks }) {
   )
 }
 
-export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
+export function AuditView({ id, cache, leads = [], onBack, onRerun, onDelete, onOpenLead, onLeadsChanged }) {
   const [state, setState] = useState(() => (cache.current.get(id) ? { status: 'ready', ...cache.current.get(id) } : { status: 'loading' }))
   const [confirm, setConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -312,6 +314,20 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
       {overall != null && <CategoryBars categories={meta.categories} scores={audit.category_scores} />}
 
       <ShareControl audit={audit} onReviewed={markReviewed} busy={savingReview} />
+
+      <FixReport audit={audit} openTasks={tasks.filter((t) => !t.done).length} toast={toast} />
+
+      <LeadControl
+        audit={audit}
+        leads={leads}
+        meta={meta}
+        toast={toast}
+        onOpenLead={onOpenLead}
+        onLinked={(leadId) => {
+          update((s) => ({ ...s, audit: { ...s.audit, lead_id: leadId } }))
+          onLeadsChanged()
+        }}
+      />
 
       <NextSteps tasks={tasks} onToggle={toggleTask} />
 
