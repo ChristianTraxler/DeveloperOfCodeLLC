@@ -120,3 +120,8 @@ alter table seo_audit_competitors enable row level security;
 alter table seo_audit_manual      enable row level security;
 alter table seo_places_cache      enable row level security;
 revoke all on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache from anon, authenticated;
+
+-- This project does not auto-grant to the API roles (see demos.sql), so the server's
+-- service_role gets explicit access, including the id sequences behind the bigserial columns.
+grant select, insert, update, delete on seo_audits, seo_audit_checks, seo_audit_tasks, seo_audit_competitors, seo_audit_manual, seo_places_cache to service_role;
+grant usage, select on sequence seo_audit_checks_id_seq, seo_audit_tasks_id_seq, seo_audit_competitors_id_seq, seo_audit_manual_id_seq to service_role;

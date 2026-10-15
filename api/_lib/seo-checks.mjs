@@ -5,7 +5,12 @@
 // Nothing here touches Supabase; api/seo.mjs saves what this returns.
 
 import { lookup } from 'node:dns/promises';
+import { lookup as lookupCb } from 'node:dns';
 import { isIP } from 'node:net';
+import http from 'node:http';
+import https from 'node:https';
+import zlib from 'node:zlib';
+import { Readable } from 'node:stream';
 import { CHECKS, FETCH, STATUS_POINTS, THRESHOLDS, SERVICES } from './seo-config.mjs';
 import { cityName, mentions, readPage, squash } from './seo-html.mjs';
 
@@ -103,11 +108,52 @@ async function readCapped(res, max) {
   return new TextDecoder('utf-8', { fatal: false }).decode(Buffer.concat(chunks));
 }
 
+// ── Pinned fetch ────────────────────────────────────────────────────────────
+// Node's fetch resolves the host again when it connects, so a site could pass hostGuard and then
+// switch its DNS to a private address. pinnedFetch checks the address inside the connection's own
+// lookup, so the address it connects to is the one it checked. Built-in modules only.
+
+const NATIVE_FETCH = globalThis.fetch;
+
+function pinnedLookup(hostname, options, callback) {
+  lookupCb(hostname, { all: true }, (err, addrs) => {
+    if (err) return callback(err);
+    if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) return callback(new Error(`${hostname} is not a public website.`));
+    if (options?.all) return callback(null, addrs);
+    callback(null, addrs[0].address, addrs[0].family);
+  });
+}
+
+const NULL_BODY = new Set([101, 204, 205, 304]);
+
+export function pinnedFetch(url, { method = 'GET', headers = {}, signal } = {}) {
+  const u = new URL(url);
+  const lib = u.protocol === 'https:' ? https : u.protocol === 'http:' ? http : null;
+  if (!lib) return Promise.reject(new Error('Only http and https addresses can be checked.'));
+  return new Promise((resolve, reject) => {
+    const req = lib.request(u, { method, headers: { 'Accept-Encoding': 'gzip, deflate, br', ...headers }, lookup: pinnedLookup, signal }, (res) => {
+      const out = new Headers();
+      for (const [k, v] of Object.entries(res.headers)) for (const one of [].concat(v)) out.append(k, String(one));
+      const enc = String(res.headers['content-encoding'] || '').toLowerCase();
+      const unzip = enc === 'gzip' ? zlib.createGunzip() : enc === 'deflate' ? zlib.createInflate() : enc === 'br' ? zlib.createBrotliDecompress() : null;
+      const stream = unzip ? res.pipe(unzip) : res;
+      if (unzip) res.on('error', (e) => unzip.destroy(e));
+      const empty = method === 'HEAD' || NULL_BODY.has(res.statusCode);
+      if (empty) res.resume();
+      resolve(new Response(empty ? null : Readable.toWeb(stream), { status: res.statusCode, statusText: res.statusMessage || '', headers: out }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 // Follows up to 6 redirects by hand so every hop is checked as a public address.
 export async function safeFetch(fetchImpl, url, { method = 'GET', timeoutMs = FETCH.smallTimeoutMs, redirect = 'follow', read = true, maxBytes = FETCH.maxHtmlBytes } = {}) {
   const started = Date.now();
   const hops = [];
   let current = new URL(url);
+  // Real network requests to the site go through pinnedFetch. Tests pass their own fake fetch.
+  if (fetchImpl === NATIVE_FETCH) fetchImpl = pinnedFetch;
   for (let i = 0; i < 7; i++) {
     await hostGuard(current.hostname);
     const left = timeoutMs - (Date.now() - started);
