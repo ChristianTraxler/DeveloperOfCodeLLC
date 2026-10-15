@@ -2,7 +2,7 @@
 //
 // Props:
 //   path      the route after /seo: '' (reviews), 'run' (a review in progress), 'audit/<id>',
-//             'leads' or 'leads/<id>'
+//             'leads', 'leads/<id>' or 'pricing'
 //   navigate  function(subPath) that moves within the tool
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from './api.js'
@@ -11,6 +11,7 @@ import { Home } from './Home.jsx'
 import { RunView } from './RunView.jsx'
 import { AuditView } from './AuditView.jsx'
 import { LeadsList, LeadView } from './Leads.jsx'
+import { Pricing } from './Pricing.jsx'
 import './seo.css'
 
 function Tool({ path, navigate }) {
@@ -112,8 +113,9 @@ function Tool({ path, navigate }) {
       />
     )
   }
+  if (section === 'pricing') return <Pricing onBack={() => navigate('')} />
   if (section === 'leads') return <LeadsList onOpen={(leadId) => navigate(`leads/${leadId}`)} onBack={() => navigate('')} />
-  return <Home list={list} draft={draft} setDraft={setDraft} onRun={start} onOpen={(a) => navigate(`audit/${a.id}`)} onRetry={load} onLeads={() => navigate('leads')} onDelete={remove} />
+  return <Home list={list} draft={draft} setDraft={setDraft} onRun={start} onOpen={(a) => navigate(`audit/${a.id}`)} onRetry={load} onLeads={() => navigate('leads')} onPricing={() => navigate('pricing')} onDelete={remove} />
 }
 
 export default function SeoPage(props) {
