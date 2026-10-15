@@ -1,10 +1,12 @@
 // The tool's front page: the new review form, then every past review.
 import { useRef, useState } from 'react'
-import { ArrowUpRight, Globe, RotateCw, UserRound, X } from 'lucide-react'
+import { ArrowUpRight, Globe, RotateCw, Trash2, UserRound, X } from 'lucide-react'
 import { Button, Field, Input } from './ui/core.jsx'
 import { Dial, marksFromCounts } from './Dial.jsx'
 import { cx, domainOf, plural, tallyFromCategories, when } from './lib.js'
 import { isDemo } from './api.js'
+import { Sheet } from './ui/Sheet.jsx'
+import { useToast } from './ui/Toast.jsx'
 
 const FIELDS = [
   { key: 'business', label: 'Business name', placeholder: 'Blue Ridge Roofing', autoComplete: 'organization' },
@@ -108,13 +110,13 @@ function Counts({ t, className = '' }) {
   return <span className={cx('flex flex-wrap gap-x-3 gap-y-1 text-[14px] font-medium tabular-nums', className)}>{parts}</span>
 }
 
-function ReviewRow({ audit, meta, onOpen }) {
+function ReviewRow({ audit, meta, onOpen, onDelete }) {
   const t = tallyFromCategories(audit.category_scores)
   const failed = audit.status === 'failed'
   const running = audit.status === 'running'
   return (
-    <li>
-      <button type="button" onClick={() => onOpen(audit)} disabled={failed || running} className="group flex w-full items-center gap-4 px-1 py-5 text-left transition-colors sm:gap-6 sm:px-3 disabled:cursor-default">
+    <li className="flex items-center gap-2">
+      <button type="button" onClick={() => onOpen(audit)} disabled={failed || running} className="group flex min-w-0 flex-1 items-center gap-4 px-1 py-5 text-left transition-colors sm:gap-6 sm:px-3 disabled:cursor-default">
         <Dial marks={marksFromCounts(meta, audit.category_scores)} size={56} title={audit.overall_score != null ? `${audit.business_name}: score ${audit.overall_score} out of 100` : `${audit.business_name} review dial`}>
           {audit.overall_score != null && <span className="text-[15px] font-semibold tabular-nums text-bone">{audit.overall_score}</span>}
         </Dial>
@@ -139,12 +141,18 @@ function ReviewRow({ audit, meta, onOpen }) {
           <ArrowUpRight size={17} />
         </span>
       </button>
+      <Button variant="quiet" size="icon" className="h-11 w-11 shrink-0 hover:text-danger" aria-label={`Delete the review of ${audit.business_name}`} onClick={() => onDelete(audit)}>
+        <Trash2 size={16} />
+      </Button>
     </li>
   )
 }
 
-export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads }) {
+export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads, onDelete }) {
   const { audits, meta, status, error } = list
+  const toast = useToast()
+  const [confirm, setConfirm] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const done = audits.filter((a) => a.status === 'complete')
   const totals = done.reduce((acc, a) => {
     const t = tallyFromCategories(a.category_scores)
@@ -226,11 +234,45 @@ export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads })
         {status === 'ready' && audits.length > 0 && meta && (
           <ul className="divide-y divide-line">
             {audits.map((a) => (
-              <ReviewRow key={a.id} audit={a} meta={meta} onOpen={onOpen} />
+              <ReviewRow key={a.id} audit={a} meta={meta} onOpen={onOpen} onDelete={setConfirm} />
             ))}
           </ul>
         )}
       </section>
+
+      <Sheet
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        variant="dialog"
+        title={confirm ? `Delete the review of ${confirm.business_name}?` : ''}
+        footer={
+          <>
+            <Button variant="quiet" onClick={() => setConfirm(null)}>
+              Keep it
+            </Button>
+            <Button
+              variant="danger"
+              className="ml-auto"
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true)
+                try {
+                  await onDelete(confirm)
+                } catch (e) {
+                  toast(e.message)
+                } finally {
+                  setDeleting(false)
+                  setConfirm(null)
+                }
+              }}
+            >
+              {deleting ? 'Deleting' : 'Delete review'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[15px] leading-relaxed text-mute">The review and all of its checks are removed from Supabase. {isDemo ? 'In this preview it comes back when you reload.' : 'This cannot be undone.'}</p>
+      </Sheet>
     </main>
   )
 }
