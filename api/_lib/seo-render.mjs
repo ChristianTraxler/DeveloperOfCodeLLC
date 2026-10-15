@@ -5,17 +5,24 @@
 
 import { FETCH } from './seo-config.mjs';
 import { isPublicUrl } from './seo-checks.mjs';
+import { startEgressProxy } from './seo-egress.mjs';
 
 export async function renderHtml(url, timeoutMs = FETCH.renderTimeoutMs) {
   const [{ default: chromium }, { default: puppeteer }] = await Promise.all([import('@sparticuz/chromium'), import('puppeteer-core')]);
   chromium.setGraphicsMode = false;
-  const browser = await puppeteer.launch({
-    args: process.env.CHROME_PATH ? ['--no-sandbox', '--disable-gpu'] : chromium.args,
-    executablePath: process.env.CHROME_PATH || (await chromium.executablePath()),
-    headless: 'shell',
-  });
+  // All browser traffic goes through the local egress proxy, which only connects to public
+  // addresses it has checked itself (see seo-egress.mjs). QUIC and direct WebRTC would skip it.
+  const proxy = await startEgressProxy();
+  const egress = [`--proxy-server=http://127.0.0.1:${proxy.port}`, '--proxy-bypass-list=<-loopback>', '--disable-quic', '--webrtc-ip-handling-policy=disable_non_proxied_udp', '--force-webrtc-ip-handling-policy'];
+  let browser;
   try {
+    browser = await puppeteer.launch({
+      args: [...(process.env.CHROME_PATH ? ['--no-sandbox', '--disable-gpu'] : chromium.args), ...egress],
+      executablePath: process.env.CHROME_PATH || (await chromium.executablePath()),
+      headless: 'shell',
+    });
     const page = await browser.newPage();
+    await page.setBypassServiceWorker(true);
     await page.setUserAgent(FETCH.userAgent);
     await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 1, isMobile: true });
     // Images, fonts and media do not change the text, so skip them to save time. Every other
@@ -38,6 +45,7 @@ export async function renderHtml(url, timeoutMs = FETCH.renderTimeoutMs) {
     await new Promise((r) => setTimeout(r, Math.max(0, Math.min(700, until - Date.now()))));
     return await page.content();
   } finally {
-    await browser.close();
+    await browser?.close().catch(() => {});
+    await proxy.close();
   }
 }

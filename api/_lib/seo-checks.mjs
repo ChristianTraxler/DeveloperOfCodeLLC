@@ -40,12 +40,15 @@ function embeddedV4(ip) {
   const [a, b] = [parseInt(hex[1], 16), parseInt(hex[2], 16)];
   return `${a >> 8}.${a & 255}.${b >> 8}.${b & 255}`;
 }
-const isPrivate = (ip) => {
+export const isPrivateAddress = (ip) => {
+  if (!isIP(ip)) return true;
   if (isIP(ip) === 4) return PRIVATE_V4.some((re) => re.test(ip));
   const v4 = embeddedV4(ip);
   if (v4) return PRIVATE_V4.some((re) => re.test(v4));
   return /^(::1?$|f[c-f]|ff|2001:db8:|::ffff:)/i.test(ip);
 };
+
+const isPrivate = isPrivateAddress;
 
 const hostChecks = new Map();
 async function assertPublicHost(hostname) {
