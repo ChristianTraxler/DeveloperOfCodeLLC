@@ -113,7 +113,7 @@ function Tool({ path, navigate }) {
     )
   }
   if (section === 'leads') return <LeadsList onOpen={(leadId) => navigate(`leads/${leadId}`)} onBack={() => navigate('')} />
-  return <Home list={list} draft={draft} setDraft={setDraft} onRun={start} onOpen={(a) => navigate(`audit/${a.id}`)} onRetry={load} onLeads={() => navigate('leads')} />
+  return <Home list={list} draft={draft} setDraft={setDraft} onRun={start} onOpen={(a) => navigate(`audit/${a.id}`)} onRetry={load} onLeads={() => navigate('leads')} onDelete={remove} />
 }
 
 export default function SeoPage(props) {
