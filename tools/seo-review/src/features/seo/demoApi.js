@@ -2,7 +2,7 @@
 // A "run" here replays the run screen, then opens the saved review for that site if there is one.
 import fixtures from './demo/fixtures.json'
 
-const store = { audits: fixtures.audits.map((a) => ({ ...a })), checks: fixtures.checks }
+const store = { audits: fixtures.audits.map((a) => ({ ...a })), checks: fixtures.checks, tasks: structuredClone(fixtures.tasks) }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 export async function listReviews() {
@@ -14,7 +14,20 @@ export async function getReview(id) {
   await wait(200)
   const audit = store.audits.find((a) => a.id === id)
   if (!audit) throw new Error('That review was deleted or never existed.')
-  return { audit, checks: store.checks[id], meta: fixtures.meta }
+  return { audit, checks: store.checks[id], tasks: store.tasks[id] || [], meta: fixtures.meta }
+}
+
+export async function setReviewed(id, reviewed) {
+  await wait(200)
+  const audit = store.audits.find((a) => a.id === id)
+  audit.reviewed_at = reviewed ? new Date().toISOString() : null
+  return { ok: true, reviewedAt: audit.reviewed_at }
+}
+
+export async function setTaskDone(id, done) {
+  await wait(120)
+  for (const list of Object.values(store.tasks)) for (const t of list) if (t.id === id) t.done = done
+  return { ok: true }
 }
 
 const host = (u) => String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]

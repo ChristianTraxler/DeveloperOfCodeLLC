@@ -1,4 +1,5 @@
-// One review: the dial and tally up top, page speed, then every check grouped by category.
+// One review: the dial with the score and the tally up top, the client link, category scores,
+// Next Steps, page speed, then every check grouped by category.
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowUpRight, RotateCw, Trash2 } from 'lucide-react'
 import { api, isDemo } from './api.js'
@@ -6,6 +7,8 @@ import { Dial, marksFor } from './Dial.jsx'
 import { CheckRow, StatusMark } from './Checks.jsx'
 import { Button } from './ui/core.jsx'
 import { Sheet } from './ui/Sheet.jsx'
+import { useToast } from './ui/Toast.jsx'
+import { CategoryBars, NextSteps, ShareControl, scoreTone as overallTone } from './Report.jsx'
 import { STATUS, bySeverity, cx, domainOf, longWhen, seconds, tally } from './lib.js'
 
 function scoreTone(n) {
@@ -80,7 +83,7 @@ function SpeedPanel({ check }) {
   )
 }
 
-function Tally({ checks, laterCount }) {
+function Tally({ checks, laterCount, scored }) {
   const t = tally(checks)
   const items = [
     ['fail', t.fail],
@@ -100,7 +103,7 @@ function Tally({ checks, laterCount }) {
         </div>
       ))}
       <p className="col-span-2 text-[13.5px] leading-relaxed text-faint sm:col-span-4">
-        {checks.length} of {checks.length + laterCount} checks ran. The overall score and the Next Steps list come in Phase 2.
+        {checks.length} of {checks.length + laterCount} checks ran. {scored ? 'The rest come with the local layer.' : 'This review has no score yet.'}
       </p>
     </dl>
   )
@@ -138,6 +141,40 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
   const [state, setState] = useState(() => (cache.current.get(id) ? { status: 'ready', ...cache.current.get(id) } : { status: 'loading' }))
   const [confirm, setConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [savingReview, setSavingReview] = useState(false)
+  const toast = useToast()
+
+  // Keep the cached copy in step, so going back and forth shows the latest ticks.
+  const update = (fn) =>
+    setState((s) => {
+      const next = fn(s)
+      const { status, ...data } = next
+      cache.current.set(id, data)
+      return next
+    })
+
+  const toggleTask = async (task, done) => {
+    update((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === task.id ? { ...t, done } : t)) }))
+    try {
+      await api.setTaskDone(task.id, done)
+    } catch (e) {
+      update((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === task.id ? { ...t, done: !done } : t)) }))
+      toast(e.message)
+    }
+  }
+
+  const markReviewed = async (reviewed) => {
+    setSavingReview(true)
+    try {
+      const out = await api.setReviewed(id, reviewed)
+      update((s) => ({ ...s, audit: { ...s.audit, reviewed_at: out.reviewedAt } }))
+      toast(reviewed ? 'Marked reviewed. The client link is on.' : 'The client link is off.')
+    } catch (e) {
+      toast(e.message)
+    } finally {
+      setSavingReview(false)
+    }
+  }
 
   useEffect(() => {
     let live = true
@@ -179,7 +216,8 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
     )
   }
 
-  const { audit, checks, meta } = state
+  const { audit, checks, meta, tasks = [] } = state
+  const overall = audit.overall_score
   const notes = audit.notes?.notes || []
   const later = Object.entries(meta.checks).filter(([, m]) => m.phase > 1)
   const speed = checks.find((c) => c.key === 'page_speed')
@@ -205,14 +243,25 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
 
       <header className="mt-10 grid items-center gap-10 lg:mt-14 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-16">
         <Dial marks={marksFor(meta, checks)} size={300} labels reveal className="mx-auto" title={`Dial for ${audit.business_name}: one mark per check`}>
-          <div>
-            <span className="display block text-[64px] leading-none tabular-nums">{checks.length - tally(checks).fail - tally(checks).warn - tally(checks).skipped}</span>
-            <span className="mt-1.5 block text-[13px] leading-tight text-mute">
-              of {checks.length} checks
-              <br />
-              working
-            </span>
-          </div>
+          {overall != null ? (
+            <div>
+              <span className={cx('display block text-[72px] leading-none tabular-nums', overallTone(overall))}>{overall}</span>
+              <span className="mt-1.5 block text-[13px] leading-tight text-mute">
+                out of 100
+                <br />
+                {tally(checks).pass} of {checks.length} working
+              </span>
+            </div>
+          ) : (
+            <div>
+              <span className="display block text-[64px] leading-none tabular-nums">{tally(checks).pass}</span>
+              <span className="mt-1.5 block text-[13px] leading-tight text-mute">
+                of {checks.length} checks
+                <br />
+                working
+              </span>
+            </div>
+          )}
         </Dial>
         <div className="min-w-0">
           <h1 className="display text-balance text-[clamp(42px,8vw,80px)] leading-[0.92]">{audit.business_name}</h1>
@@ -239,7 +288,7 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
       </header>
 
       <section className="mt-14 border-t border-line pt-10" aria-label="Results at a glance">
-        <Tally checks={checks} laterCount={later.length} />
+        <Tally checks={checks} laterCount={later.length} scored={overall != null} />
         {(notes.length > 0 || audit.error) && (
           <ul className="mt-8 space-y-2">
             {audit.error && <li className="text-[14px] leading-relaxed text-danger">The home page could not be read: {audit.error}.</li>}
@@ -251,6 +300,12 @@ export function AuditView({ id, cache, onBack, onRerun, onDelete }) {
           </ul>
         )}
       </section>
+
+      {overall != null && <CategoryBars categories={meta.categories} scores={audit.category_scores} />}
+
+      <ShareControl audit={audit} onReviewed={markReviewed} busy={savingReview} />
+
+      <NextSteps tasks={tasks} onToggle={toggleTask} />
 
       {speed && <SpeedPanel check={speed} />}
 

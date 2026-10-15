@@ -1,5 +1,9 @@
 // api/seo.mjs: backend for /admin/seo/ (SEO Review), one function with an ?action= switch.
 //
+// Public action (no sign in, used by the client report at /seo/<share_token>):
+//   GET  share&t=<token> one reviewed review, shaped for the client. Never ids, tokens, notes,
+//                        raw check details or anything about other reviews.
+//
 // Admin actions (need a Supabase session whose email is in ADMIN_EMAILS):
 //   GET  list            every review, newest first, without the check details
 //   GET  get&id=<uuid>   one review with all of its checks
@@ -20,7 +24,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { AuditInputError, normalizeUrl, runAudit, PHASE_ONE } from './_lib/seo-checks.mjs';
-import { CATEGORIES, CHECKS, SERVICES, FETCH } from './_lib/seo-config.mjs';
+import { CATEGORIES, CHECKS, SERVICES, FETCH, OFFERS, BRAND } from './_lib/seo-config.mjs';
 import { scoreAudit, buildTasks } from './_lib/seo-score.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
@@ -34,6 +38,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const AUDIT_COLUMNS = 'id,lead_id,site_url,final_url,business_name,city,service,overall_score,category_scores,status,error,notes,duration_ms,created_at,reviewed_at';
+const ADMIN_AUDIT_COLUMNS = `${AUDIT_COLUMNS},share_token`;
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -182,7 +187,7 @@ async function list() {
 
 async function getOne(id) {
   if (!UUID.test(id || '')) throw new HttpError(400, 'That review id is not valid.');
-  const [audit] = await rows(`/rest/v1/seo_audits?id=eq.${id}&select=${AUDIT_COLUMNS}&limit=1`);
+  const [audit] = await rows(`/rest/v1/seo_audits?id=eq.${id}&select=${ADMIN_AUDIT_COLUMNS}&limit=1`);
   if (!audit) throw new HttpError(404, 'That review was deleted or never existed.');
   const checks = await rows(`/rest/v1/seo_audit_checks?audit_id=eq.${id}&select=*&order=id.asc`);
   let tasks = await rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${id}&select=*&order=priority_order.asc`);
@@ -281,6 +286,69 @@ async function setTask(body) {
   return { ok: true };
 }
 
+// ── Client share ────────────────────────────────────────────────────────────
+
+const SHARE_TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
+const speedScore = (run) => (typeof run?.score === 'number' ? run.score : null);
+
+// Everything the client report needs, and nothing else. Exported for tests.
+export function shareView(audit, checkRows, taskRows_) {
+  const byKey = Object.fromEntries(checkRows.map((r) => [r.check_key, r]));
+  const keyById = Object.fromEntries(checkRows.map((r) => [r.id, r.check_key]));
+  const scored = scoreAudit(checkRows.map((r) => ({ key: r.check_key, category: r.category, status: r.status, score: r.score == null ? null : Number(r.score) })));
+  const overall = audit.overall_score ?? scored.overall;
+  const speed = checkRows.find((r) => r.check_key === 'page_speed' && r.status !== 'skipped')?.details;
+  const recommended = OFFERS.find((o) => o.recommendFrom != null && overall != null && overall >= o.recommendFrom)?.key || null;
+  let url = audit.final_url || audit.site_url;
+  try { url = new URL(url).hostname.replace(/^www\./, ''); } catch { /* keep as saved */ }
+
+  return {
+    report: {
+      business: audit.business_name,
+      site: url,
+      city: audit.city,
+      service: audit.service,
+      ranAt: audit.created_at,
+      reviewedAt: audit.reviewed_at,
+      overall,
+      dropped: scored.dropped,
+      categories: Object.fromEntries(
+        Object.entries(CATEGORIES).map(([k, c]) => [k, { label: c.label, blurb: c.blurb, score: scored.categories[k].score, weight: scored.categories[k].weight }]),
+      ),
+      speed: speed ? { phone: speedScore(speed.mobile), computer: speedScore(speed.desktop) } : null,
+    },
+    checks: checkRows.map((r) => {
+      const m = CHECKS[r.check_key] || {};
+      return { key: r.check_key, label: m.label || r.check_key, category: r.category, status: r.status, summary: r.summary, explanation: r.explanation, service: SERVICES[m.service] };
+    }),
+    tasks: [...taskRows_]
+      .sort((a, b) => a.priority_order - b.priority_order)
+      .map((t) => {
+        const c = byKey[keyById[t.check_id]];
+        return { title: t.title, impact: t.impact, effort: t.effort, service: SERVICES[t.service_tag] || t.service_tag, status: c?.status || null, label: CHECKS[c?.check_key]?.label || null, why: c?.explanation || null };
+      }),
+    meta: {
+      categories: Object.fromEntries(Object.entries(CATEGORIES).map(([k, c]) => [k, { label: c.label }])),
+      checks: Object.fromEntries(Object.entries(CHECKS).map(([k, c]) => [k, { label: c.label, category: c.category, phase: c.phase }])),
+    },
+    offers: OFFERS.map(({ key, name, price, blurb }) => ({ key, name, price, blurb })),
+    recommended,
+    brand: BRAND,
+  };
+}
+
+async function share(token) {
+  const missing = new HttpError(404, 'This report is not available. Ask Christian for a new link.');
+  if (!SHARE_TOKEN.test(token || '')) throw missing;
+  const [audit] = await rows(`/rest/v1/seo_audits?share_token=eq.${enc(token)}&reviewed_at=not.is.null&status=eq.complete&select=${AUDIT_COLUMNS}&limit=1`);
+  if (!audit) throw missing;
+  const [checks, tasks] = await Promise.all([
+    rows(`/rest/v1/seo_audit_checks?audit_id=eq.${audit.id}&select=*&order=id.asc`),
+    rows(`/rest/v1/seo_audit_tasks?audit_id=eq.${audit.id}&select=*&order=priority_order.asc`),
+  ]);
+  return shareView(audit, checks, tasks);
+}
+
 async function remove(body) {
   if (!UUID.test(body.id || '')) throw new HttpError(400, 'That review id is not valid.');
   await sb(`/rest/v1/seo_audits?id=eq.${body.id}`, { method: 'DELETE' });
@@ -292,6 +360,7 @@ export default {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
     try {
+      if (request.method === 'GET' && action === 'share') return json(await share(url.searchParams.get('t')));
       await requireAdmin(request);
       if (request.method === 'GET') {
         if (action === 'list') return json(await list());

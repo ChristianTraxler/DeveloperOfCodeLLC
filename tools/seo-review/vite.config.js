@@ -58,5 +58,7 @@ export default defineConfig({
     reportCompressedSize: false,
     // Top-level await loads the shared admin client at run time (see src/app/session.js).
     target: 'es2022',
+    // Two pages: the admin tool, and the public client report (served at /seo/<token>).
+    rollupOptions: { input: { main: path.resolve(__dirname, 'index.html'), share: path.resolve(__dirname, 'share.html') } },
   },
 })

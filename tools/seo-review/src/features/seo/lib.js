@@ -6,7 +6,7 @@ export const STATUS = {
   warn: { label: 'Tighten', long: 'to tighten', tone: 'text-amber', ring: 'border-amber/40 bg-amber/10 text-amber', color: 'rgb(var(--amber-rgb))' },
   pass: { label: 'Working', long: 'working', tone: 'text-live', ring: 'border-live/35 bg-live/10 text-live', color: 'rgb(var(--live-rgb))' },
   skipped: { label: 'Not checked', long: 'not checked', tone: 'text-faint', ring: 'border-line2 text-mute', color: 'rgb(var(--faint-rgb))' },
-  later: { label: 'Phase 3', long: 'coming later', tone: 'text-faint', ring: 'border-line2 text-faint', color: 'rgba(236,232,223,0.13)' },
+  later: { label: 'Phase 3', long: 'coming later', tone: 'text-faint', ring: 'border-line2 text-faint', color: 'rgb(var(--bone-rgb) / 0.13)' },
 }
 
 const SEVERITY = { fail: 0, warn: 1, skipped: 2, pass: 3 }

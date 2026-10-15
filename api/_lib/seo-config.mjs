@@ -83,3 +83,23 @@ export const FETCH = {
   spaTextThreshold: 200,
   renderTimeoutMs: 15000,
 };
+
+// The offer ladder on the client report. Prices are placeholders until Christian sets them.
+// recommendFrom: the lowest overall score (inclusive) that points to this offer. The report
+// recommends the first offer whose recommendFrom the score reaches, so order from high to low.
+export const OFFERS = [
+  { key: 'care', name: 'Website Care + Local SEO', price: '[PRICE] per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80 },
+  { key: 'implementation', name: 'Implementation Package', price: '[PRICE]', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0 },
+  { key: 'review', name: 'Full SEO Review', price: '[PRICE]', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null },
+];
+
+// Who the client report is from, and where its buttons go.
+export const BRAND = {
+  person: 'Christian Traxler',
+  company: 'Developer of Code, LLC',
+  line: 'Veteran-owned web development company based in North Carolina.',
+  email: 'DeveloperOfCodeLLC@Gmail.com',
+  phone: '(828) 781-4674',
+  bookUrl: '/consult.html',
+  site: 'https://developerofcode.com',
+};

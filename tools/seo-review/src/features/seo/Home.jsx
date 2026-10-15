@@ -96,7 +96,9 @@ function ReviewRow({ audit, meta, onOpen }) {
   return (
     <li>
       <button type="button" onClick={() => onOpen(audit)} disabled={failed || running} className="group flex w-full items-center gap-4 px-1 py-5 text-left transition-colors sm:gap-6 sm:px-3 disabled:cursor-default">
-        <Dial marks={marksFromCounts(meta, audit.category_scores)} size={56} title={`${audit.business_name} review dial`} />
+        <Dial marks={marksFromCounts(meta, audit.category_scores)} size={56} title={audit.overall_score != null ? `${audit.business_name}: score ${audit.overall_score} out of 100` : `${audit.business_name} review dial`}>
+          {audit.overall_score != null && <span className="text-[15px] font-semibold tabular-nums text-bone">{audit.overall_score}</span>}
+        </Dial>
         <span className="min-w-0 flex-1">
           <span className="display line-clamp-2 block text-[22px] leading-tight transition-colors group-hover:text-white sm:text-[24px]">{audit.business_name}</span>
           <span className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[14px] text-mute">
@@ -104,6 +106,7 @@ function ReviewRow({ audit, meta, onOpen }) {
             <span className="text-faint">
               {audit.service} in {audit.city}
             </span>
+            {audit.reviewed_at && <span className="text-live">Reviewed</span>}
           </span>
           <span className="mt-2 block sm:hidden">
             {failed ? <span className="text-[14px] text-danger">Stopped early</span> : running ? <span className="text-[14px] text-mute">Still running</span> : <Counts t={t} />}

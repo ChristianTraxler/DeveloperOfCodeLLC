@@ -246,3 +246,22 @@ test('Next Steps: only fails and warns, high impact, then small effort, then fai
 test('every check has a Next Steps title', () => {
   for (const [key, c] of Object.entries(CHECKS)) assert.ok(c.task, `${key} needs a task title in seo-config.mjs`);
 });
+
+test('the client share view leaks no ids, tokens, notes or raw details', async () => {
+  process.env.SUPABASE_URL ||= 'https://sb.test';
+  const { shareView } = await import('../api/seo.mjs');
+  const audit = { id: 'a1b2', share_token: 'secret-token-value-123', lead_id: 'lead-9', notes: { site: { ip: '1.2.3.4' } }, business_name: 'Blue Ridge Wash', site_url: 'https://www.blueridge.test/', final_url: null, city: 'Hickory, NC', service: 'Pressure washing', created_at: '2026-10-15T12:00:00Z', reviewed_at: '2026-10-15T13:00:00Z', overall_score: 45, status: 'complete' };
+  const checkRows = [
+    { id: 11, audit_id: 'a1b2', check_key: 'title', category: 'onpage', status: 'fail', score: 0, summary: 'No city', explanation: 'Plain words.', details: { html: '<title>x</title>' } },
+    { id: 12, audit_id: 'a1b2', check_key: 'page_speed', category: 'technical', status: 'warn', score: 0.5, summary: 'Slow', explanation: 'Plain.', details: { mobile: { score: 62, screenshot: 'data:image/jpeg;base64,AAAA' }, desktop: { score: 91 } } },
+  ];
+  const taskRows = [{ id: 5, audit_id: 'a1b2', check_id: 11, title: 'Add the city', impact: 'high', effort: 'small', service_tag: 'onpage', priority_order: 1, done: false }];
+  const v = shareView(audit, checkRows, taskRows);
+  const text = JSON.stringify(v);
+  for (const leak of ['a1b2', 'secret-token', 'lead-9', '1.2.3.4', 'base64', '<title>']) assert.ok(!text.includes(leak), `share view leaks ${leak}`);
+  assert.equal(v.report.site, 'blueridge.test');
+  assert.deepEqual(v.report.speed, { phone: 62, computer: 91 });
+  assert.equal(v.tasks[0].status, 'fail');
+  assert.equal(v.tasks[0].service, 'On-page fixes');
+  assert.equal(v.recommended, 'implementation');
+});

@@ -64,15 +64,15 @@ export function Dial({ marks, size = 240, labels = false, scanning = null, revea
   return (
     <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox={`0 0 ${box} ${box}`} width={size} height={size} role="img" aria-label={title || 'Review dial'} className="block overflow-visible">
-        <circle cx={c} cy={c} r={r + weight / 2 + 7} fill="none" stroke="rgba(236,232,223,0.06)" />
-        <circle cx={c} cy={c} r={r - weight / 2 - 7} fill="none" stroke="rgba(236,232,223,0.05)" />
+        <circle cx={c} cy={c} r={r + weight / 2 + 7} fill="none" stroke="rgb(var(--bone-rgb) / 0.06)" />
+        <circle cx={c} cy={c} r={r - weight / 2 - 7} fill="none" stroke="rgb(var(--bone-rgb) / 0.05)" />
         {placed.map((m, i) => {
           const later = m.status === 'later'
           if (!later) live++
           let color = (STATUS[m.status] || STATUS.later).color
           let opacity = 1
           if (scanning != null && !later) {
-            color = live < scanIndex ? 'rgb(var(--bone-rgb))' : live === scanIndex ? 'rgb(var(--ember-rgb))' : 'rgba(236,232,223,0.14)'
+            color = live < scanIndex ? 'rgb(var(--bone-rgb))' : live === scanIndex ? 'rgb(var(--ember-rgb))' : 'rgb(var(--bone-rgb) / 0.14)'
             opacity = live < scanIndex ? 0.55 : 1
           }
           const d = arc(c, c, r, m.angle - span / 2, m.angle + span / 2)
