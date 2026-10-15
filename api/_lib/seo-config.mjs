@@ -103,15 +103,41 @@ export const FETCH = {
   renderTimeoutMs: 15000,
 };
 
-// The offer ladder on the client report. Prices are placeholders until Christian sets them.
+// The offer ladder on the client report. The client sees name, price and blurb only.
+// tiers and includes are Christian's price sheet (admin Pricing page, #/pricing).
 // recommendFrom: the lowest overall score (inclusive) that points to this offer. The report
 // recommends the first offer whose recommendFrom the score reaches, so order from high to low.
 // payUrl: the Stripe Payment Link for the offer (Phase 4). Leave null until Christian creates them;
 // until then "Request implementation" only emails the request and Christian replies with a quote.
 export const OFFERS = [
-  { key: 'care', name: 'Website Care + Local SEO', price: '$149 to $399 per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80, payUrl: null },
-  { key: 'implementation', name: 'Implementation Package', price: '$495 to $1,200', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0, payUrl: null },
-  { key: 'review', name: 'Full SEO Review', price: '$149', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null, payUrl: null },
+  {
+    key: 'care', name: 'Website Care + Local SEO', price: '$149 to $399 per month', blurb: 'Monthly fixes, a fresh review every month, and a short report on what changed.', recommendFrom: 80, payUrl: null,
+    billing: 'Monthly',
+    includes: ['A fresh review every month', 'A short report on what changed'],
+    tiers: [
+      { name: 'Basic', price: '$149/mo', includes: ['Monthly re-scan and report', 'Up to 1 hour of fixes'] },
+      { name: 'Growth', price: '$249/mo', includes: ['Everything in Basic', 'Up to 3 hours of fixes', '2 Google Business Profile posts a month'] },
+      { name: 'Premium', price: '$399/mo', includes: ['Everything in Growth', 'Up to 6 hours of fixes', '4 Google Business Profile posts a month', 'Review request setup'] },
+    ],
+  },
+  {
+    key: 'implementation', name: 'Implementation Package', price: '$495 to $1,200', blurb: 'I make the fixes in this report, then run the review again so you can see the difference.', recommendFrom: 0, payUrl: null,
+    billing: 'One time',
+    includes: ['A re-scan when the work is done', 'Before and after scores'],
+    tiers: [
+      { name: 'Starter', price: '$495', includes: ['Up to 5 fixes from the report', 'On-page and technical fixes'] },
+      { name: 'Standard', price: '$795', includes: ['Up to 12 fixes from the report', 'Service page copy'] },
+      { name: 'Full', price: '$1,200', includes: ['Every fix in the report', 'Google Business Profile cleanup'] },
+    ],
+  },
+  {
+    key: 'review', name: 'Full SEO Review', price: '$149', blurb: 'This report plus your Google Business Profile, reviews and the top 3 local competitors.', recommendFrom: null, payUrl: null,
+    billing: 'One time',
+    includes: [],
+    tiers: [
+      { name: 'Full SEO Review', price: '$149', includes: ['This report plus a Google Business Profile check', 'Reviews compared with the top 3 local competitors', 'A 20 minute walkthrough call'] },
+    ],
+  },
 ];
 
 // Phase 4: the leads list. Statuses run in this order; won and lost end the follow-ups.

@@ -1,6 +1,6 @@
 // The tool's front page: the new review form, then every past review.
 import { useRef, useState } from 'react'
-import { ArrowUpRight, Globe, RotateCw, Trash2, UserRound, X } from 'lucide-react'
+import { ArrowUpRight, Globe, RotateCw, Tag, Trash2, UserRound, X } from 'lucide-react'
 import { Button, Field, Input } from './ui/core.jsx'
 import { Dial, marksFromCounts } from './Dial.jsx'
 import { cx, domainOf, plural, tallyFromCategories, when } from './lib.js'
@@ -148,7 +148,7 @@ function ReviewRow({ audit, meta, onOpen, onDelete }) {
   )
 }
 
-export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads, onDelete }) {
+export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads, onPricing, onDelete }) {
   const { audits, meta, status, error } = list
   const toast = useToast()
   const [confirm, setConfirm] = useState(null)
@@ -169,9 +169,14 @@ export function Home({ list, draft, setDraft, onRun, onOpen, onRetry, onLeads, o
           <p className="mt-6 max-w-[34ch] text-[17px] leading-relaxed text-mute sm:text-[18px]">
             Check how a local business shows up in Google. Every problem it finds is work you can offer to fix.
           </p>
-          <Button variant="ghost" size="md" className="mt-7" onClick={onLeads}>
-            <UserRound size={16} /> Leads{list.leads?.length ? <span className="tabular-nums text-faint">{list.leads.length}</span> : null}
-          </Button>
+          <div className="mt-7 flex flex-wrap gap-2">
+            <Button variant="ghost" size="md" onClick={onLeads}>
+              <UserRound size={16} /> Leads{list.leads?.length ? <span className="tabular-nums text-faint">{list.leads.length}</span> : null}
+            </Button>
+            <Button variant="ghost" size="md" onClick={onPricing}>
+              <Tag size={16} /> Pricing
+            </Button>
+          </div>
           {done.length > 0 && (
             <p className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[14px] text-mute">
               <span>
