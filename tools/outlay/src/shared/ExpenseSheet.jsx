@@ -7,7 +7,7 @@ import { prepareReceipt } from '../lib/files.js';
 import { IconClip, IconCamera } from './Icons.jsx';
 
 const blank = (today) => ({
-  amount: '', vendor: '', spent_on: today, category: 'software', payment_method: 'Business card', notes: '',
+  amount: '', vendor: '', spent_on: today, category: '', payment_method: 'Business card', notes: '',
   is_billable: false, client_id: '', new_client: '', billing_status: 'unbilled',
 });
 
@@ -68,6 +68,7 @@ export default function ExpenseSheet() {
     const errs = {};
     if (!Number.isFinite(cents) || cents <= 0) errs.amount = 'Enter an amount above zero.';
     if (!f.vendor.trim()) errs.vendor = 'Add who you paid.';
+    if (!f.category) errs.category = 'Choose a category.';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(f.spent_on)) errs.spent_on = 'Pick the date you paid.';
     if (f.is_billable && f.client_id === '__new' && !f.new_client.trim()) errs.client = 'Name the new client.';
     setErrors(errs);
@@ -178,10 +179,13 @@ export default function ExpenseSheet() {
 
         <div className="field">
           <label className="field-label" htmlFor="x-cat">Category</label>
-          <select id="x-cat" className="input" value={f.category} onChange={set('category')} aria-describedby="x-cat-hint">
+          <select id="x-cat" className="input" value={f.category} onChange={set('category')} aria-describedby="x-cat-hint"
+            aria-invalid={errors.category ? true : undefined}>
+            <option value="" disabled>Choose a category</option>
             {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
-          <p id="x-cat-hint" className="field-hint">Schedule C line {cat.line}, {cat.lineLabel.toLowerCase()}{cat.rate ? `, counted at ${cat.rate * 100}%` : ''}. <button type="button" className="btn-text" onClick={() => ui.openCategories()}>Manage categories</button></p>
+          {errors.category ? <p className="field-error">{errors.category}</p> : null}
+          <p id="x-cat-hint" className="field-hint">{f.category ? `Schedule C line ${cat.line}, ${cat.lineLabel.toLowerCase()}${cat.rate ? `, counted at ${cat.rate * 100}%` : ''}.` : 'Pick one to see its Schedule C line.'} <button type="button" className="btn-text" onClick={() => ui.openCategories()}>Manage categories</button></p>
         </div>
 
         <div className="field">
