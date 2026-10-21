@@ -433,21 +433,151 @@
     border-top: 1.5px solid currentColor;
     border-bottom: 1.5px solid currentColor;
   }
-  .menu-panel {
-    --surface: var(--c-dusk);
+  /* Mobile menu: a Dynamic Island style card that grows out of the Menu pill and folds back into it. */
+  .island-root {
+    --surface: var(--c-night);
     --fg: var(--c-snow);
     --muted: var(--c-snow-muted);
+    --ease-island: cubic-bezier(0.32, 0.72, 0, 1);
     position: fixed;
     inset: 0;
     z-index: 60;
+  }
+  .island-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgb(var(--c-night) / 0.5);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .island-root[data-open='true'] .island-scrim {
+    opacity: 1;
+  }
+  .island {
+    position: absolute;
+    top: var(--island-top);
+    right: var(--island-right);
+    width: min(calc(100vw - 2 * var(--island-right)), 24rem);
+    max-height: calc(100dvh - var(--island-top) - var(--island-right) - env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgb(var(--c-dusk));
+    overscroll-behavior: contain;
+    border-radius: 1.75rem;
+    background: rgb(var(--c-night));
+    box-shadow: inset 0 0 0 1px rgb(var(--c-snow) / 0.1);
     color: rgb(var(--fg));
-    animation: panel-in 0.3s ease both;
+    clip-path: inset(0 0 calc(100% - var(--pill-h)) calc(100% - var(--pill-w)) round calc(var(--pill-h) / 2));
+    transition: clip-path 0.46s var(--ease-island);
+  }
+  .island-root[data-open='true'] .island {
+    clip-path: inset(0 round 1.75rem);
+  }
+  .island-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 1.25rem;
+    transition: padding 0.46s var(--ease-island);
+  }
+  .island-label {
+    color: rgb(var(--muted));
+  }
+  .island-close {
+    border-color: rgb(var(--fg) / 0.2);
+    transition:
+      border-color 0.3s ease,
+      background-color 0.3s ease;
+  }
+  /* Once open, the Close pill steps in from the corner and becomes a filled chip, so the card's
+     own rounded corner reads cleanly instead of the pill outline sitting on top of it. */
+  .island-root[data-open='true'] .island-top {
+    padding: 0.75rem 0.75rem 0 1.25rem;
+  }
+  .island-root[data-open='true'] .island-close {
+    border-color: transparent;
+    background-color: rgb(var(--fg) / 0.09);
+  }
+  .island-x {
+    position: relative;
+    width: 0.95rem;
+    height: 0.5rem;
+  }
+  .island-x::before,
+  .island-x::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: currentColor;
+    transition:
+      transform 0.4s var(--ease-island),
+      top 0.4s var(--ease-island);
+  }
+  .island-x::before {
+    top: 0;
+  }
+  .island-x::after {
+    top: calc(100% - 1.5px);
+  }
+  .island-root[data-open='true'] .island-x::before,
+  .island-root[data-open='true'] .island-x::after {
+    top: calc(50% - 0.75px);
+    transform: rotate(45deg);
+  }
+  .island-root[data-open='true'] .island-x::after {
+    transform: rotate(-45deg);
+  }
+  .island-body {
+    padding: 1rem 1.25rem 0;
+  }
+  .island-foot {
+    padding: 1.5rem 1.25rem;
+  }
+  .island-body li,
+  .island-foot,
+  .island-label {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+  .island-root[data-open='true'] .island-body li,
+  .island-root[data-open='true'] .island-foot,
+  .island-root[data-open='true'] .island-label {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.4s ease calc(0.14s + var(--i, 0) * 0.04s),
+      transform 0.5s var(--ease-island) calc(0.14s + var(--i, 0) * 0.04s);
+  }
+  .island-root[data-open='true'] .island-foot {
+    --i: 6;
+  }
+  .island .menu-list a {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .island,
+    .island-root[data-open='true'] .island {
+      clip-path: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .island-root[data-open='true'] .island {
+      opacity: 1;
+    }
+    .island-body li,
+    .island-foot,
+    .island-label,
+    .island-x::before,
+    .island-x::after {
+      transition: none;
+    }
   }
   .menu-list a {
     display: block;
