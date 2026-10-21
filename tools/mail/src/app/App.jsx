@@ -5,12 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { ArrowLeft, LogOut } from 'lucide-react'
 import { MailTool, createGmailApi } from '../features/mail/index.js'
-import { Button } from '../features/mail/ui/core.jsx'
 import { getClient, getSession, onAuthChange, signOut, toLogin, LOGIN_URL } from './session.js'
 
 const HUB_URL = '/admin/'
 const LINK =
-  'inline-flex h-10 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full border border-line2 bg-white/[0.02] px-4 text-[14px] font-medium text-bone transition-[background,border-color] duration-150 hover:border-white/30 hover:bg-white/[0.06] max-sm:w-10 max-sm:px-0'
+  'inline-flex h-11 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full border border-line2 bg-white/[0.03] px-4 text-[14px] font-medium text-bone transition-[background,border-color] duration-150 hover:border-white/30 hover:bg-white/[0.07] max-sm:w-11 max-sm:px-0'
 
 function useHashRoute() {
   const read = () => (window.location.hash || '').replace(/^#\/?/, '')
@@ -46,10 +45,10 @@ function TopBar({ email }) {
             <ArrowLeft size={16} />
             <span className="max-sm:hidden">Hub</span>
           </a>
-          <Button variant="ghost" onClick={signOut} aria-label="Sign out" className="max-sm:w-10 max-sm:px-0">
+          <button type="button" onClick={signOut} aria-label="Sign out" className={LINK}>
             <LogOut size={16} />
             <span className="max-sm:hidden">Sign out</span>
-          </Button>
+          </button>
         </nav>
       </div>
     </header>

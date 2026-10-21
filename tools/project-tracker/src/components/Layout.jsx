@@ -34,12 +34,12 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-950/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-950/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-3 group">
-            <span className="code-tag text-xl font-bold tracking-tight">&lt;/DOC&gt;</span>
-            <span className="hidden sm:block w-px h-5 bg-ink-600" />
-            <span className="hidden sm:block text-xs uppercase tracking-[0.18em] text-muted font-mono">
+            <span className="code-tag text-[22px] font-extrabold leading-none tracking-[-0.04em]" style={{ fontStretch: '112%' }}>&lt;/DOC&gt;</span>
+            <span className="hidden sm:block w-px h-5 bg-[rgba(236,232,223,0.17)]" />
+            <span className="hidden sm:block text-[14px] tracking-[0.02em] text-muted">
               Project Tracker
             </span>
           </Link>
@@ -50,7 +50,8 @@ export default function Layout({ children }) {
           <nav className="flex items-center gap-1">
             <a
               href="/admin"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-mono transition-colors text-muted hover:text-bone hover:bg-ink-800/60"
+              aria-label="Back to hub"
+              className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[rgba(236,232,223,0.17)] bg-white/[0.03] px-4 text-[14px] font-medium text-bone transition-colors hover:border-white/30 hover:bg-white/[0.07] max-sm:w-11 max-sm:px-0"
             >
               <LayoutGrid size={16} strokeWidth={2} />
               <span className="hidden sm:inline">Hub</span>
@@ -68,9 +69,10 @@ export default function Layout({ children }) {
               onClick={handleSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="ml-1 flex items-center justify-center p-2 rounded-lg text-muted hover:text-accent hover:bg-ink-800/60 transition-colors"
+              className="ml-1 inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[rgba(236,232,223,0.17)] bg-white/[0.03] px-4 text-[14px] font-medium text-bone transition-colors hover:border-white/30 hover:bg-white/[0.07] max-sm:w-11 max-sm:px-0"
             >
               <LogOut size={16} strokeWidth={2} />
+              <span className="hidden sm:inline">Sign out</span>
             </button>
           </nav>
         </div>
