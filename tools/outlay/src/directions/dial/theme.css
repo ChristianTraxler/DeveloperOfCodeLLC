@@ -88,7 +88,7 @@
 .d-brand-div { display: none; width: 1px; height: 20px; background: rgb(var(--silver)); }
 .d-brand-label { display: none; font-size: .875rem; letter-spacing: .02em; color: rgb(var(--muted)); }
 @media (min-width: 640px) { .d-brand-div, .d-brand-label { display: block; } }
-.d-pill { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; padding: .5rem 1rem; border-radius: 999px; font: inherit; font-weight: 500; font-size: .875rem; text-decoration: none; cursor: pointer; color: rgb(var(--graphite)); background: rgb(var(--graphite) / .03); border: 1px solid rgb(var(--graphite) / .17); transition: background-color .2s, border-color .2s; }
+.d-pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 16px; border-radius: 999px; font: inherit; font-weight: 500; font-size: .875rem; text-decoration: none; cursor: pointer; color: rgb(var(--graphite)); background: rgb(var(--graphite) / .03); border: 1px solid rgb(var(--graphite) / .17); transition: background-color .2s, border-color .2s; }
 .d-pill:hover { background: rgb(var(--graphite) / .07); border-color: rgb(var(--graphite) / .3); }
 .d-pill .lbl { display: none; }
 @media (min-width: 640px) { .d-pill .lbl { display: inline; } }
