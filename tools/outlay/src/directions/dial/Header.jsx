@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useData } from '../../data/DataContext.jsx';
-import { useScrolledPast } from '../../shared/hooks.js';
-import { IconPlus, IconMenu, IconClose, IconArrowLeft } from '../../shared/Icons.jsx';
+import { IconPlus, IconMenu, IconClose, IconArrowLeft, IconLogOut } from '../../shared/Icons.jsx';
 import { ModeToggle } from '../../shared/mode.jsx';
 
 const LINKS = [['ledger', 'Ledger'], ['spending', 'Spending'], ['billable', 'Billable'], ['recurring', 'Recurring'], ['taxes', 'Taxes']];
@@ -21,9 +20,8 @@ export function BrandMark() {
 }
 
 export default function Header() {
-  const { ui } = useData();
-  const solid = useScrolledPast(30);
-  const [menu, setMenu] = useState(false);
+  const { ui, mode, signOut } = useData();
+    const [menu, setMenu] = useState(false);
 
   useEffect(() => {
     if (!menu) return undefined;
@@ -33,16 +31,17 @@ export default function Header() {
   }, [menu]);
 
   return (
-    <header className={`d-header ${solid ? 'is-solid' : ''}`}>
-      <div className="wrap d-header-row">
-        <a href="/admin/" className="d-hub-link" aria-label="Back to the Admin Hub"><IconArrowLeft width={18} height={18} /><span>Hub</span></a>
-        <a href="#top" className="d-brand"><BrandMark /><span className="d-brand-word">Outlay</span><span className="d-brand-sub">Developer of Code, LLC</span></a>
+    <header className="d-header is-solid">
+      <div className="d-header-row">
+        <a href="#top" className="d-brand"><span className="d-doc">{'</DOC>'}</span><span className="d-brand-div" /><span className="d-brand-label">Outlay</span></a>
         <nav className="d-nav" aria-label="Sections">
           {LINKS.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
         </nav>
         <ModeToggle />
         <button type="button" className="btn btn-primary d-header-cta" onClick={() => ui.openEditor()}><IconPlus />Log an expense</button>
         <button type="button" className="icon-btn d-menu-btn" onClick={() => setMenu(true)} aria-label="Open the section menu" aria-expanded={menu}><IconMenu /></button>
+        <a href="/admin/" className="d-pill" aria-label="Back to hub"><IconArrowLeft width={16} height={16} /><span className="lbl">Hub</span></a>
+        {mode === 'supabase' ? <button type="button" className="d-pill" onClick={() => signOut()} aria-label="Sign out"><IconLogOut width={16} height={16} /><span className="lbl">Sign out</span></button> : null}
       </div>
       {menu ? (
         <div className="d-menu tone-light" role="dialog" aria-modal="true" aria-label="Sections">

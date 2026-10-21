@@ -29,7 +29,7 @@ function useHashRoute() {
 function TopBar({ email }) {
   return (
     <header className="sticky z-40 border-b border-line bg-ink/75 backdrop-blur-xl" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6">
         <a href={HUB_URL} className="flex items-center gap-3.5" aria-label="Developer of Code admin home">
           <span className="text-[22px] font-extrabold leading-none tracking-[-0.04em] text-ember" style={{ fontStretch: '112%' }}>
             {'</DOC>'}
@@ -56,7 +56,7 @@ function TopBar({ email }) {
 // Only shows for the moment before the redirect to the admin sign in (or if it is blocked).
 function SignedOut() {
   return (
-    <main className="mx-auto max-w-[1120px] px-4 pb-24 pt-20 sm:px-6 lg:px-10">
+    <main className="mx-auto max-w-[1120px] px-4 pb-24 pt-20 sm:px-6">
       <h1 className="display text-[clamp(44px,11vw,88px)] leading-[0.9]">Sign in to the admin first</h1>
       <p className="mt-6 text-[16px] text-mute" role="status">Taking you to the admin sign in.</p>
       <a href={LOGIN_URL} className="mt-8 inline-flex h-11 items-center rounded-full bg-ember px-5 text-[15px] font-semibold text-[#1c0a02] hover:bg-[#ff6f3a]">

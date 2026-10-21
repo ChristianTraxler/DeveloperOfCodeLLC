@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face { font-family: 'Mona Sans Variable'; font-style: normal; font-display: swap; font-weight: 200 900; font-stretch: 75% 125%; src: url('/admin/demos/fonts/mona-sans-latin-standard-normal.woff2') format('woff2-variations'); }
+
 :root {
   color-scheme: dark;
   --bg-deep: #060a13;

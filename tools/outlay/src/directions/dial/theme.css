@@ -1,3 +1,4 @@
+@font-face { font-family: 'Mona Sans Variable'; font-style: normal; font-display: swap; font-weight: 200 900; font-stretch: 75% 125%; src: url('/admin/demos/fonts/mona-sans-latin-standard-normal.woff2') format('woff2-variations'); }
 /* Dial: a precision instrument for the studio's money. Porcelain and silver, blued steel, one orange marker for today. */
 @font-face { font-family: 'Jost Local'; src: url('../../assets/fonts/jost-latin.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 
@@ -79,8 +80,20 @@
 /* Header */
 .d-header { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding-top: env(safe-area-inset-top, 0px); color: rgb(var(--graphite)); transition: background-color .3s ease, box-shadow .3s ease; }
 .d-header.is-solid { background: rgb(var(--porcelain) / .9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 rgb(var(--silver)); }
-.d-header-row { display: flex; align-items: center; gap: 26px; min-height: 72px; }
-.d-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: inherit; }
+.d-header-row { display: flex; align-items: center; gap: .5rem; height: 64px; max-width: 1120px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 640px) { .d-header-row { padding-inline: 24px; } }
+.d-header { font-family: 'Mona Sans Variable', var(--font-ui); }
+.d-header.is-solid { background: rgb(var(--porcelain) / .75); border-bottom: 1px solid rgb(var(--silver) / .6); box-shadow: none; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.d-doc { color: #ff5a1f; font-weight: 800; letter-spacing: -.04em; font-size: 1.4rem; line-height: 1; font-stretch: 112%; }
+.d-brand-div { display: none; width: 1px; height: 20px; background: rgb(var(--silver)); }
+.d-brand-label { display: none; font-size: .875rem; letter-spacing: .02em; color: rgb(var(--muted)); }
+@media (min-width: 640px) { .d-brand-div, .d-brand-label { display: block; } }
+.d-pill { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; padding: .5rem 1rem; border-radius: 999px; font: inherit; font-weight: 500; font-size: .875rem; text-decoration: none; cursor: pointer; color: rgb(var(--graphite)); background: rgb(var(--graphite) / .03); border: 1px solid rgb(var(--graphite) / .17); transition: background-color .2s, border-color .2s; }
+.d-pill:hover { background: rgb(var(--graphite) / .07); border-color: rgb(var(--graphite) / .3); }
+.d-pill .lbl { display: none; }
+@media (min-width: 640px) { .d-pill .lbl { display: inline; } }
+@media (max-width: 639px) { .d-pill { width: 44px; padding: 0; } }
+.d-brand { display: flex; align-items: center; gap: .9rem; margin-right: auto; text-decoration: none; color: inherit; }
 .d-hub-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-inline: 4px; margin-right: -10px; font-size: .875rem; font-weight: 500; text-decoration: none; color: rgb(var(--muted)); transition: color .2s; }
 .d-hub-link:hover { color: rgb(var(--graphite)); }
 .d-hub-link:focus-visible { outline: 2px solid rgb(var(--orange)); outline-offset: 2px; border-radius: 6px; }

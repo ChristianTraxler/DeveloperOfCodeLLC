@@ -34,10 +34,10 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-950/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
-          <Link to="/" className="flex items-center gap-3 group">
-            <span className="code-tag text-[22px] font-extrabold leading-none tracking-[-0.04em]" style={{ fontStretch: '112%' }}>&lt;/DOC&gt;</span>
+      <header className="sticky top-0 z-30 border-b border-[rgba(236,232,223,0.09)] bg-[rgba(7,10,18,0.75)] backdrop-blur-xl" style={{ fontFamily: "'Mona Sans Variable', ui-sans-serif, system-ui, sans-serif" }}>
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-3.5 group">
+            <span className="text-ember text-[22px] font-extrabold leading-none tracking-[-0.04em]" style={{ fontStretch: '112%', fontFamily: 'inherit', color: '#ff5a1f' }}>&lt;/DOC&gt;</span>
             <span className="hidden sm:block w-px h-5 bg-[rgba(236,232,223,0.17)]" />
             <span className="hidden sm:block text-[14px] tracking-[0.02em] text-muted">
               Project Tracker

@@ -31,7 +31,7 @@ function useHashRoute() {
 function TopBar({ email }) {
   return (
     <header className="sticky z-40 border-b border-line bg-ink/75 backdrop-blur-xl" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="mx-auto flex h-16 max-w-none items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6">
         <a href={HUB_URL} className="flex items-center gap-3.5" aria-label="Developer of Code admin home">
           <span className="text-[22px] font-extrabold leading-none tracking-[-0.04em] text-ember" style={{ fontStretch: '112%' }}>
             {'</DOC>'}
