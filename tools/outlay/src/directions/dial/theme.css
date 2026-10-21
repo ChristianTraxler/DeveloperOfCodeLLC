@@ -77,7 +77,7 @@
 .d-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; margin-bottom: clamp(30px, 4vw, 54px); }
 
 /* Header */
-.d-header { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding-top: env(safe-area-inset-top, 0px); color: rgb(var(--graphite)); transition: background-color .3s ease, box-shadow .3s ease; }
+.d-header { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding-top: calc(env(safe-area-inset-top, 0px) + 24px); color: rgb(var(--graphite)); transition: background-color .3s ease, box-shadow .3s ease; }
 .d-header.is-solid { background: rgb(var(--porcelain) / .9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 rgb(var(--silver)); }
 .d-header-row { display: flex; align-items: center; gap: 26px; min-height: 72px; }
 .d-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: inherit; }
@@ -102,7 +102,7 @@
 .d-menu-actions .btn { width: 100%; justify-content: center; }
 
 /* Hero: the month as a watch dial */
-.d-hero { padding-top: calc(92px + env(safe-area-inset-top, 0px)); padding-bottom: clamp(56px, 8vw, 112px); overflow: hidden; }
+.d-hero { padding-top: calc(116px + env(safe-area-inset-top, 0px)); padding-bottom: clamp(56px, 8vw, 112px); overflow: hidden; }
 .d-hero-grid { display: grid; gap: 36px; align-items: center; }
 @media (min-width: 1024px) { .d-hero-grid { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 80px; } }
 .d-dial { position: relative; width: min(100%, 560px); aspect-ratio: 1; margin-inline: auto; container-type: inline-size; animation: d-in 1.2s cubic-bezier(.16, .84, .24, 1) both; }
