@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { ArrowUpRight, Mail, MoreHorizontal } from 'lucide-react'
 import { PlatformMark } from './marks'
-import { resolveImage } from '../data/samples'
+import { resolveImage } from '../lib/images'
 import { useQueue } from '../data/QueueContext'
 import { monthDay, when } from '../lib/dates'
 import PostMenu from './PostMenu'

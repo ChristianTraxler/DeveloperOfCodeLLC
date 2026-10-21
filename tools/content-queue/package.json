@@ -8,8 +8,7 @@
     "dev": "vite",
     "dev:open": "VITE_CQ_SKIP_AUTH=1 vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "images": "node scripts/render-samples.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

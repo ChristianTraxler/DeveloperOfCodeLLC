@@ -3,7 +3,7 @@ import { ChevronDown, Columns3, List, Search, X } from 'lucide-react'
 import { QueueProvider, blankPost, newId, useQueue } from './data/QueueContext'
 import { PLATFORMS, PLATFORM_BY_ID, STATUSES, STATUS_BY_ID } from './lib/platforms'
 import { addDays, at, longDate, relative, when } from './lib/dates'
-import { ToastProvider, useToast, Dialog } from './components/overlay'
+import { ToastProvider, useToast } from './components/overlay'
 import { PlatformMark, StatusGlyph } from './components/marks'
 import QuickAdd from './components/QuickAdd'
 import Runway from './components/Runway'
@@ -38,14 +38,13 @@ function useNow() {
 }
 
 function Queue() {
-  const { posts, accounts, accountById, prefs, setPrefs, add, update, remove, restore, resetToSamples, clearAll, allTags } = useQueue()
+  const { posts, accounts, accountById, prefs, setPrefs, add, update, remove, restore, status, error, reload, dismissError, allTags } = useQueue()
   const toast = useToast()
   const now = useNow()
 
   const [composer, setComposer] = useState(null) // { initial, isNew, focus, notice }
   const [postedFor, setPostedFor] = useState(null)
   const [promoteFor, setPromoteFor] = useState(null)
-  const [confirm, setConfirm] = useState(null) // 'reset' | 'clear'
   const [businessesOpen, setBusinessesOpen] = useState(false)
 
   const { view, filters, sort } = prefs
@@ -112,7 +111,7 @@ function Queue() {
     else if (type === 'delete') deletePost(post)
     else if (type === 'duplicate') {
       const stamp = new Date().toISOString()
-      const copy = { ...post, id: newId(), title: `${post.title || 'Untitled post'} (copy)`, status: 'drafting', scheduledAt: null, liveUrl: '', postedAt: null, promo: null, sample: false, createdAt: stamp, updatedAt: stamp }
+      const copy = { ...post, id: newId(), title: `${post.title || 'Untitled post'} (copy)`, status: 'drafting', scheduledAt: null, liveUrl: '', postedAt: null, promo: null, createdAt: stamp, updatedAt: stamp }
       add(copy)
       toast('Copied as a new draft', { action: { label: 'Open', run: () => setComposer({ initial: copy, isNew: false }) } })
     }
@@ -167,9 +166,19 @@ function Queue() {
 
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
+  if (status !== 'ready') return <LoadState failed={status === 'error'} message={error} onRetry={reload} />
+
   return (
     <div className="cq-root text-bone">
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10 pb-28 pt-8 sm:gap-12 sm:pt-10 lg:pt-14">
+        {error && (
+          <div role="alert" className="flex items-center gap-3 rounded-[12px] border border-danger/50 bg-danger/10 py-2 pl-4 pr-2 text-[14px] text-bone">
+            <span className="min-w-0 flex-1">{error}</span>
+            <button className="cq-icon-btn h-9 w-9" aria-label="Dismiss" onClick={dismissError}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
         {/* Header */}
         <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,452px)] lg:gap-14">
           <div className="flex min-w-0 animate-rise flex-col gap-6">
@@ -305,7 +314,7 @@ function Queue() {
           </div>
 
           {posts.length === 0 ? (
-            <EmptyQueue onNew={() => newPost({ status: 'drafting' })} onSamples={resetToSamples} />
+            <EmptyQueue onNew={() => newPost({ status: 'drafting' })} />
           ) : view === 'board' ? (
             <Board posts={filtered} now={now} onOpen={openPost} onMove={moveTo} onAction={onAction} onNew={(status) => newPost(status === 'scheduled' ? { status, scheduledAt: at(1, 9) } : { status })} />
           ) : filtered.length ? (
@@ -321,15 +330,9 @@ function Queue() {
         </section>
 
         <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-5 text-[13px] text-faint">
-          <span>Saved in this browser only.</span>
+          <span>Saved to your account. Changes show on every device you sign in on.</span>
           <button type="button" className="underline decoration-line2 underline-offset-4 hover:text-bone" onClick={() => setBusinessesOpen(true)}>
             Businesses
-          </button>
-          <button type="button" className="underline decoration-line2 underline-offset-4 hover:text-bone" onClick={() => setConfirm('reset')}>
-            Reset to sample data
-          </button>
-          <button type="button" className="underline decoration-line2 underline-offset-4 hover:text-bone" onClick={() => setConfirm('clear')}>
-            Start empty
           </button>
         </footer>
       </div>
@@ -378,36 +381,6 @@ function Queue() {
           toast('Promotion removed')
         }}
       />
-      <Dialog
-        open={!!confirm}
-        onClose={() => setConfirm(null)}
-        width={440}
-        labelledBy="cq-confirm-title"
-        title={confirm === 'reset' ? 'Reset to sample data?' : 'Start with an empty queue?'}
-        description={
-          confirm === 'reset'
-            ? 'This replaces everything in the queue with the example posts. Your own posts in this browser are removed.'
-            : 'This removes every post from the queue in this browser. Use it when you are ready to put in your real content.'
-        }
-        footer={
-          <>
-            <button className="cq-btn-quiet" data-autofocus onClick={() => setConfirm(null)}>
-              Cancel
-            </button>
-            <button
-              className="cq-btn cq-btn-quiet border-danger/50 text-danger hover:bg-danger/10"
-              onClick={() => {
-                if (confirm === 'reset') resetToSamples()
-                else clearAll()
-                setConfirm(null)
-                toast(confirm === 'reset' ? 'Sample data restored' : 'Queue cleared')
-              }}
-            >
-              {confirm === 'reset' ? 'Reset queue' : 'Remove all posts'}
-            </button>
-          </>
-        }
-      />
     </div>
   )
 }
@@ -446,20 +419,36 @@ function FilterPill({ id, label, value, onChange, options, always }) {
   )
 }
 
-function EmptyQueue({ onNew, onSamples }) {
+// Before the first load finishes, or if it fails.
+function LoadState({ failed, message, onRetry }) {
+  return (
+    <div className="cq-root mx-auto flex w-full max-w-[1440px] flex-col items-start gap-4 pb-28 pt-8 text-bone sm:pt-10 lg:pt-14">
+      <h1 className="font-display text-[44px] font-[380] leading-[0.98] tracking-[-0.025em] text-bone [font-variation-settings:'opsz'_72] sm:text-[60px] lg:text-[72px]">
+        Content Queue
+      </h1>
+      <p className="text-[15px] text-mute" role="status">
+        {failed ? message : 'Loading your queue…'}
+      </p>
+      {failed && (
+        <button className="cq-btn-primary" onClick={onRetry}>
+          Try again
+        </button>
+      )}
+    </div>
+  )
+}
+
+function EmptyQueue({ onNew }) {
   return (
     <div className="flex flex-col items-start gap-4 rounded-[16px] border border-dashed border-line2 px-6 py-12 sm:px-10">
       <StatusGlyph status="idea" size={22} />
       <h3 className="font-display text-[26px] font-[420] tracking-[-0.01em] text-bone">The queue is empty.</h3>
       <p className="max-w-[46ch] text-[15px] leading-relaxed text-mute">
-        Capture an idea in the box above, or start a post with a platform and a date. Everything you add is saved in this browser.
+        Capture an idea in the box above, or start a post with a platform and a date. Everything you add is saved to your account and shows on every device.
       </p>
       <div className="flex flex-wrap gap-2">
         <button className="cq-btn-primary" onClick={onNew}>
           New post
-        </button>
-        <button className="cq-btn-quiet" onClick={onSamples}>
-          Load sample posts
         </button>
       </div>
     </div>

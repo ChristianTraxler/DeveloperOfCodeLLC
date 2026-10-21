@@ -1,7 +1,7 @@
 # Content Queue for the DOC Admin Hub
 
 Capture content ideas, draft posts and schedule them for Developer of Code and its clients.
-Built with Vite, React 18 and Tailwind 3. Data is saved in the browser for now.
+Built with Vite, React 18 and Tailwind 3. Data is saved to your admin account in Supabase.
 
 ## What is in it
 
@@ -27,7 +27,6 @@ check the session. The root `npm run build` runs `build:content-queue`, which bu
 npm install
 npm run dev:open       # local design work, skips the sign in check
 npm run build          # into ../../public/admin/content-queue
-npm run images         # re-renders the sample post graphics (needs Playwright: npm i -D playwright)
 ```
 
 ## Businesses
@@ -37,41 +36,22 @@ Add one from any "For" picker ("+ Add a business…") or from **Businesses** at 
 page, where you can also edit or remove them. Developer of Code cannot be removed. Removing a
 business keeps its posts; they show as "Removed business" until you pick someone else.
 
-## Move the data to Supabase later
+## Where the data lives
 
-`data/QueueContext.jsx` is the only file that touches storage (posts and businesses). Swap its load and save for table calls and nothing else changes. A table that matches the post shape:
+Posts and businesses are saved to the signed-in admin account in Supabase, so every device shows
+the same queue. The tables, access rules and image bucket are in `supabase/content-queue.sql` at the
+repo root (run once in the Supabase SQL editor; safe to run again).
 
-```sql
-create table content_posts (
-  id uuid primary key default gen_random_uuid(),
-  owner uuid not null references auth.users on delete cascade,
-  title text not null default '',
-  notes text not null default '',
-  body text not null default '',
-  platform text check (platform in ('facebook','instagram','linkedin','x','gbp','blog','email')),
-  account text not null default 'doc',
-  image_url text not null default '',
-  scheduled_at timestamptz,
-  status text not null default 'idea' check (status in ('idea','drafting','scheduled','posted','skipped')),
-  tags text[] not null default '{}',
-  live_url text not null default '',
-  posted_at timestamptz,
-  promo jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-alter table content_posts enable row level security;
-create policy "owner reads and writes" on content_posts
-  for all using (auth.uid() = owner) with check (auth.uid() = owner);
-create index on content_posts (owner, status);
-create index on content_posts (owner, scheduled_at);
-```
-
-Uploaded images are stored as small JPEG data inside the post for now. With Supabase, upload them to a Storage bucket and keep the public URL in `image_url`.
+- `data/QueueContext.jsx` is the only file that reads or writes. Changes show at once and are saved
+  in the background; if a save fails, a banner says so and the queue reloads to match what is saved.
+- Realtime brings in changes from other devices, and the queue reloads when the tab comes back.
+- The first visit on an account starts the business list with `data/accounts.js`.
+- Uploaded images are shrunk to 1600px JPEGs and stored in the public `content-images` bucket under
+  `<user id>/<post id>/`. The post keeps the public link, so it works in any tool you paste it into.
+- View, filters and sort are remembered on each device only.
 
 ## Notes
 
 - Character limits: Facebook 63,206, Instagram 2,200 (and 30 hashtags), LinkedIn 3,000, X 280 (links count as 23), Business Profile 1,500. Fold points are approximate, which the composer says.
 - Email uses the title as the subject line and flags subjects over 60 characters. Blog and email show word count and reading time instead of a limit.
 - Saving a post as Scheduled needs a platform, a date and text inside the limit. Posted needs a live link.
-- The sample data is marked with `sample: true`. Use "Start empty" at the bottom of the page when you are ready for real content.

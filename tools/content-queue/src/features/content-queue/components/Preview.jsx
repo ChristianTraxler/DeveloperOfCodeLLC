@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Bookmark, Globe2, Heart, MessageCircle, Repeat2, Send, Share, ThumbsUp } from 'lucide-react'
 import { useQueue } from '../data/QueueContext'
-import { resolveImage } from '../data/samples'
+import { resolveImage } from '../lib/images'
 import { PLATFORM_BY_ID, truncateAt } from '../lib/platforms'
 import { longDate, monthDay, time } from '../lib/dates'
 
