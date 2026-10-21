@@ -22,6 +22,7 @@ export default function ExpenseSheet() {
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [vendorOpen, setVendorOpen] = useState(false);
   const fileInput = useRef(null);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function ExpenseSheet() {
     setErrors({});
     setBusy(false);
     setConfirm(false);
+    setVendorOpen(false);
   }, [ui.editor, today]);
 
   useEffect(() => {
@@ -50,6 +52,10 @@ export default function ExpenseSheet() {
   }, [file]);
 
   const vendors = useMemo(() => [...new Set(expenses.map((e) => e.vendor))].slice(0, 80), [expenses]);
+  const vendorMatches = useMemo(() => {
+    const q = f.vendor.trim().toLowerCase();
+    return vendors.filter((v) => v.toLowerCase() !== q && (!q || v.toLowerCase().includes(q))).slice(0, 6);
+  }, [vendors, f.vendor]);
   const cat = categoryOf(f.category);
   const set = (key) => (ev) => {
     const t = ev.target;
@@ -136,9 +142,22 @@ export default function ExpenseSheet() {
 
         <div className="field">
           <label className="field-label" htmlFor="x-vendor">Paid to</label>
-          <input id="x-vendor" className="input" list="x-vendors" autoComplete="off" placeholder="Vercel, Best Buy, a contractor" value={f.vendor} onChange={set('vendor')}
-            aria-invalid={errors.vendor ? true : undefined} aria-describedby={errors.vendor ? 'x-vendor-err' : undefined} />
-          <datalist id="x-vendors">{vendors.map((v) => <option key={v} value={v} />)}</datalist>
+          <div className="combo">
+            <input id="x-vendor" className="input" autoComplete="off" placeholder="Vercel, Best Buy, a contractor" value={f.vendor}
+              onChange={(ev) => { set('vendor')(ev); setVendorOpen(true); }}
+              onFocus={() => setVendorOpen(true)} onBlur={() => setVendorOpen(false)}
+              aria-invalid={errors.vendor ? true : undefined} aria-describedby={errors.vendor ? 'x-vendor-err' : undefined} />
+            {vendorOpen && vendorMatches.length ? (
+              <ul className="combo-list" role="listbox" aria-label="Previous vendors">
+                {vendorMatches.map((v) => (
+                  <li key={v} role="option" aria-selected="false">
+                    <button type="button" tabIndex={-1} onMouseDown={(ev) => ev.preventDefault()}
+                      onClick={() => { setF((s) => ({ ...s, vendor: v })); setVendorOpen(false); }}>{v}</button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
           {errors.vendor ? <p id="x-vendor-err" className="field-error">{errors.vendor}</p> : null}
         </div>
 
