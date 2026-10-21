@@ -147,6 +147,7 @@ final class Controller: NSObject, NSTableViewDataSource, NSTableViewDelegate,
                           backing: .buffered, defer: false)
         super.init()
         window.title = "DOC Admin"
+        window.titleVisibility = .hidden
         window.minSize = NSSize(width: 760, height: 520)
         window.isReleasedWhenClosed = false
         window.titlebarAppearsTransparent = true
