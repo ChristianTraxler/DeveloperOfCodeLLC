@@ -1,6 +1,6 @@
 // DOC Admin: native macOS app around the Developer of Code admin hub.
-// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, SEO Review, Demos, Pricing Desk,
-// Relay Solo). Each tool
+// A sidebar lists each tool (Hub, Tracker, Outlay, Marketing, Mail, SEO Review, Demos, Content Queue,
+// Pricing Desk, Relay Solo). Each tool
 // keeps its own WebKit view so state survives switching. Logins persist between launches.
 // Set DOC_ADMIN_BASE (e.g. http://localhost:5173) to point the app at a dev server.
 
@@ -26,6 +26,7 @@ let tools = [Tool(name: "Hub", path: "/admin/", symbol: "square.grid.2x2")] + [
     Tool(name: "Mail", path: "/admin/mail/", symbol: "envelope"),
     Tool(name: "SEO Review", path: "/admin/seo/", symbol: "magnifyingglass"),
     Tool(name: "Demos", path: "/admin/demos/", symbol: "play.rectangle"),
+    Tool(name: "Content Queue", path: "/admin/content-queue/", symbol: "calendar.badge.clock"),
     Tool(name: "Pricing Desk", path: "/admin/pricing-desk/", symbol: "tag", sso: "pricing-desk"),
     Tool(name: "Relay Solo", path: "https://relay-solo.vercel.app/", symbol: "paperplane"),
 ].sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
