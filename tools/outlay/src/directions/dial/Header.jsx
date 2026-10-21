@@ -53,8 +53,10 @@ export default function Header() {
           <nav aria-label="Sections">
             <ol>{LINKS.map(([id, label]) => <li key={id}><a href={`#${id}`} onClick={() => setMenu(false)}>{label}</a></li>)}</ol>
           </nav>
-          <a href="/admin/" className="btn btn-quiet"><IconArrowLeft width={18} height={18} />Back to the Admin Hub</a>
-          <button type="button" className="btn btn-primary" onClick={() => { setMenu(false); ui.openEditor(); }}><IconPlus />Log an expense</button>
+          <div className="d-menu-actions">
+            <button type="button" className="btn btn-primary" onClick={() => { setMenu(false); ui.openEditor(); }}><IconPlus />Log an expense</button>
+            <a href="/admin/" className="btn btn-quiet"><IconArrowLeft width={18} height={18} />Back to the Admin Hub</a>
+          </div>
         </div>
       ) : null}
     </header>
