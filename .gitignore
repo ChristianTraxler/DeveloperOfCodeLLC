@@ -17,6 +17,8 @@ public/admin/marketing/
 public/admin/mail/
 # SEO Review build output (regenerated from tools/seo-review on every deploy)
 public/admin/seo/
+# Content Queue build output (regenerated from tools/content-queue on every deploy)
+public/admin/content-queue/
 
 # Local env + cruft (.env.example is the committed template)
 .env
