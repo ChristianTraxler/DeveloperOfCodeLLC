@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, ImagePlus, Mail, MoreHorizontal, Trash2, X } from 'lucide-react'
 import { AccountSelect } from './Businesses'
-import { resolveImage } from '../data/samples'
+import { resolveImage } from '../lib/images'
 import { useQueue } from '../data/QueueContext'
+import { isUploadedImage, uploadImage } from '../data/client'
 import { PLATFORMS, PLATFORM_BY_ID, STATUSES, measure } from '../lib/platforms'
 import { addDays, at, fromInputs, startOfDay, toInputs } from '../lib/dates'
 import { StatusGlyph } from './marks'
@@ -19,8 +20,8 @@ export const isUrl = (v) => {
   }
 }
 
-/** Shrinks a picked photo so it fits comfortably in browser storage. */
-function fileToDataUrl(file, max = 1200) {
+/** Shrinks a picked photo to a JPEG no wider or taller than `max`, ready to upload. */
+function shrinkImage(file, max = 1600) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = () => reject(new Error('read'))
@@ -33,7 +34,7 @@ function fileToDataUrl(file, max = 1200) {
         c.width = Math.round(img.width * scale)
         c.height = Math.round(img.height * scale)
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
-        resolve(c.toDataURL('image/jpeg', 0.82))
+        c.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('encode'))), 'image/jpeg', 0.85)
       }
       img.src = reader.result
     }
@@ -54,7 +55,7 @@ function validate(d) {
     if (!d.liveUrl.trim()) e.liveUrl = 'Paste the link to the live post so you can find it later.'
     else if (!isUrl(d.liveUrl.trim())) e.liveUrl = 'That link needs to start with https:// to open.'
   }
-  if (d.imageUrl && !d.imageUrl.startsWith('sample:') && !d.imageUrl.startsWith('data:image/') && !isUrl(d.imageUrl)) {
+  if (d.imageUrl && !d.imageUrl.startsWith('data:image/') && !isUrl(d.imageUrl)) {
     e.imageUrl = 'Image links need to start with https://'
   }
   return e
@@ -73,6 +74,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
   const scroller = useRef(null)
   const fileInput = useRef(null)
   const [uploadError, setUploadError] = useState('')
+  const [uploading, setUploading] = useState(false)
   useScrollLock(true)
   useEffect(() => {
     document.documentElement.dataset.cqComposer = '1'
@@ -150,10 +152,19 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
     if (!file) return
     setUploadError('')
     if (!file.type.startsWith('image/')) return setUploadError('That file is not an image. Pick a JPG, PNG or WebP.')
+    let blob
     try {
-      set({ imageUrl: await fileToDataUrl(file) })
+      blob = await shrinkImage(file)
     } catch {
-      setUploadError('That image could not be read. Try a JPG or PNG.')
+      return setUploadError('That image could not be read. Try a JPG or PNG.')
+    }
+    setUploading(true)
+    try {
+      set({ imageUrl: await uploadImage(draft.id, blob) })
+    } catch {
+      setUploadError('The image did not upload. Check your connection and try again.')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -271,9 +282,9 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                       <ImagePlus size={18} />
                     </span>
                   )}
-                  {draft.imageUrl.startsWith('sample:') || draft.imageUrl.startsWith('data:') ? (
+                  {draft.imageUrl.startsWith('data:') || isUploadedImage(draft.imageUrl) ? (
                     <div className="flex min-h-[46px] min-w-0 flex-1 items-center justify-between gap-2 rounded-[10px] border border-line bg-well pl-3 pr-1 text-[14px] text-mute">
-                      <span className="truncate">{draft.imageUrl.startsWith('sample:') ? `Sample image: ${draft.imageUrl.slice(7)}.jpg` : 'Uploaded image'}</span>
+                      <span className="truncate">Uploaded image</span>
                       <button type="button" className="cq-btn-ghost min-h-[36px] px-2.5 text-[13px]" onClick={() => set({ imageUrl: '' })}>
                         Remove
                       </button>
@@ -292,8 +303,8 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                       autoCorrect="off"
                     />
                   )}
-                  <button type="button" className="cq-btn-quiet h-[46px] shrink-0" onClick={() => fileInput.current?.click()}>
-                    Upload
+                  <button type="button" className="cq-btn-quiet h-[46px] shrink-0" disabled={uploading} onClick={() => fileInput.current?.click()}>
+                    {uploading ? 'Uploading…' : 'Upload'}
                   </button>
                   <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={(e) => (pickFile(e.target.files?.[0]), (e.target.value = ''))} />
                 </div>
