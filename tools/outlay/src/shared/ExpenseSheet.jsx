@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Sheet from './Sheet.jsx';
 import { useData } from '../data/DataContext.jsx';
-import { CATEGORIES, categoryOf, PAYMENT_METHODS, BILLING } from '../lib/categories.js';
+import { categoryOf, PAYMENT_METHODS, BILLING } from '../lib/categories.js';
 import { parseMoney, centsToInput } from '../lib/money.js';
 import { prepareReceipt } from '../lib/files.js';
 import { IconClip, IconCamera } from './Icons.jsx';
@@ -12,7 +12,7 @@ const blank = (today) => ({
 });
 
 export default function ExpenseSheet() {
-  const { ui, today, clients, expenses, saveExpense, deleteExpense, addClient } = useData();
+  const { ui, today, clients, expenses, categories, saveExpense, deleteExpense, addClient } = useData();
   const open = Boolean(ui.editor);
   const editing = ui.editor?.expense || null;
   const [f, setF] = useState(() => blank(today));
@@ -179,9 +179,9 @@ export default function ExpenseSheet() {
         <div className="field">
           <label className="field-label" htmlFor="x-cat">Category</label>
           <select id="x-cat" className="input" value={f.category} onChange={set('category')} aria-describedby="x-cat-hint">
-            {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
-          <p id="x-cat-hint" className="field-hint">Schedule C line {cat.line}, {cat.lineLabel.toLowerCase()}{cat.rate ? `, counted at ${cat.rate * 100}%` : ''}.</p>
+          <p id="x-cat-hint" className="field-hint">Schedule C line {cat.line}, {cat.lineLabel.toLowerCase()}{cat.rate ? `, counted at ${cat.rate * 100}%` : ''}. <button type="button" className="btn-text" onClick={() => ui.openCategories()}>Manage categories</button></p>
         </div>
 
         <div className="field">

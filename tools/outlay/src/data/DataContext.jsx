@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { todayISO, addMonths, shortDate } from '../lib/dates.js';
-import { cadenceOf } from '../lib/categories.js';
+import { cadenceOf, DEFAULT_CATEGORIES, sortCategories, setCategories, newCategory } from '../lib/categories.js';
 
 const Ctx = createContext(null);
 export const useData = () => useContext(Ctx);
@@ -30,6 +30,7 @@ function sortAll(d) {
     expenses: [...(d.expenses || [])].sort(byDateDesc),
     subscriptions: [...(d.subscriptions || [])].sort((a, b) => a.next_renewal.localeCompare(b.next_renewal)),
     clients: [...(d.clients || [])].sort((a, b) => a.name.localeCompare(b.name)),
+    categories: sortCategories(d.categories && d.categories.length ? d.categories : DEFAULT_CATEGORIES),
   };
 }
 
@@ -38,14 +39,16 @@ export function DataProvider({ children }) {
   const [mode, setMode] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
-  const [data, setData] = useState({ expenses: [], subscriptions: [], clients: [] });
+  const [data, setData] = useState({ expenses: [], subscriptions: [], clients: [], categories: DEFAULT_CATEGORIES });
   const [session, setSession] = useState(null);
   const [toast, setToast] = useState(null);
   const [editor, setEditor] = useState(null);
   const [subEditor, setSubEditor] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [catsOpen, setCatsOpen] = useState(false);
   const [filter, setFilter] = useState({ q: '', kind: 'all', category: '' });
   const today = todayISO();
+  setCategories(data.categories);
 
   const notify = useCallback((message, tone = 'ok') => setToast({ message, tone, id: `${Date.now()}${Math.random()}` }), []);
   const dismissToast = useCallback(() => setToast(null), []);
@@ -148,6 +151,34 @@ export function DataProvider({ children }) {
     return row;
   }), [run]);
 
+  const saveCategories = useCallback((list) => run(async (a) => {
+    const next = sortCategories(list);
+    await a.saveCategories(next);
+    setData((d) => ({ ...d, categories: next }));
+  }), [run]);
+
+  const addCategory = useCallback((label, line) => {
+    const name = label.trim();
+    if (data.categories.some((c) => c.label.toLowerCase() === name.toLowerCase())) {
+      notify('You already have a category with that name.', 'error');
+      return Promise.reject(new Error('duplicate'));
+    }
+    return saveCategories([...data.categories, newCategory(name, line, data.categories)]);
+  }, [data.categories, saveCategories, notify]);
+
+  const deleteCategory = useCallback((cat) => {
+    const used = data.expenses.filter((e) => e.category === cat.key).length + data.subscriptions.filter((s) => s.category === cat.key).length;
+    if (used) {
+      notify(`${cat.label} is used by ${used} ${used === 1 ? 'entry' : 'entries'}. Move those to another category first.`, 'error');
+      return Promise.reject(new Error('in use'));
+    }
+    if (data.categories.length <= 1) {
+      notify('Keep at least one category.', 'error');
+      return Promise.reject(new Error('last'));
+    }
+    return saveCategories(data.categories.filter((c) => c.key !== cat.key));
+  }, [data, saveCategories, notify]);
+
   const saveSubscription = useCallback(({ id, fields }) => run(async (a) => {
     const row = id ? await a.updateSubscription(id, fields) : await a.createSubscription(fields);
     setData((d) => sortAll({ ...d, subscriptions: id ? d.subscriptions.map((x) => (x.id === id ? row : x)) : [...d.subscriptions, row] }));
@@ -237,16 +268,19 @@ export function DataProvider({ children }) {
     receipt,
     openReceipt: (e) => setReceipt(e),
     closeReceipt: () => setReceipt(null),
+    categoriesOpen: catsOpen,
+    openCategories: () => setCatsOpen(true),
+    closeCategories: () => setCatsOpen(false),
     filter,
     setFilter,
-  }), [editor, subEditor, receipt, filter]);
+  }), [editor, subEditor, receipt, filter, catsOpen]);
 
   const value = useMemo(() => ({
     mode, status, error, today, session, ...data, toast, notify, dismissToast, ui,
     serialOf: (id) => serials.get(id) || 0,
     clientName: (id) => (data.clients.find((c) => c.id === id) || {}).name || '',
-    saveExpense, deleteExpense, setBilling, addClient, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt,
-  }), [mode, status, error, today, session, data, toast, notify, dismissToast, ui, serials, saveExpense, deleteExpense, setBilling, addClient, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt]);
+    saveExpense, deleteExpense, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt,
+  }), [mode, status, error, today, session, data, toast, notify, dismissToast, ui, serials, saveExpense, deleteExpense, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

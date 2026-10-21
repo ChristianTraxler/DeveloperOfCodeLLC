@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Sheet from './Sheet.jsx';
 import { useData } from '../data/DataContext.jsx';
-import { CATEGORIES, PAYMENT_METHODS, CADENCES } from '../lib/categories.js';
+import { PAYMENT_METHODS, CADENCES } from '../lib/categories.js';
 import { parseMoney, centsToInput } from '../lib/money.js';
 
 const blank = (today) => ({ name: '', amount: '', cadence: 'monthly', next_renewal: today, category: 'software', payment_method: 'Business card', active: true, notes: '' });
 
 export default function SubscriptionSheet() {
-  const { ui, today, saveSubscription, deleteSubscription } = useData();
+  const { ui, today, categories, saveSubscription, deleteSubscription } = useData();
   const open = Boolean(ui.subEditor);
   const editing = ui.subEditor?.sub || null;
   const [f, setF] = useState(() => blank(today));
@@ -122,8 +122,9 @@ export default function SubscriptionSheet() {
           <div className="field">
             <label className="field-label" htmlFor="s-cat">Category</label>
             <select id="s-cat" className="input" value={f.category} onChange={set('category')}>
-              {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
             </select>
+            <button type="button" className="btn-text field-hint" onClick={() => ui.openCategories()}>Manage categories</button>
           </div>
           <div className="field">
             <label className="field-label" htmlFor="s-method">Paid with</label>

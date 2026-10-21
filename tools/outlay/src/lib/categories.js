@@ -1,6 +1,6 @@
 // Categories follow the usual Schedule C lines for a single-member LLC.
 // They are a starting point: confirm the final mapping with your tax preparer.
-export const CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   { key: 'software', label: 'Software and subscriptions', short: 'Software', line: '27a', lineLabel: 'Other expenses' },
   { key: 'hosting', label: 'Hosting and domains', short: 'Hosting', line: '27a', lineLabel: 'Other expenses' },
   { key: 'equipment', label: 'Equipment', short: 'Equipment', line: '13', lineLabel: 'Depreciation and section 179' },
@@ -21,8 +21,14 @@ export const CATEGORIES = [
   { key: 'bank', label: 'Bank fees', short: 'Bank fees', line: '27a', lineLabel: 'Other expenses' },
 ];
 
-export const CATEGORY = Object.fromEntries(CATEGORIES.map((c) => [c.key, c]));
-export const categoryOf = (key) => CATEGORY[key] || { key, label: key || 'Uncategorized', short: key || 'Other', line: '27a', lineLabel: 'Other expenses' };
+const byLabel = (a, b) => a.label.localeCompare(b.label);
+export const sortCategories = (list) => [...list].sort(byLabel);
+
+// The live list. DataContext keeps it in step with what is saved, so categoryOf (used all over the
+// ledger math and CSV export) always sees the current set.
+let current = DEFAULT_CATEGORIES;
+export const setCategories = (list) => { current = list; };
+export const categoryOf = (key) => current.find((c) => c.key === key) || { key, label: key || 'Uncategorized', short: key || 'Other', line: '27a', lineLabel: 'Other expenses' };
 export const deductibleCents = (e) => Math.round(e.amount_cents * (categoryOf(e.category).rate ?? 1));
 
 const lineRank = (line) => {
@@ -47,3 +53,33 @@ export const CADENCES = [
   { key: 'annual', label: 'Annual', months: 12, per: 'a year' },
 ];
 export const cadenceOf = (key) => CADENCES.find((c) => c.key === key) || CADENCES[0];
+
+// The Schedule C lines a custom category can be filed under.
+export const SCHEDULE_C_LINES = [
+  { line: '8', lineLabel: 'Advertising' },
+  { line: '9', lineLabel: 'Car and truck expenses' },
+  { line: '10', lineLabel: 'Commissions and fees' },
+  { line: '11', lineLabel: 'Contract labor' },
+  { line: '13', lineLabel: 'Depreciation and section 179' },
+  { line: '15', lineLabel: 'Insurance, other than health' },
+  { line: '17', lineLabel: 'Legal and professional services' },
+  { line: '18', lineLabel: 'Office expense' },
+  { line: '20b', lineLabel: 'Rent or lease, other property' },
+  { line: '22', lineLabel: 'Supplies' },
+  { line: '23', lineLabel: 'Taxes and licenses' },
+  { line: '24a', lineLabel: 'Travel' },
+  { line: '24b', lineLabel: 'Deductible meals', rate: 0.5 },
+  { line: '25', lineLabel: 'Utilities' },
+  { line: '27a', lineLabel: 'Other expenses' },
+];
+
+export function newCategory(label, line, existing) {
+  const name = label.trim();
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'category';
+  let key = base;
+  for (let n = 2; existing.some((c) => c.key === key); n += 1) key = `${base}-${n}`;
+  const l = SCHEDULE_C_LINES.find((x) => x.line === line) || SCHEDULE_C_LINES[SCHEDULE_C_LINES.length - 1];
+  const cat = { key, label: name, short: name, line: l.line, lineLabel: l.lineLabel };
+  if (l.rate) cat.rate = l.rate;
+  return cat;
+}

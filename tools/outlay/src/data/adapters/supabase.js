@@ -51,7 +51,17 @@ export function createSupabaseAdapter() {
         selectAll('outlay_subscriptions', [['next_renewal', true]]),
         selectAll('outlay_clients', [['name', true]]),
       ]);
-      return { expenses, subscriptions, clients };
+      return { expenses, subscriptions, clients, categories: await this.loadCategories() };
+    },
+    // The category list lives on the signed-in user's profile, so it follows them to every device.
+    async loadCategories() {
+      const { data } = await supabase.auth.getUser();
+      const list = data?.user?.user_metadata?.outlay_categories;
+      return Array.isArray(list) && list.length ? list : null;
+    },
+    async saveCategories(list) {
+      const { error } = await supabase.auth.updateUser({ data: { outlay_categories: list } });
+      if (error) throw error;
     },
     createExpense: (input) => one(supabase.from('outlay_expenses').insert(pick(input, EXPENSE_FIELDS)).select().single()),
     updateExpense: (id, patch) => one(supabase.from('outlay_expenses').update(pick(patch, EXPENSE_FIELDS)).eq('id', id).select().single()),

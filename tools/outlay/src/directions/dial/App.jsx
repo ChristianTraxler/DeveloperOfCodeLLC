@@ -12,6 +12,7 @@ import Footer from './Footer.jsx';
 import Dock from '../../shared/Dock.jsx';
 import ExpenseSheet from '../../shared/ExpenseSheet.jsx';
 import SubscriptionSheet from '../../shared/SubscriptionSheet.jsx';
+import CategorySheet from '../../shared/CategorySheet.jsx';
 import ReceiptViewer from '../../shared/ReceiptViewer.jsx';
 import Toast from '../../shared/Toast.jsx';
 import SignIn from '../../shared/SignIn.jsx';
@@ -59,6 +60,7 @@ function Screens() {
       <Dock />
       <ExpenseSheet />
       <SubscriptionSheet />
+      <CategorySheet />
       <ReceiptViewer />
       <Toast />
     </>

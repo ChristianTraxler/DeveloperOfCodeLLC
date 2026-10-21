@@ -1,7 +1,7 @@
 import React from 'react';
 import { useData } from '../../data/DataContext.jsx';
 import { useLedger } from '../../shared/hooks.js';
-import { CATEGORIES, categoryOf } from '../../lib/categories.js';
+import { categoryOf } from '../../lib/categories.js';
 import { money } from '../../lib/money.js';
 import { monthYear, dayNum, longDate } from '../../lib/dates.js';
 import { IconSearch, IconClip } from '../../shared/Icons.jsx';
@@ -30,7 +30,7 @@ function Row({ e }) {
 }
 
 export default function Ledger() {
-  const { ui, expenses } = useData();
+  const { ui, expenses, categories } = useData();
   const L = useLedger(40);
   return (
     <section id="ledger" className="tone-white d-sec" aria-labelledby="d-ledger-title">
@@ -50,7 +50,7 @@ export default function Ledger() {
             <label className="sr-only" htmlFor="d-cat">Category</label>
             <select id="d-cat" className="input" value={L.filter.category} onChange={(ev) => L.patch({ category: ev.target.value })}>
               <option value="">Every category</option>
-              {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
             </select>
           </div>
         </div>

@@ -52,7 +52,17 @@ export function createDemoAdapter() {
   return {
     mode: 'demo',
     async load() {
-      return clone(state);
+      return { ...clone(state), categories: await this.loadCategories() };
+    },
+    async loadCategories() {
+      try {
+        return JSON.parse(localStorage.getItem('outlay-categories') || 'null');
+      } catch {
+        return null;
+      }
+    },
+    async saveCategories(list) {
+      localStorage.setItem('outlay-categories', JSON.stringify(list));
     },
     async createExpense(input) {
       const row = { subscription_id: null, receipt_path: null, ...input, id: uid(), created_at: now() };
