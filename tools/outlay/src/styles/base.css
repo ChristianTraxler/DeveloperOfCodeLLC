@@ -22,7 +22,7 @@
 }
 .outlay-root *, .outlay-root *::before, .outlay-root *::after { box-sizing: border-box; }
 html:has(.outlay-root) {
-  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 112px);
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 88px);
   -webkit-text-size-adjust: 100%;
 }
 .outlay-root main:focus { outline: none; }
