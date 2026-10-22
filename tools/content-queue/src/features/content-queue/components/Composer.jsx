@@ -316,7 +316,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                 error={errors.schedule || (draft.status === 'scheduled' && draft.scheduledAt && new Date(draft.scheduledAt) < today ? 'This time has passed. Pick a new one, or mark the post as posted if it went out.' : '')}
                 as="fieldset"
               >
-                <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-4">
+                <div className="grid grid-cols-[minmax(0,14rem)_minmax(0,10rem)] gap-4">
                   <label className="sr-only" htmlFor="cq-c-schedule">
                     Date
                   </label>
