@@ -13,6 +13,16 @@
     @apply w-full rounded-[10px] border border-line bg-well px-3 py-2.5 text-[15px] text-bone placeholder:text-faint transition-colors;
     @apply hover:border-line2 focus:border-ember/70 focus:outline-none;
   }
+  .cq-input-dt {
+    @apply block min-w-0 max-w-full;
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 46px;
+  }
+  .cq-input-dt::-webkit-date-and-time-value {
+    text-align: left;
+    min-width: 0;
+  }
   .cq-input[aria-invalid='true'] {
     @apply border-danger/70;
   }

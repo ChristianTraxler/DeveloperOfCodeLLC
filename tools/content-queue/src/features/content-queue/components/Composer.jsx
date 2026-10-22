@@ -316,7 +316,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                 error={errors.schedule || (draft.status === 'scheduled' && draft.scheduledAt && new Date(draft.scheduledAt) < today ? 'This time has passed. Pick a new one, or mark the post as posted if it went out.' : '')}
                 as="fieldset"
               >
-                <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2.5">
+                <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-4">
                   <label className="sr-only" htmlFor="cq-c-schedule">
                     Date
                   </label>
@@ -326,7 +326,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                     value={date}
                     onChange={(e) => set({ scheduledAt: e.target.value ? fromInputs(e.target.value, timeStr || '09:00') : null })}
                     aria-invalid={!!errors.schedule}
-                    className="cq-input"
+                    className="cq-input cq-input-dt"
                   />
                   <label className="sr-only" htmlFor="cq-c-time">
                     Time
@@ -337,7 +337,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
                     value={timeStr}
                     disabled={!date}
                     onChange={(e) => set({ scheduledAt: fromInputs(date, e.target.value || '09:00') })}
-                    className="cq-input disabled:opacity-50"
+                    className="cq-input cq-input-dt disabled:opacity-50"
                   />
                 </div>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
