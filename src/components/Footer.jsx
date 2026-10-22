@@ -2,6 +2,7 @@ import { contact, links } from '../content.js'
 import ExtLink from './ExtLink.jsx'
 import { Brand, navFor } from './Header.jsx'
 import StatusBadge from './StatusBadge.jsx'
+import ownedBadge from '../assets/img/locally-owned-badge.webp'
 
 function Column({ title, items, className }) {
   return (
@@ -32,6 +33,15 @@ export default function Footer({ current = 'home' }) {
             <p className="t-small mt-5 max-w-[22rem] text-muted">
               Veteran-owned web development company based in North Carolina.
             </p>
+            <img
+              src={ownedBadge}
+              alt="Locally Owned and Operated, certified by American Operator"
+              width="190"
+              height="216"
+              loading="lazy"
+              decoding="async"
+              className="mt-6 h-auto w-[5.5rem] rounded-[3px] opacity-95 sm:w-[6.5rem]"
+            />
           </div>
           <Column title="Studio" items={items} className="col-span-6 sm:col-span-4 lg:col-span-2" />
           <Column

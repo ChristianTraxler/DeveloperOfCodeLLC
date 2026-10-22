@@ -50,6 +50,7 @@ export const nav = [
   { label: 'Process', href: '#process' },
   { label: 'About', href: '#about' },
   { label: 'Shop', href: '#shop' },
+  { label: 'Contact', href: '#contact' },
 ]
 
 export const principles = [

@@ -1,5 +1,6 @@
 import { contact, images, links, pricing } from '../content.js'
 import ExtLink from './ExtLink.jsx'
+import ownedBanner from '../assets/img/locally-owned-banner.webp'
 
 export default function Contact() {
   return (
@@ -57,6 +58,15 @@ export default function Contact() {
               </dd>
             </div>
           </dl>
+          <img
+            src={ownedBanner}
+            alt="Locally Owned and Operated, certified by American Operator"
+            width="640"
+            height="108"
+            loading="lazy"
+            decoding="async"
+            className="mt-10 h-auto w-[15rem] rounded-[5px] ring-1 ring-white/15 sm:w-[18rem]"
+          />
         </div>
       </div>
     </section>

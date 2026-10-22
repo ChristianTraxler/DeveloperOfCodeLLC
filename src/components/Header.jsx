@@ -146,7 +146,7 @@ export default function Header({ current = 'home' }) {
             </div>
             <nav aria-label="Menu" className="island-body">
               <ul className="menu-list">
-                {[...items, { label: 'Contact', href: homeSection('#contact', onHome) }].map((item, index) => (
+                {items.map((item, index) => (
                   <li key={item.label} style={{ '--i': index }}>
                     <ExtLink href={item.href} onClick={close} aria-current={item.current ? 'page' : undefined}>
                       {item.label}
