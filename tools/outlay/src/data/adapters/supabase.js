@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient.js';
 const BUCKET = 'outlay-receipts';
 const PAGE = 1000;
 const EXPENSE_FIELDS = ['spent_on', 'amount_cents', 'vendor', 'category', 'payment_method', 'notes', 'is_billable', 'client_id', 'billing_status', 'subscription_id', 'receipt_path'];
+const INCOME_FIELDS = ['received_on', 'amount_cents', 'payer', 'source', 'client_id', 'notes', 'document_path'];
 const SUB_FIELDS = ['name', 'amount_cents', 'cadence', 'next_renewal', 'category', 'payment_method', 'active', 'notes'];
 const pick = (obj, keys) => Object.fromEntries(keys.filter((k) => k in obj).map((k) => [k, obj[k]]));
 
@@ -51,7 +52,16 @@ export function createSupabaseAdapter() {
         selectAll('outlay_subscriptions', [['next_renewal', true]]),
         selectAll('outlay_clients', [['name', true]]),
       ]);
-      return { expenses, subscriptions, clients, categories: await this.loadCategories() };
+      // Income has its own table (supabase/outlay-income.sql). Until that has been run, the rest of
+      // the ledger still loads and the Income section explains what is missing.
+      let income = [];
+      let incomeMissing = false;
+      try {
+        income = await selectAll('outlay_income', [['received_on', false], ['created_at', false]]);
+      } catch {
+        incomeMissing = true;
+      }
+      return { expenses, income, incomeMissing, subscriptions, clients, categories: await this.loadCategories() };
     },
     // The category list lives on the signed-in user's profile, so it follows them to every device.
     async loadCategories() {
@@ -66,6 +76,9 @@ export function createSupabaseAdapter() {
     createExpense: (input) => one(supabase.from('outlay_expenses').insert(pick(input, EXPENSE_FIELDS)).select().single()),
     updateExpense: (id, patch) => one(supabase.from('outlay_expenses').update(pick(patch, EXPENSE_FIELDS)).eq('id', id).select().single()),
     deleteExpense: (id) => none(supabase.from('outlay_expenses').delete().eq('id', id)),
+    createIncome: (input) => one(supabase.from('outlay_income').insert(pick(input, INCOME_FIELDS)).select().single()),
+    updateIncome: (id, patch) => one(supabase.from('outlay_income').update(pick(patch, INCOME_FIELDS)).eq('id', id).select().single()),
+    deleteIncome: (id) => none(supabase.from('outlay_income').delete().eq('id', id)),
     createSubscription: (input) => one(supabase.from('outlay_subscriptions').insert(pick(input, SUB_FIELDS)).select().single()),
     updateSubscription: (id, patch) => one(supabase.from('outlay_subscriptions').update(pick(patch, SUB_FIELDS)).eq('id', id).select().single()),
     deleteSubscription: (id) => none(supabase.from('outlay_subscriptions').delete().eq('id', id)),

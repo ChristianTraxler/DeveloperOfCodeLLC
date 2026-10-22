@@ -135,6 +135,25 @@ export function buildSample(today = todayISO()) {
   return { expenses, subscriptions, clients };
 }
 
+// A few payments received this year, for preview mode. Clients come from the sample ledger.
+export function buildSampleIncome(clients, today = todayISO()) {
+  const T = parseISO(today);
+  const Y = T.getFullYear();
+  const rows = [
+    [0, 'Invoice 1042', 480000, 'invoice', 'Site build, final payment'],
+    [1, 'Invoice 1038', 320000, 'invoice', 'Site build, deposit'],
+    [2, 'Stripe payout', 96500, 'stripe', 'Monthly care plans'],
+    [4, 'Invoice 1031', 215000, 'check', 'Booking tool'],
+  ];
+  return rows.map(([ago, payer, cents, source, note], i) => {
+    const d = toISO(new Date(Y, T.getMonth() - ago, Math.min(T.getDate(), 20), 12));
+    return {
+      id: `sample-income-${i}`, received_on: d <= today ? d : today, amount_cents: cents, payer, source,
+      client_id: clients[i % Math.max(clients.length, 1)]?.id || null, notes: note, document_path: null, created_at: `${d}T12:00:00.000Z`,
+    };
+  });
+}
+
 // A plain thermal-receipt picture for sample entries, so the receipt viewer has something to show.
 export function sampleReceiptSvg(e) {
   const amt = (e.amount_cents / 100).toFixed(2);

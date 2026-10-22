@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useData } from '../../data/DataContext.jsx';
 import { IconPlus, IconMenu, IconClose, IconArrowLeft, IconLogOut } from '../../shared/Icons.jsx';
 import { ModeToggle } from '../../shared/mode.jsx';
 
-const LINKS = [['ledger', 'Ledger'], ['spending', 'Spending'], ['billable', 'Billable'], ['recurring', 'Recurring'], ['taxes', 'Taxes']];
+const LINKS = [['ledger', 'Ledger'], ['income', 'Income'], ['spending', 'Spending'], ['billable', 'Billable'], ['recurring', 'Recurring'], ['taxes', 'Taxes']];
 
 export function BrandMark() {
   return (
@@ -43,7 +44,7 @@ export default function Header() {
         <a href="/admin/" className="d-pill" aria-label="Back to hub"><IconArrowLeft width={16} height={16} /><span className="lbl">Hub</span></a>
         {mode === 'supabase' ? <button type="button" className="d-pill" onClick={() => signOut()} aria-label="Sign out"><IconLogOut width={16} height={16} /><span className="lbl">Sign out</span></button> : null}
       </div>
-      {menu ? (
+      {menu ? createPortal(
         <div className="d-menu tone-light" role="dialog" aria-modal="true" aria-label="Sections">
           <div className="d-menu-top">
             <span className="d-brand"><BrandMark /><span className="d-brand-word">Outlay</span></span>
@@ -56,7 +57,8 @@ export default function Header() {
             <button type="button" className="btn btn-primary" onClick={() => { setMenu(false); ui.openEditor(); }}><IconPlus />Log an expense</button>
             <a href="/admin/" className="btn btn-quiet"><IconArrowLeft width={18} height={18} />Back to the Admin Hub</a>
           </div>
-        </div>
+        </div>,
+        document.querySelector('.outlay-root') || document.body,
       ) : null}
     </header>
   );

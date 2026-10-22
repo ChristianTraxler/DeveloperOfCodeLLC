@@ -1,23 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import { useData } from '../../data/DataContext.jsx';
-import { taxYear } from '../../lib/calc.js';
+import { taxYear, incomeYear } from '../../lib/calc.js';
 import { money } from '../../lib/money.js';
 import { yearOf, QUARTER_LABEL } from '../../lib/dates.js';
-import { expensesCsv, taxSummaryCsv } from '../../lib/csv.js';
+import { expensesCsv, incomeCsv, taxSummaryCsv } from '../../lib/csv.js';
 import { saveTextFile } from '../../lib/files.js';
 import { scrollToId } from '../../shared/hooks.js';
 import { IconDownload } from '../../shared/Icons.jsx';
 
 export default function Taxes() {
-  const { expenses, clients, today, ui, notify } = useData();
+  const { expenses, income, clients, today, ui, notify } = useData();
   const years = useMemo(() => {
-    const set = new Set(expenses.map((e) => yearOf(e.spent_on)));
+    const set = new Set([...expenses.map((e) => yearOf(e.spent_on)), ...income.map((i) => yearOf(i.received_on))]);
     set.add(yearOf(today));
     return [...set].sort((a, b) => b - a);
-  }, [expenses, today]);
+  }, [expenses, income, today]);
   const [year, setYear] = useState(yearOf(today));
   const [busy, setBusy] = useState(false);
   const T = useMemo(() => taxYear(expenses, year), [expenses, year]);
+  const I = useMemo(() => incomeYear(income, year), [income, year]);
+  const net = I.total - T.deductible;
   const missing = T.count - T.withReceipt;
 
   async function exportCsv() {
@@ -32,13 +34,25 @@ export default function Taxes() {
     else if (result === 'failed') notify('The file could not be saved here. Export again from your own domain.', 'error');
   }
 
-  async function exportSummary() {
-    if (!T.count) {
-      notify(`No expenses logged for ${year} yet.`, 'error');
+  async function exportIncome() {
+    if (!I.count) {
+      notify(`No income logged for ${year} yet.`, 'error');
       return;
     }
     setBusy(true);
-    const result = await saveTextFile(`outlay-schedule-c-${year}.csv`, taxSummaryCsv(T, year));
+    const result = await saveTextFile(`outlay-income-${year}.csv`, incomeCsv(I.list, clients));
+    setBusy(false);
+    if (result === 'saved') notify(`Exported ${I.count} income entries for ${year}.`);
+    else if (result === 'failed') notify('The file could not be saved here. Export again from your own domain.', 'error');
+  }
+
+  async function exportSummary() {
+    if (!T.count && !I.count) {
+      notify(`Nothing logged for ${year} yet.`, 'error');
+      return;
+    }
+    setBusy(true);
+    const result = await saveTextFile(`outlay-schedule-c-${year}.csv`, taxSummaryCsv(T, year, I));
     setBusy(false);
     if (result === 'saved') notify(`Exported the ${year} Schedule C summary.`);
     else if (result === 'failed') notify('The file could not be saved here. Export again from your own domain.', 'error');
@@ -50,7 +64,10 @@ export default function Taxes() {
         <div className="d-head">
           <div>
             <h2 id="d-tax-title" className="d-h2">Tax year {year}</h2>
-            <p className="d-lede"><span className="tnum">{money(T.deductible)}</span> deductible so far, out of <span className="tnum">{money(T.total)}</span> spent.</p>
+            <p className="d-lede">
+              <span className="tnum">{money(I.total)}</span> received, <span className="tnum">{money(T.deductible)}</span> deductible out of <span className="tnum">{money(T.total)}</span> spent.
+              {I.count ? <> Net profit so far: <span className="tnum">{money(net)}</span>.</> : null}
+            </p>
           </div>
           <div className="d-tax-actions">
             {years.length > 1 ? (
@@ -61,9 +78,10 @@ export default function Taxes() {
             ) : null}
             <button type="button" className="btn btn-primary" onClick={exportCsv} disabled={busy}><IconDownload />{busy ? 'Preparing the file' : `Export ${year} as CSV`}</button>
             <button type="button" className="btn btn-quiet" onClick={exportSummary} disabled={busy}><IconDownload />Schedule C summary</button>
+            <button type="button" className="btn btn-quiet" onClick={exportIncome} disabled={busy}><IconDownload />Income CSV</button>
           </div>
         </div>
-        {T.count === 0 ? (
+        {T.count === 0 && I.count === 0 ? (
           <div className="d-empty"><p>Nothing logged for {year}.</p></div>
         ) : (
           <>
@@ -72,6 +90,12 @@ export default function Taxes() {
                 <caption className="sr-only">Schedule C expense lines for {year}</caption>
                 <thead><tr><th scope="col">Line</th><th scope="col">Expense</th><th scope="col" className="num">Spent</th><th scope="col" className="num">Deductible</th></tr></thead>
                 <tbody>
+                  <tr>
+                    <td><span className="d-index">1</span></td>
+                    <td><span className="d-tline">Gross receipts or sales</span><span className="d-tcats">{I.count} {I.count === 1 ? 'payment' : 'payments'}</span></td>
+                    <td className="num">{money(I.total)}</td>
+                    <td className="num">{money(I.total)}</td>
+                  </tr>
                   {T.rows.map((r) => (
                     <tr key={r.line}>
                       <td><span className="d-index">{r.line}</span></td>
@@ -81,7 +105,7 @@ export default function Taxes() {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot><tr><td /><th scope="row">Total</th><td className="num">{money(T.total)}</td><td className="num">{money(T.deductible)}</td></tr></tfoot>
+                <tfoot><tr><td /><th scope="row">Total expenses</th><td className="num">{money(T.total)}</td><td className="num">{money(T.deductible)}</td></tr></tfoot>
               </table>
             </div>
             <div className="d-quarters">
@@ -91,6 +115,7 @@ export default function Taxes() {
               Receipts on file for {T.withReceipt} of {T.count} expenses.
               {missing > 0 ? <> <button type="button" className="btn-text" onClick={() => { ui.setFilter({ q: '', kind: 'missing', category: '' }); scrollToId('ledger'); }}>Show the {missing} without one</button></> : null}
             </p>
+            <p className="d-receipts">Income documents on file for {I.withDoc} of {I.count} payments.</p>
             <p className="d-fine">Lines follow the usual Schedule C mapping for a single-member LLC, with business meals counted at 50%. Confirm the final numbers with your tax preparer.</p>
           </>
         )}

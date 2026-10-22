@@ -13,6 +13,10 @@ The expense ledger for Developer of Code, LLC, served at `/admin/outlay/` as a t
 
 `supabase/outlay.sql` created the three `outlay_` tables, owner-only row level security, and the private `outlay-receipts` bucket with matching storage policies. It is safe to run twice and has rollback notes at the top.
 
+## Income (needs one SQL run)
+
+Income lives in `outlay_income`, created by `supabase/outlay-income.sql`. **Not run yet:** paste it into the Supabase SQL editor (safe to run twice). Until then the ledger works and the Income section says the table is missing. Income is cash basis: the date received decides the tax year. Invoices or 1099s attach to the private `outlay-receipts` bucket under `<user id>/income-<id>/`. The Schedule C summary CSV now starts with line 1 gross receipts and ends with net profit (line 31), and the Taxes section has an Income CSV export.
+
 ## Run it
 
 ```bash

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useData } from '../../data/DataContext.jsx';
 import { useOverview, useMonthPace } from '../../shared/hooks.js';
-import { recurring } from '../../lib/calc.js';
 import { money } from '../../lib/money.js';
-import { daysBetween } from '../../lib/dates.js';
+import { recurring, incomeYear, taxYear } from '../../lib/calc.js';
+import { daysBetween, yearOf } from '../../lib/dates.js';
 import { IconPlus } from '../../shared/Icons.jsx';
 
 const C = 200;
@@ -66,13 +66,16 @@ function SubDial({ fraction, value, title, detail }) {
 }
 
 export default function Hero() {
-  const { ui, expenses, subscriptions, today } = useData();
+  const { ui, expenses, income, subscriptions, today } = useData();
   const o = useOverview();
   const P = useMonthPace();
   const R = recurring(subscriptions, today);
   const fraction = P.prevTotal > 0 ? P.mtd / P.prevTotal : P.mtd > 0 ? 1 : 0;
   const month = expenses.filter((e) => e.spent_on.slice(0, 7) === today.slice(0, 7) && e.spent_on <= today);
   const withReceipt = month.filter((e) => e.receipt_path).length;
+  const yr = yearOf(today);
+  const yearIncome = incomeYear(income, yr).total;
+  const yearNet = yearIncome - taxYear(expenses, yr).deductible;
   const nextIn = R.next ? Math.max(0, daysBetween(today, R.next.next_renewal)) : null;
   return (
     <section id="overview" className="tone-light d-hero" aria-labelledby="d-hero-title">
@@ -89,6 +92,7 @@ export default function Hero() {
         <div>
           <p className="d-hero-lead">{o.compare}</p>
           {o.receipts ? <p className="d-hero-note">{o.receipts}</p> : null}
+          {yearIncome > 0 ? <p className="d-hero-note">{yr} so far: {money(yearIncome)} received, {money(yearNet)} net after deductible expenses.</p> : null}
           <ul className="d-legend">
             <li><span className="d-key d-key-arc" />Arc: {P.prevTotal > 0 ? `${Math.round(fraction * 100)}% of everything spent in ${P.prevName}` : `nothing to compare in ${P.prevName}`}</li>
             <li><span className="d-key d-key-ticks" />Ticks: the days already behind you</li>
@@ -96,6 +100,7 @@ export default function Hero() {
           </ul>
           <div className="d-hero-actions">
             <button type="button" className="btn btn-primary" onClick={() => ui.openEditor()}><IconPlus />Log an expense</button>
+            <button type="button" className="btn btn-quiet" onClick={() => ui.openIncome()}><IconPlus />Log income</button>
             <a className="btn-text" href="#ledger">Open the ledger</a>
           </div>
           <div className="d-subdials">

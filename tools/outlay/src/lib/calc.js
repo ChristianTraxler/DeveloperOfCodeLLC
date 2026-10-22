@@ -68,6 +68,14 @@ export function taxYear(expenses, year) {
   };
 }
 
+// Money received in a tax year (cash basis: the day it landed decides the year).
+export function incomeYear(income, year) {
+  const list = income.filter((i) => yearOf(i.received_on) === year);
+  const total = sum(list.map((i) => ({ amount_cents: i.amount_cents })));
+  const quarters = [1, 2, 3, 4].map((q) => ({ q, cents: sum(list.filter((i) => quarterOf(i.received_on) === q)) }));
+  return { list, total, count: list.length, quarters, withDoc: list.filter((i) => i.document_path).length };
+}
+
 export function billable(expenses, clients, year) {
   const items = expenses.filter((e) => e.is_billable);
   const groupsMap = new Map();

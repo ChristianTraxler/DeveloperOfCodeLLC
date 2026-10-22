@@ -1,5 +1,5 @@
 import { get as idbGet, set as idbSet, del as idbDel, clear as idbClear, createStore } from 'idb-keyval';
-import { buildSample, sampleReceiptSvg } from '../../lib/sample.js';
+import { buildSample, buildSampleIncome, sampleReceiptSvg } from '../../lib/sample.js';
 
 // Preview mode: data in localStorage, receipt files in IndexedDB, both in this browser only.
 const KEY = 'outlay:v1';
@@ -35,6 +35,10 @@ export function createDemoAdapter() {
   let state = read();
   if (!state || !Array.isArray(state.expenses)) {
     state = buildSample();
+    write(state);
+  }
+  if (!Array.isArray(state.income)) {
+    state.income = buildSampleIncome(state.clients || []);
     write(state);
   }
   const save = () => write(state);
@@ -78,6 +82,22 @@ export function createDemoAdapter() {
     },
     async deleteExpense(id) {
       state.expenses = state.expenses.filter((e) => e.id !== id);
+      save();
+    },
+    async createIncome(input) {
+      const row = { document_path: null, ...input, id: uid(), created_at: now() };
+      state.income = [row, ...state.income];
+      save();
+      return row;
+    },
+    async updateIncome(id, patch) {
+      const [next, row] = patchIn(state.income, id, patch);
+      state.income = next;
+      save();
+      return row;
+    },
+    async deleteIncome(id) {
+      state.income = state.income.filter((i) => i.id !== id);
       save();
     },
     async createSubscription(input) {
@@ -138,7 +158,11 @@ export function createDemoAdapter() {
       }
     },
     async reset(kind) {
-      state = kind === 'empty' ? { expenses: [], subscriptions: [], clients: [] } : buildSample();
+      if (kind === 'empty') state = { expenses: [], income: [], subscriptions: [], clients: [] };
+      else {
+        state = buildSample();
+        state.income = buildSampleIncome(state.clients);
+      }
       save();
       files.clear();
       try {

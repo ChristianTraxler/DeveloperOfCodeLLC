@@ -4,6 +4,7 @@ import { useData } from '../../data/DataContext.jsx';
 import Header from './Header.jsx';
 import Hero from './Hero.jsx';
 import Ledger from './Ledger.jsx';
+import Income from './Income.jsx';
 import Spending from './Spending.jsx';
 import Billable from './Billable.jsx';
 import Recurring from './Recurring.jsx';
@@ -11,6 +12,7 @@ import Taxes from './Taxes.jsx';
 import Footer from './Footer.jsx';
 import Dock from '../../shared/Dock.jsx';
 import ExpenseSheet from '../../shared/ExpenseSheet.jsx';
+import IncomeSheet from '../../shared/IncomeSheet.jsx';
 import SubscriptionSheet from '../../shared/SubscriptionSheet.jsx';
 import CategorySheet from '../../shared/CategorySheet.jsx';
 import ReceiptViewer from '../../shared/ReceiptViewer.jsx';
@@ -51,6 +53,7 @@ function Screens() {
       <main id="top" tabIndex={-1}>
         <Hero />
         <Ledger />
+        <Income />
         <Spending />
         <Billable />
         <Recurring />
@@ -59,6 +62,7 @@ function Screens() {
       <Footer />
       <Dock />
       <ExpenseSheet />
+      <IncomeSheet />
       <SubscriptionSheet />
       <CategorySheet />
       <ReceiptViewer />

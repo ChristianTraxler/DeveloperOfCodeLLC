@@ -25,9 +25,15 @@ const byDateDesc = (a, b) => (a.spent_on === b.spent_on
   ? String(b.created_at || '').localeCompare(String(a.created_at || ''))
   : b.spent_on.localeCompare(a.spent_on));
 
+const byReceivedDesc = (a, b) => (a.received_on === b.received_on
+  ? String(b.created_at || '').localeCompare(String(a.created_at || ''))
+  : b.received_on.localeCompare(a.received_on));
+
 function sortAll(d) {
   return {
     expenses: [...(d.expenses || [])].sort(byDateDesc),
+    income: [...(d.income || [])].sort(byReceivedDesc),
+    incomeMissing: Boolean(d.incomeMissing),
     subscriptions: [...(d.subscriptions || [])].sort((a, b) => a.next_renewal.localeCompare(b.next_renewal)),
     clients: [...(d.clients || [])].sort((a, b) => a.name.localeCompare(b.name)),
     categories: sortCategories(d.categories && d.categories.length ? d.categories : DEFAULT_CATEGORIES),
@@ -39,11 +45,12 @@ export function DataProvider({ children }) {
   const [mode, setMode] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
-  const [data, setData] = useState({ expenses: [], subscriptions: [], clients: [], categories: DEFAULT_CATEGORIES });
+  const [data, setData] = useState({ expenses: [], income: [], incomeMissing: false, subscriptions: [], clients: [], categories: DEFAULT_CATEGORIES });
   const [session, setSession] = useState(null);
   const [toast, setToast] = useState(null);
   const [editor, setEditor] = useState(null);
   const [subEditor, setSubEditor] = useState(null);
+  const [incomeEditor, setIncomeEditor] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [catsOpen, setCatsOpen] = useState(false);
   const [filter, setFilter] = useState({ q: '', kind: 'all', category: '' });
@@ -138,6 +145,28 @@ export function DataProvider({ children }) {
     await a.deleteExpense(e.id);
     setData((d) => ({ ...d, expenses: d.expenses.filter((x) => x.id !== e.id) }));
   }, 'Expense deleted.'), [run]);
+
+  const saveIncome = useCallback(({ id, fields, file, dropDoc, previous }) => run(async (a) => {
+    let row;
+    if (id) {
+      const patch = { ...fields };
+      if (file) patch.document_path = await a.uploadReceipt(`income-${id}`, file);
+      else if (dropDoc) patch.document_path = null;
+      row = await a.updateIncome(id, patch);
+      if ((file || dropDoc) && previous) a.removeReceipt(previous).catch(() => {});
+    } else {
+      row = await a.createIncome({ ...fields, document_path: null });
+      if (file) row = await a.updateIncome(row.id, { document_path: await a.uploadReceipt(`income-${row.id}`, file) });
+    }
+    setData((d) => sortAll({ ...d, income: id ? d.income.map((x) => (x.id === id ? row : x)) : [row, ...d.income] }));
+    return row;
+  }, id ? 'Changes saved.' : 'Income logged.'), [run]);
+
+  const deleteIncome = useCallback((i) => run(async (a) => {
+    if (i.document_path) await a.removeReceipt(i.document_path).catch(() => {});
+    await a.deleteIncome(i.id);
+    setData((d) => ({ ...d, income: d.income.filter((x) => x.id !== i.id) }));
+  }, 'Income deleted.'), [run]);
 
   const setBilling = useCallback((e, billing_status) => run(async (a) => {
     const row = await a.updateExpense(e.id, { billing_status });
@@ -265,6 +294,9 @@ export function DataProvider({ children }) {
     subEditor,
     openSub: (sub = null) => setSubEditor({ sub }),
     closeSub: () => setSubEditor(null),
+    incomeEditor,
+    openIncome: (income = null) => setIncomeEditor({ income }),
+    closeIncome: () => setIncomeEditor(null),
     receipt,
     openReceipt: (e) => setReceipt(e),
     closeReceipt: () => setReceipt(null),
@@ -273,14 +305,15 @@ export function DataProvider({ children }) {
     closeCategories: () => setCatsOpen(false),
     filter,
     setFilter,
-  }), [editor, subEditor, receipt, filter, catsOpen]);
+  }), [editor, subEditor, incomeEditor, receipt, filter, catsOpen]);
 
   const value = useMemo(() => ({
     mode, status, error, today, session, ...data, toast, notify, dismissToast, ui,
+    openIncomeDoc: (i) => setReceipt({ vendor: i.payer, spent_on: i.received_on, amount_cents: i.amount_cents, receipt_path: i.document_path }),
     serialOf: (id) => serials.get(id) || 0,
     clientName: (id) => (data.clients.find((c) => c.id === id) || {}).name || '',
-    saveExpense, deleteExpense, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt,
-  }), [mode, status, error, today, session, data, toast, notify, dismissToast, ui, serials, saveExpense, deleteExpense, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt]);
+    saveExpense, deleteExpense, saveIncome, deleteIncome, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt,
+  }), [mode, status, error, today, session, data, toast, notify, dismissToast, ui, serials, saveExpense, deleteExpense, saveIncome, deleteIncome, setBilling, addClient, addCategory, deleteCategory, saveSubscription, deleteSubscription, logCharge, resetDemo, signOut, getReceipt]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
