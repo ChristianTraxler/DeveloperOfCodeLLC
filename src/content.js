@@ -49,6 +49,7 @@ export const nav = [
   { label: 'Services', href: '#services' },
   { label: 'Process', href: '#process' },
   { label: 'About', href: '#about' },
+  { label: 'Pricing', href: '/pricing.html' },
   { label: 'Shop', href: '#shop' },
   { label: 'Contact', href: '#contact' },
 ]

@@ -7,7 +7,9 @@ import ExtLink from './ExtLink.jsx'
 export function navFor(current) {
   const onHome = current === 'home'
   return nav.map((item) =>
-    !onHome && item.href === '#shop'
+    item.href.startsWith('/')
+      ? { ...item, current: current === 'pricing' }
+      : !onHome && item.href === '#shop'
       ? { ...item, href: pages.products, current: current === 'products' }
       : { ...item, href: homeSection(item.href, onHome) },
   )

@@ -23,6 +23,7 @@ export default defineConfig({
         products: page('./products.html'),
         notify: page('./notify.html'),
         consult: page('./consult.html'),
+        pricing: page('./pricing.html'),
       },
     },
   },
