@@ -163,11 +163,11 @@ function Showcase() {
       <div aria-hidden="true" className="absolute right-0 top-0 h-96 w-96 rounded-full bg-[radial-gradient(closest-side,rgba(43,69,166,.35),transparent)]" />
       <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <SectionHead id="samples-title" eyebrow={showcase.eyebrow} title={showcase.title} body={showcase.body} tone="dark" />
-        <p className="text-sm text-fog sm:hidden">Swipe to see all six</p>
+        <p className="text-sm text-fog sm:hidden">Swipe to see all {samples.filter((s) => s.src).length}</p>
       </div>
       {/* Swipeable row on phones, grid from tablet up. */}
       <ul className="no-scrollbar relative -mx-5 mt-14 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto px-5 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-14 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-        {samples.map((s, i) => (
+        {samples.filter((s) => s.src).map((s, i) => (
           <Reveal as="li" key={s.id} delay={(i % 3) * 100} className="w-[72vw] max-w-[17.5rem] shrink-0 snap-start sm:w-auto sm:max-w-none">
             <VideoCard sample={s} />
           </Reveal>

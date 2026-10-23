@@ -75,6 +75,9 @@ export function MockReel({ caption, tag, tone = 'ember', comingSoon = false, com
  * mode "auto": plays muted while on screen (hero), unless reduced motion or data saver.
  * The video never downloads until it is about to play (preload="none" + poster).
  */
+// Remembered for the visit: once someone turns sound on, the next video starts with it on.
+let soundPreferred = false
+
 export function SampleVideo({ sample, mode = 'hover', label, location = 'showcase' }) {
   const videoRef = useRef(null)
   const reduced = useReducedMotion()
@@ -82,11 +85,16 @@ export function SampleVideo({ sample, mode = 'hover', label, location = 'showcas
   const [wrapRef, onScreen] = useInView({ once: false, threshold: 0.35, rootMargin: '0px' })
   const [playing, setPlaying] = useState(false)
   const [userPaused, setUserPaused] = useState(false)
+  const [soundOn, setSoundOn] = useState(false)
   const autoAllowed = mode === 'auto' && !reduced && !prefersSaveData()
 
   const play = () => {
     const v = videoRef.current
     if (!v) return
+    if (sample.hasAudio && soundPreferred) {
+      v.muted = false
+      setSoundOn(true)
+    }
     const p = v.play()
     if (p && p.catch) p.catch(() => setPlaying(false))
   }
@@ -106,6 +114,16 @@ export function SampleVideo({ sample, mode = 'hover', label, location = 'showcas
       play()
       track(`play_${sample.id}`, location)
     }
+  }
+
+  const toggleSound = () => {
+    const v = videoRef.current
+    if (!v) return
+    const next = v.muted
+    soundPreferred = next
+    v.muted = !next
+    setSoundOn(next)
+    track(`sound_${next ? 'on' : 'off'}_${sample.id}`, location)
   }
 
   const hoverHandlers =
@@ -145,6 +163,30 @@ export function SampleVideo({ sample, mode = 'hover', label, location = 'showcas
       >
         <Icon name={playing ? 'pause' : 'play'} className={playing ? 'h-4 w-4' : 'ml-1 h-6 w-6'} />
       </button>
+      {sample.hasAudio && (
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          aria-label={`${soundOn ? 'Turn sound off' : 'Turn sound on'}: ${sample.title}`}
+          className="absolute bottom-3 left-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-paper ring-1 ring-white/40 backdrop-blur-md transition duration-300 hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" />
+            {soundOn ? (
+              <>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+              </>
+            ) : (
+              <>
+                <path d="m16 9 5 6" />
+                <path d="m21 9-5 6" />
+              </>
+            )}
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

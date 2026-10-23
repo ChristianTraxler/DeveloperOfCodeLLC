@@ -150,7 +150,7 @@ export const video = {
   packages: [
     { id: 'starter', name: 'Starter', price: 349, videos: 4, each: 87 },
     { id: 'growth', name: 'Growth', price: 649, videos: 8, each: 81, recommended: true },
-    { id: 'authority', name: 'Authority', price: 949, videos: 12, each: 79, extra: 'Posting calendar included' },
+    { id: 'scale', name: 'Scale', price: 949, videos: 12, each: 79, extra: 'Posting calendar included' },
   ],
   pilot: { price: 199, videos: 3 },
   single: 99,

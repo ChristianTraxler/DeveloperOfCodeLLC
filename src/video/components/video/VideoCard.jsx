@@ -30,7 +30,7 @@ export default function VideoCard({ sample }) {
         {real && sample.transcript && (
           <details className="mt-3 text-sm text-fog">
             <summary className="cursor-pointer select-none rounded font-semibold text-paper underline decoration-white/30 underline-offset-4 hover:decoration-ember focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember">
-              {sample.silent ? 'Silent video. Read the on-screen text' : 'Read the transcript'}
+              {sample.transcriptLabel || (sample.silent ? 'Silent video. Read the on-screen text' : 'Read the transcript')}
             </summary>
             <ol className="mt-3 space-y-2 border-l border-white/15 pl-4">
               {sample.transcript.map((line, i) => (

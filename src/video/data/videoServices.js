@@ -19,6 +19,12 @@
 import fiveSecondTest from '../assets/video/five-second-test.mp4'
 import fiveSecondTestWebm from '../assets/video/five-second-test.webm'
 import fiveSecondTestPoster from '../assets/video/five-second-test-poster.webp'
+import promo30 from '../assets/video/promo-30s.mp4'
+import promo30Poster from '../assets/video/promo-30s-poster.jpg'
+import buyBack from '../assets/video/buy-back-your-time.mp4'
+import buyBackPoster from '../assets/video/buy-back-your-time-poster.jpg'
+import wordOfMouth from '../assets/video/word-of-mouth-then-google.mp4'
+import wordOfMouthPoster from '../assets/video/word-of-mouth-then-google-poster.jpg'
 
 // ---- Links ---------------------------------------------------------------
 // Every button on the page reads its link from here.
@@ -113,8 +119,8 @@ export const problem = {
 // the designed "coming soon" card using `mock` as the caption.
 export const showcase = {
   eyebrow: 'What the videos look like',
-  title: 'Six formats that work for local businesses.',
-  body: 'Every video is vertical, captioned and branded. Tap a card to play.',
+  title: 'Formats that work for local businesses.',
+  body: 'Every video is vertical, captioned and branded. Tap a card to play, and use the speaker button to turn sound on.',
 }
 
 export const samples = [
@@ -138,6 +144,65 @@ export const samples = [
       'Booked. No phone tag.',
       'Which one is yours? Lost the call, or got the booking.',
       'Developer of Code. Built by a veteran. Built to get the call. Custom websites for North Carolina small businesses that work from a phone.',
+    ],
+  },
+  {
+    id: 'main-street',
+    style: 'Brand story',
+    title: 'Main Street closes at 5',
+    blurb: 'A 30-second story that shows what you do, who you do it for and how to start.',
+    src: promo30,
+    poster: promo30Poster,
+    duration: '0:30',
+    hasAudio: true,
+    transcriptLabel: 'Read the on-screen text',
+    transcript: [
+      'Main Street closes at 5. Your website never does.',
+      'Veteran-owned. North Carolina. Developer of Code, web design and development.',
+      'Online stores that turn browsers into buyers.',
+      'Booking and web apps that save you time.',
+      'One person, first call to launch: free consultation, written proposal, design and build, launch and care.',
+      'Here after launch: updates and fixes, hosting and domain, hands-on training, SEO and analytics.',
+      'What clients say.',
+      'Developer of Code. Built for Main Street. Veteran-owned. North Carolina. Book a free consultation.',
+    ],
+  },
+  {
+    id: 'buy-back-your-time',
+    style: 'Explainer',
+    title: 'Buy back your time',
+    blurb: 'A 60-second pitch for owners who are tired of fixing their own website.',
+    src: buyBack,
+    poster: buyBackPoster,
+    duration: '1:00',
+    hasAudio: true,
+    transcriptLabel: 'Read the on-screen text',
+    transcript: [
+      'Tuesday night, 11:48 PM. Still fixing your website?',
+      'Your customers do not need a web expert.',
+      'It is 5:00 PM. What if you could buy that time back?',
+      'Here is what I handle: updates and edits, hosting and security, contact forms, online booking.',
+      'Veteran-owned. One-on-one. Clear pricing, no jargon, no agency runaround.',
+      'Proudly local. Serving small businesses across North Carolina.',
+      'Buy back your time. Developer of Code. Call or text (828) 781-4674.',
+    ],
+  },
+  {
+    id: 'word-of-mouth',
+    style: 'Problem and solution',
+    title: 'Word of mouth, then Google',
+    blurb: 'A 20-second story about the customer who looked you up and called the other guy.',
+    src: wordOfMouth,
+    poster: wordOfMouthPoster,
+    duration: '0:20',
+    hasAudio: true,
+    transcriptLabel: 'Read the on-screen text',
+    transcript: [
+      'Someone just recommended you.',
+      'So they look. No site. Or one that never loads.',
+      'They called the other guy.',
+      'Let us fix that. Developer of Code, LLC. Veteran-owned. North Carolina.',
+      'Message me to get started.',
     ],
   },
   {
@@ -272,8 +337,8 @@ export const packages = {
       ctaHref: mail('Growth video package'),
     },
     {
-      id: 'authority',
-      name: 'Authority',
+      id: 'scale',
+      name: 'Scale',
       price: 949,
       period: 'month',
       videos: 12,
@@ -281,8 +346,8 @@ export const packages = {
       extra: 'Posting calendar included, about $79 a video',
       summary: 'Three a week, with a posting calendar so you always know what goes out when.',
       features: common(12),
-      cta: 'Choose Authority',
-      ctaHref: mail('Authority video package'),
+      cta: 'Choose Scale',
+      ctaHref: mail('Scale video package'),
     },
   ],
 }
@@ -311,10 +376,9 @@ export const why = {
   headshotAlt: 'Christian Traxler, founder of Developer of Code',
   founderName: 'Christian Traxler',
   founderRole: 'Founder, Developer of Code, LLC',
-  // [PLACEHOLDER] Two sentences in your own words.
   blurb: [
-    '[PLACEHOLDER: one sentence on your service and what you bring from it.]',
-    '[PLACEHOLDER: one sentence on why you help Carolina small businesses.]',
+    'Veteran-owned and run by one person, so nothing gets lost between a sales call and the finished video.',
+    'I’m based in North Carolina and work with local businesses that want to be seen without adding another job to their week.',
   ],
   points: [
     { title: 'Veteran-owned', body: 'Reliable, on time and accountable. If I say Thursday, it is Thursday.' },
@@ -378,7 +442,7 @@ export const faq = {
     },
     {
       q: 'Can I cancel?',
-      a: 'Starter, Growth and Authority are month to month. Cancel before your next billing date and you will not be charged again. The Pilot is a one-time package.',
+      a: 'Starter, Growth and Scale are month to month. Cancel before your next billing date and you will not be charged again. The Pilot is a one-time package.',
     },
     {
       q: 'Do you guarantee views or followers?',
