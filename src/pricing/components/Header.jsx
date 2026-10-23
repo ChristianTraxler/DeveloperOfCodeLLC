@@ -8,12 +8,13 @@ const nav = [
   ['Services', '/#services'],
   ['Process', '/#process'],
   ['About', '/#about'],
-  ['Pricing', '#top', true],
+  ['Pricing', '/pricing.html', 'pricing'],
+  ['Video', '/video', 'video'],
   ['Shop', '/#shop'],
   ['Contact', '/#contact'],
 ]
 
-export default function Header() {
+export default function Header({ current = 'pricing' }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -52,19 +53,21 @@ export default function Header() {
         </a>
 
         <nav aria-label="Main" className="hidden items-center gap-7 lg:flex">
-          {nav.map(([label, h, current]) => (
+          {nav.map(([label, h, key]) => {
+            const here = key === current
+            return (
             <a
               key={label}
               href={href(h)}
-              aria-current={current ? 'page' : undefined}
+              aria-current={here ? 'page' : undefined}
               className={`relative py-1.5 text-[14px] font-[540] transition ${
-                current ? 'text-snow' : 'text-snow/75 hover:text-snow'
+                here ? 'text-snow' : 'text-snow/75 hover:text-snow'
               }`}
             >
               {label}
-              {current && <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-lamp" />}
+              {here && <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-lamp" />}
             </a>
-          ))}
+          )})}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -93,18 +96,20 @@ export default function Header() {
         className="h-[calc(100dvh-4rem)] overflow-y-auto border-t border-snow/10 bg-night lg:hidden"
       >
         <nav aria-label="Mobile" className="wrap flex flex-col py-6">
-          {nav.map(([label, h, current]) => (
+          {nav.map(([label, h, key]) => {
+            const here = key === current
+            return (
             <a
               key={label}
               href={href(h)}
               onClick={() => setOpen(false)}
-              aria-current={current ? 'page' : undefined}
+              aria-current={here ? 'page' : undefined}
               className="display flex items-center justify-between border-b border-snow/10 py-4 text-[2rem]"
             >
               {label}
-              {current && <span className="eyebrow font-sans text-lamp">You are here</span>}
+              {here && <span className="eyebrow font-sans text-lamp">You are here</span>}
             </a>
-          ))}
+          )})}
           <a href={url(site.intake)} className="btn-snow mt-8">Start your project</a>
           <a href={url(site.consult)} className="btn-ghost mt-3">Book a free consultation</a>
         </nav>

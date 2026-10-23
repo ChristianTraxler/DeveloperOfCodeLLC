@@ -8,7 +8,7 @@ export function navFor(current) {
   const onHome = current === 'home'
   return nav.map((item) =>
     item.href.startsWith('/')
-      ? { ...item, current: current === 'pricing' }
+      ? { ...item, current: current === item.label.toLowerCase() }
       : !onHome && item.href === '#shop'
       ? { ...item, href: pages.products, current: current === 'products' }
       : { ...item, href: homeSection(item.href, onHome) },

@@ -1,3 +1,4 @@
+import SiteFooter from '../../components/Footer.jsx'
 import { site, url } from '../site.config.js'
 import { extraHourRate, careTerm, money } from '../pricing.js'
 import { Reveal, Arrow, LiveDot } from './ui.jsx'
@@ -93,28 +94,14 @@ export function Closing() {
         </div>
       </section>
 
-      <footer className="bg-night py-14 text-[14px] text-snow-muted">
-        <div className="wrap grid gap-10 md:grid-cols-12">
-          <div className="md:col-span-5">
-            <a href={url('/#top')} className="flex items-center gap-2.5 font-semibold text-snow">
-              <img src={logo} alt="" className="h-7 w-auto" /> Developer of Code
-            </a>
-            <p className="mt-4 max-w-sm leading-relaxed">Veteran-owned web studio in North Carolina since 2019.</p>
-          </div>
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-3 md:col-span-4">
-            {[['Work', '/#work'], ['Services', '/#services'], ['Process', '/#process'], ['About', '/#about'], ['Shop', '/#shop'], ['Client support', site.support]].map(([l, h]) => (
-              <a key={l} href={url(h)} className="hover:text-snow">{l}</a>
-            ))}
-          </nav>
-          <div className="md:col-span-3">
-            <a href={url('/privacy.html')} className="hover:text-snow">Privacy Policy</a>
-          </div>
-          <p className="border-t border-snow/10 pt-8 text-[12.5px] leading-relaxed text-snow-muted/80 md:col-span-12">
-            Prices are in US dollars. Estimates on this page are a guide, not a quote. Your written quote and service agreement set the final price and terms.
-            {' '}© {new Date().getFullYear()} Developer of Code, LLC.
-          </p>
-        </div>
-      </footer>
+      <p className="bg-[rgb(8_13_25)] pb-10 text-[12.5px] leading-relaxed text-snow-muted/80">
+        <span className="wrap block">
+          Prices are in US dollars. Estimates on this page are a guide, not a quote. Your written quote and service agreement set the final price and terms.
+        </span>
+      </p>
+      <div className="live-footer">
+        <SiteFooter current="pricing" />
+      </div>
     </>
   )
 }

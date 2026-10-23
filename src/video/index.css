@@ -1,0 +1,108 @@
+@font-face {
+  font-family: 'Literata DOC';
+  src: url('../pricing/assets/fonts/literata-latin.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Mona Sans DOC';
+  src: url('../pricing/assets/fonts/mona-sans-latin.woff2') format('woff2');
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* /video page. Same fonts and tokens as the rest of developerofcode.com. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-night font-sans text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .font-display {
+    font-optical-sizing: auto;
+  }
+  ::selection {
+    background: #f07a45;
+    color: #0a1328;
+  }
+  :focus-visible {
+    outline-color: #f07a45;
+  }
+}
+
+@layer utilities {
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Dev only: outlines unfilled [PLACEHOLDERS] so they are easy to spot. */
+  .placeholder-mark {
+    background: transparent;
+    color: inherit;
+    outline: 1.5px dashed #f07a45;
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:root {
+  color-scheme: dark;
+  --c-night: 10 19 40;
+  --c-deep: 12 20 38;
+  --c-dusk: 17 36 72;
+  --c-dusk-2: 27 50 93;
+  --c-snow: 238 240 244;
+  --c-snow-muted: 172 184 206;
+  --c-ink: 20 33 61;
+  --c-ink-muted: 84 95 117;
+  --c-sand: 217 211 203;
+  --c-paper: 250 250 248;
+  --c-lamp: 255 122 56;
+  --c-lamp-ink: 176 66 22;
+  --c-live: 58 175 123;
+  --header-h: 4rem;
+}
+
+
+/* Header rules shared with the pricing page */
+@layer components {
+  .wrap { @apply mx-auto w-full max-w-page; --g: 20px; padding-left: max(var(--g), env(safe-area-inset-left, 0px)); padding-right: max(var(--g), env(safe-area-inset-right, 0px)); }
+  @media (min-width: 640px) { .wrap { --g: 32px; } }
+  @media (min-width: 1024px) { .wrap { --g: 48px; } }
+  .display { font-family: 'Literata DOC', Georgia, serif; font-weight: 300; letter-spacing: -0.03em; line-height: 1; }
+  .eyebrow { font-stretch: 125%; font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition duration-200; letter-spacing: 0.004em; min-height: 48px; }
+  .btn-snow { @apply btn bg-snow text-dusk hover:bg-white; }
+  .btn-ghost { @apply btn border border-snow/30 text-snow hover:border-snow/70 hover:bg-snow/5; }
+}
+

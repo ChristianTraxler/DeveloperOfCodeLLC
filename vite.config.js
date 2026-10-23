@@ -24,6 +24,7 @@ export default defineConfig({
         notify: page('./notify.html'),
         consult: page('./consult.html'),
         pricing: page('./pricing.html'),
+        video: page('./video.html'),
       },
     },
   },

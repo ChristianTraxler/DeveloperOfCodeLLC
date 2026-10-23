@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 const bad = new RegExp('[' + String.fromCharCode(0x2013) + String.fromCharCode(0x2014) + ']')
-const roots = ['src/pricing', 'pricing.html', 'scripts/pricing-check-dashes.mjs', 'scripts/pricing-check-prices.mjs']
+const roots = ['src/video', 'video.html', 'src/pricing', 'pricing.html', 'scripts/pricing-check-dashes.mjs', 'scripts/pricing-check-prices.mjs']
 let hits = 0
 const walk = (p) => {
   const st = statSync(p, { throwIfNoEntry: false })

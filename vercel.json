@@ -5,6 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/pricing", "destination": "/pricing.html" },
+    { "source": "/video", "destination": "/video.html" },
     { "source": "/admin/tracker/(.*)", "destination": "/admin/tracker/index.html" },
     { "source": "/seo/:token", "destination": "/admin/seo/share.html" },
     { "source": "/admin/pricing-desk", "destination": "https://pricing-desk.vercel.app/" },
