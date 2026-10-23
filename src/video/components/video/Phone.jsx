@@ -78,7 +78,7 @@ export function MockReel({ caption, tag, tone = 'ember', comingSoon = false, com
 // Remembered for the visit: once someone turns sound on, the next video starts with it on.
 let soundPreferred = false
 
-export function SampleVideo({ sample, mode = 'hover', label, location = 'showcase' }) {
+export function SampleVideo({ sample, mode = 'hover', label, location = 'showcase', mini = false }) {
   const videoRef = useRef(null)
   const reduced = useReducedMotion()
   const canHover = useCanHover()
@@ -157,8 +157,8 @@ export function SampleVideo({ sample, mode = 'hover', label, location = 'showcas
         aria-label={`${playing ? 'Pause' : 'Play'} sample: ${sample.title}`}
         className={`absolute z-10 grid place-items-center rounded-full text-paper ring-1 ring-white/40 backdrop-blur-md transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember ${
           playing
-            ? 'bottom-3 right-3 h-10 w-10 bg-black/40 opacity-70 hover:opacity-100'
-            : 'left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 bg-black/35 hover:scale-105 hover:bg-black/50'
+            ? `${mini ? 'bottom-2 right-2 h-8 w-8' : 'bottom-3 right-3 h-10 w-10'} bg-black/40 opacity-70 hover:opacity-100`
+            : `${mini ? 'h-11 w-11' : 'h-16 w-16'} left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/35 hover:scale-105 hover:bg-black/50`
         }`}
       >
         <Icon name={playing ? 'pause' : 'play'} className={playing ? 'h-4 w-4' : 'ml-1 h-6 w-6'} />
@@ -169,7 +169,7 @@ export function SampleVideo({ sample, mode = 'hover', label, location = 'showcas
           onClick={toggleSound}
           aria-pressed={soundOn}
           aria-label={`${soundOn ? 'Turn sound off' : 'Turn sound on'}: ${sample.title}`}
-          className="absolute bottom-3 left-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-paper ring-1 ring-white/40 backdrop-blur-md transition duration-300 hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+          className={`absolute z-10 grid place-items-center ${mini ? 'bottom-2 left-2 h-8 w-8' : 'bottom-3 left-3 h-10 w-10'} rounded-full bg-black/40 text-paper ring-1 ring-white/40 backdrop-blur-md transition duration-300 hover:bg-black/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember`}
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" />

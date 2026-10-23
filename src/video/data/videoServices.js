@@ -86,10 +86,9 @@ export const hero = {
   reassurance: ['Veteran-owned', 'Month to month', 'You own every video'],
   // The middle phone plays this sample. Set to null to show a designed frame instead.
   featuredSampleId: 'before-after',
-  sidePhones: [
-    { caption: '3 things to check before you hire a roofer', tag: 'Talking tip', tone: 'ember' },
-    { caption: 'Saturday at the farm stand: what just came in', tag: 'Behind the scenes', tone: 'cobalt' },
-  ],
+  // The two tilted phones on the sides play these samples (by id), muted and without buttons.
+  sidePhoneIds: ['buy-back-your-time', 'word-of-mouth'],
+
 }
 
 // ---- The problem ---------------------------------------------------------

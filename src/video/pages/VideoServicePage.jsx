@@ -37,7 +37,7 @@ export default function VideoServicePage() {
 function Hero() {
   const { hero, samples } = data
   const featured = samples.find((s) => s.id === hero.featuredSampleId && s.src)
-  const [left, right] = hero.sidePhones
+  const [left, right] = hero.sidePhoneIds.map((id) => samples.find((s) => s.id === id && s.src))
   return (
     <section aria-labelledby="video-hero-title" className="relative overflow-hidden bg-night text-paper">
       <div aria-hidden="true" className="absolute inset-0">
@@ -84,7 +84,7 @@ function Hero() {
           <div className="-mr-8 w-[30%] translate-y-8 rotate-[-6deg] opacity-90 sm:-mr-10">
             <div className="animate-drift [animation-delay:-2s] motion-reduce:animate-none">
               <PhoneFrame>
-                <MockReel caption={left.caption} tag={left.tag} tone={left.tone} compact mini />
+                {left ? <SampleVideo sample={left} mode="manual" location="hero" mini /> : <MockReel caption="Your business, every week" tag="Your video here" tone="ember" compact mini />}
               </PhoneFrame>
             </div>
           </div>
@@ -105,7 +105,7 @@ function Hero() {
           <div className="-ml-8 w-[30%] -translate-y-6 rotate-[6deg] opacity-90 sm:-ml-10">
             <div className="animate-drift [animation-delay:-4.5s] motion-reduce:animate-none">
               <PhoneFrame>
-                <MockReel caption={right.caption} tag={right.tag} tone={right.tone} compact mini />
+                {right ? <SampleVideo sample={right} mode="manual" location="hero" mini /> : <MockReel caption="Your business, every week" tag="Your video here" tone="cobalt" compact mini />}
               </PhoneFrame>
             </div>
           </div>
