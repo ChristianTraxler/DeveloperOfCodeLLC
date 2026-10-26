@@ -171,3 +171,25 @@ test('prepareDemo warns only about env values that are still missing', () => {
   assert.deepEqual(complete.missingEnv, []);
   assert.ok(!complete.warnings.some((w) => /no value was provided/.test(w)));
 });
+
+test('prepareDemo flags routed built sites only when their routes depend on the folder', () => {
+  const page = (src) => `<!doctype html><html><head><script type="module" src="${src}"></script></head><body></body></html>`;
+  const routing = (out) => out.warnings.some((w) => /client-side routing/.test(w));
+  const browserRouted = 'history.pushState({}, "", "/about")';
+  const hashRouted = 'h.pushState(s, "", u); warn(`relative pathnames are not supported in hash history.push(${t})`)';
+
+  // Built for "/": routes read the path, so they miss under /<slug>/.
+  assert.ok(routing(prepareDemo(zip({ 'index.html': page('/assets/app.js'), 'assets/app.js': browserRouted }), 'shop')));
+  assert.ok(routing(prepareDemo(zip({ 'index.html': page('/assets/app.js'), 'assets/app.js': hashRouted }), 'shop')));
+  // Relative files but browser routing: still flagged.
+  assert.ok(routing(prepareDemo(zip({ 'index.html': page('./assets/app.js'), 'assets/app.js': browserRouted }), 'shop')));
+  // Relative files and hash routes ("#/page"): works from any folder, nothing to flag.
+  assert.ok(!routing(prepareDemo(zip({ 'index.html': page('./assets/app.js'), 'assets/app.js': hashRouted }), 'shop')));
+});
+
+test('prepareDemo flags built sites that register a service worker', () => {
+  const page = '<!doctype html><html><head><script type="module" src="./assets/app.js"></script></head></html>';
+  const out = prepareDemo(zip({ 'index.html': page, 'assets/app.js': 'navigator.serviceWorker.register("/sw.js")' }), 'shop');
+  assert.ok(out.warnings.some((w) => /service worker/.test(w)));
+  assert.deepEqual(prepareDemo(zip({ 'index.html': page, 'assets/app.js': 'console.log(1)' }), 'shop').warnings, []);
+});

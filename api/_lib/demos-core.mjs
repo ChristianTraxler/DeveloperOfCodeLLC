@@ -187,21 +187,30 @@ export function rewriteBuiltBase(files, slug) {
   return { files: out, rewritten };
 }
 
+// True when index.html loads the build's own scripts and styles with relative paths
+// ("./assets/..."), as a Vite build with base "./" does: it was not built for "/".
+export function loadsRelatively(files) {
+  const html = text(files.get('index.html'));
+  const refs = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)=["']([^"']+)["']/gi)].map((m) => m[1]);
+  const local = refs.filter((ref) => !/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(ref));
+  return local.length > 0 && local.every((ref) => !ref.startsWith('/'));
+}
+
+// React Router keeps this message from its hash history in production builds.
+const HASH_ROUTING = /hash history/;
+
 function builtWarnings(files) {
   const warnings = [];
-  for (const [path, data] of files) {
-    if (!/\.m?js$/.test(path)) continue;
-    const code = text(data);
-    if (/history\.pushState|pushState\(/.test(code)) {
-      warnings.push('This built site uses client-side routing. It was built for "/", so its routes may not work under the demo path. Upload the source zip instead for a routed app.');
-      break;
-    }
+  const scripts = [...files].filter(([path]) => /\.m?js$/.test(path)).map(([, data]) => text(data));
+  // Hash routes ("#/page") ignore the folder, so a build that also loads its files
+  // relatively works under /<slug>/ as it is. Anything else that routes was built for "/".
+  const routes = scripts.some((code) => /history\.pushState|pushState\(/.test(code));
+  const folderProof = loadsRelatively(files) && scripts.some((code) => HASH_ROUTING.test(code));
+  if (routes && !folderProof) {
+    warnings.push('This built site uses client-side routing. It was built for "/", so its routes may not work under the demo path. Upload the source zip instead for a routed app.');
   }
-  for (const [path, data] of files) {
-    if (/\.m?js$/.test(path) && /serviceWorker\.register/.test(text(data))) {
-      warnings.push('Registers a service worker. A worker scoped to "/" can take over the whole demos site.');
-      break;
-    }
+  if (scripts.some((code) => /serviceWorker\.register/.test(code))) {
+    warnings.push('Registers a service worker. A worker scoped to "/" can take over the whole demos site.');
   }
   return warnings;
 }
