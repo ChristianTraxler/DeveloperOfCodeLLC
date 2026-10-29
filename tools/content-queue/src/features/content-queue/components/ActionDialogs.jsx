@@ -25,8 +25,7 @@ export function MarkPostedDialog({ post, onCancel, onConfirm }) {
   const submit = (e) => {
     e?.preventDefault()
     const u = url.trim()
-    if (!u) return setError('Paste the link to the live post so you can open it from the queue.')
-    if (!isUrl(u)) return setError('That link needs to start with https:// to open.')
+    if (u && !isUrl(u)) return setError('That link needs to start with https:// to open.')
     onConfirm(post, { liveUrl: u, postedAt: fromInputs(date, time) || new Date().toISOString() })
   }
 
@@ -36,7 +35,7 @@ export function MarkPostedDialog({ post, onCancel, onConfirm }) {
       open={!!post}
       onClose={onCancel}
       title="Mark as posted"
-      description={`"${post?.title || 'Untitled post'}"${where ? ` on ${where}` : ''}. Save the live link so the queue can take you straight to it.`}
+      description={`"${post?.title || 'Untitled post'}"${where ? ` on ${where}` : ''}. Add the live link if you want the queue to open it for you.`}
       labelledBy="cq-posted-title"
       footer={
         <>
@@ -52,7 +51,7 @@ export function MarkPostedDialog({ post, onCancel, onConfirm }) {
       <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
         <div>
           <label htmlFor="cq-posted-url" className="cq-field-label">
-            Live post link
+            Live post link (optional)
           </label>
           <input
             id="cq-posted-url"

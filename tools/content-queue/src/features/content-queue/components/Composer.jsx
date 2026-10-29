@@ -52,8 +52,7 @@ function validate(d) {
     if (d.platform && m.over && !m.soft) e.body = `This is over the ${PLATFORM_BY_ID[d.platform].label} limit. Shorten it, or save it as a draft for now.`
   }
   if (d.status === 'posted') {
-    if (!d.liveUrl.trim()) e.liveUrl = 'Paste the link to the live post so you can find it later.'
-    else if (!isUrl(d.liveUrl.trim())) e.liveUrl = 'That link needs to start with https:// to open.'
+    if (d.liveUrl.trim() && !isUrl(d.liveUrl.trim())) e.liveUrl = 'That link needs to start with https:// to open.'
   }
   if (d.imageUrl && !d.imageUrl.startsWith('data:image/') && !isUrl(d.imageUrl)) {
     e.imageUrl = 'Image links need to start with https://'
@@ -376,7 +375,7 @@ export default function Composer({ initial, isNew, focus, notice, paused, onClos
               </Field>
 
               {draft.status === 'posted' && (
-                <Field id="cq-c-liveUrl" label="Live post link" error={errors.liveUrl} hint="Where the post lives now, so you can open it from the queue.">
+                <Field id="cq-c-liveUrl" label="Live post link (optional)" error={errors.liveUrl} hint="Where the post lives now, so you can open it from the queue.">
                   <input
                     id="cq-c-liveUrl"
                     type="url"
