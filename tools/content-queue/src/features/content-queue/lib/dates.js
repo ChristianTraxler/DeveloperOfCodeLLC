@@ -8,7 +8,11 @@ export const startOfDay = (d) => {
   return x
 }
 
-export const addDays = (d, n) => new Date(new Date(d).getTime() + n * DAY)
+export const addDays = (d, n) => {
+  const x = new Date(d)
+  x.setDate(x.getDate() + n)
+  return x
+}
 
 export const sameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime()
 
