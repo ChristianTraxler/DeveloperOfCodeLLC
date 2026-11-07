@@ -1,4 +1,4 @@
-name: Supabase keep-alive
+name: Supabase keep awake
 
 # Supabase pauses free-tier projects after 7 days of no activity. This workflow
 # pings the Supabase REST API directly, once a day, so the project never hits
